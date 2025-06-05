@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
-import android.widget.LinearLayout // Ensure LinearLayout is imported
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -19,7 +19,8 @@ class MainActivity : AppCompatActivity() {
     // Layout Containers
     private lateinit var twoPlayerLayoutContainer: LinearLayout
     private lateinit var threePlayerLayoutContainer: LinearLayout
-    private lateinit var fourPlayerLayoutContainer: LinearLayout // Added
+    private lateinit var fourPlayerLayoutContainer: LinearLayout
+    private lateinit var fivePlayerLayoutContainer: LinearLayout // NEW
 
     // TextViews for 2-Player Layout
     private lateinit var lifeCounterTextP1TwoPlayer: TextView
@@ -30,12 +31,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var lifeCounterTextP2ThreePlayer: TextView
     private lateinit var lifeCounterTextP3ThreePlayer: TextView
 
-    // TextViews for 4-Player Layout (Added)
+    // TextViews for 4-Player Layout
     private lateinit var lifeCounterTextP1FourPlayer: TextView
     private lateinit var lifeCounterTextP2FourPlayer: TextView
     private lateinit var lifeCounterTextP3FourPlayer: TextView
     private lateinit var lifeCounterTextP4FourPlayer: TextView
 
+    // TextViews for 5-Player Layout // NEW
+    private lateinit var lifeCounterTextP1FivePlayer: TextView
+    private lateinit var lifeCounterTextP2FivePlayer: TextView
+    private lateinit var lifeCounterTextP3FivePlayer: TextView
+    private lateinit var lifeCounterTextP4FivePlayer: TextView
+    private lateinit var lifeCounterTextP5FivePlayer: TextView
 
     // Common UI
     private lateinit var settingsIcon: ImageView
@@ -51,7 +58,8 @@ class MainActivity : AppCompatActivity() {
         // Initialize layout containers
         twoPlayerLayoutContainer = findViewById(R.id.twoPlayerLayoutContainer)
         threePlayerLayoutContainer = findViewById(R.id.threePlayerLayoutContainer)
-        fourPlayerLayoutContainer = findViewById(R.id.fourPlayerLayoutContainer) // Added
+        fourPlayerLayoutContainer = findViewById(R.id.fourPlayerLayoutContainer)
+        fivePlayerLayoutContainer = findViewById(R.id.fivePlayerLayoutContainer) // NEW
 
         // Initialize 2-Player TextViews
         lifeCounterTextP1TwoPlayer = findViewById(R.id.lifeCounterTextP1TwoPlayer)
@@ -62,71 +70,88 @@ class MainActivity : AppCompatActivity() {
         lifeCounterTextP2ThreePlayer = findViewById(R.id.lifeCounterTextP2ThreePlayer)
         lifeCounterTextP3ThreePlayer = findViewById(R.id.lifeCounterTextP3ThreePlayer)
 
-        // Initialize 4-Player TextViews (Added)
+        // Initialize 4-Player TextViews
         lifeCounterTextP1FourPlayer = findViewById(R.id.lifeCounterTextP1FourPlayer)
         lifeCounterTextP2FourPlayer = findViewById(R.id.lifeCounterTextP2FourPlayer)
         lifeCounterTextP3FourPlayer = findViewById(R.id.lifeCounterTextP3FourPlayer)
         lifeCounterTextP4FourPlayer = findViewById(R.id.lifeCounterTextP4FourPlayer)
+
+        // Initialize 5-Player TextViews // NEW
+        lifeCounterTextP1FivePlayer = findViewById(R.id.lifeCounterTextP1FivePlayer)
+        lifeCounterTextP2FivePlayer = findViewById(R.id.lifeCounterTextP2FivePlayer)
+        lifeCounterTextP3FivePlayer = findViewById(R.id.lifeCounterTextP3FivePlayer)
+        lifeCounterTextP4FivePlayer = findViewById(R.id.lifeCounterTextP4FivePlayer)
+        lifeCounterTextP5FivePlayer = findViewById(R.id.lifeCounterTextP5FivePlayer)
+
 
         settingsIcon = findViewById(R.id.settingsIcon)
         settingsIcon.setOnClickListener {
             showSettingsPopup()
         }
 
-        setupUIForPlayerCount(playerCount) // Initialize UI for default 2 players
+        setupUIForPlayerCount(playerCount)
     }
 
     private fun setupUIForPlayerCount(newPlayerCount: Int) {
-        playerCount = newPlayerCount // Update the class member
+        playerCount = newPlayerCount
 
         players.clear()
         for (i in 0 until playerCount) {
             players.add(Player(name = "Player ${i + 1}"))
         }
 
-        // Detach all listeners first to prevent issues
+        // Detach all listeners
         lifeCounterTextP1TwoPlayer.setOnTouchListener(null)
         lifeCounterTextP2TwoPlayer.setOnTouchListener(null)
         lifeCounterTextP1ThreePlayer.setOnTouchListener(null)
         lifeCounterTextP2ThreePlayer.setOnTouchListener(null)
         lifeCounterTextP3ThreePlayer.setOnTouchListener(null)
-        lifeCounterTextP1FourPlayer.setOnTouchListener(null) // Added
-        lifeCounterTextP2FourPlayer.setOnTouchListener(null) // Added
-        lifeCounterTextP3FourPlayer.setOnTouchListener(null) // Added
-        lifeCounterTextP4FourPlayer.setOnTouchListener(null) // Added
+        lifeCounterTextP1FourPlayer.setOnTouchListener(null)
+        lifeCounterTextP2FourPlayer.setOnTouchListener(null)
+        lifeCounterTextP3FourPlayer.setOnTouchListener(null)
+        lifeCounterTextP4FourPlayer.setOnTouchListener(null)
+        lifeCounterTextP1FivePlayer.setOnTouchListener(null) // NEW
+        lifeCounterTextP2FivePlayer.setOnTouchListener(null) // NEW
+        lifeCounterTextP3FivePlayer.setOnTouchListener(null) // NEW
+        lifeCounterTextP4FivePlayer.setOnTouchListener(null) // NEW
+        lifeCounterTextP5FivePlayer.setOnTouchListener(null) // NEW
 
-
+        // Hide all containers initially
         twoPlayerLayoutContainer.visibility = View.GONE
         threePlayerLayoutContainer.visibility = View.GONE
         fourPlayerLayoutContainer.visibility = View.GONE
-
+        fivePlayerLayoutContainer.visibility = View.GONE // NEW
 
         when (playerCount) {
             2 -> {
                 twoPlayerLayoutContainer.visibility = View.VISIBLE
-                updateLifeDisplay(0) // P1
-                updateLifeDisplay(1) // P2
-                lifeCounterTextP1TwoPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
-                lifeCounterTextP2TwoPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
+                (0..1).forEach { updateLifeDisplay(it) }
+                lifeCounterTextP1TwoPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) }
+                lifeCounterTextP2TwoPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) }
             }
             3 -> {
                 threePlayerLayoutContainer.visibility = View.VISIBLE
-                updateLifeDisplay(0) // P1
-                updateLifeDisplay(1) // P2
-                updateLifeDisplay(2) // P3
-                lifeCounterTextP1ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
-                lifeCounterTextP2ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
-                lifeCounterTextP3ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 2) }
+                (0..2).forEach { updateLifeDisplay(it) }
+                lifeCounterTextP1ThreePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) }
+                lifeCounterTextP2ThreePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) }
+                lifeCounterTextP3ThreePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) }
             }
-            4 -> { // Added case for 4 players
+            4 -> {
                 fourPlayerLayoutContainer.visibility = View.VISIBLE
-                updateLifeDisplay(0) // P1
-                updateLifeDisplay(1) // P2
-                updateLifeDisplay(3) // P4
-                lifeCounterTextP1FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
-                lifeCounterTextP2FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
-                lifeCounterTextP3FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 2) }
-                lifeCounterTextP4FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 3) }
+                (0..3).forEach { updateLifeDisplay(it) }
+                lifeCounterTextP1FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) }
+                lifeCounterTextP2FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) }
+                lifeCounterTextP3FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) }
+                lifeCounterTextP4FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) }
+            }
+            5 -> { // NEW
+                fivePlayerLayoutContainer.visibility = View.VISIBLE
+                (0..4).forEach { updateLifeDisplay(it) }
+                lifeCounterTextP1FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) }
+                lifeCounterTextP2FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) }
+                lifeCounterTextP3FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) }
+                lifeCounterTextP4FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) }
+                lifeCounterTextP5FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 4) }
             }
             else -> {
                 Toast.makeText(this, "$newPlayerCount players UI not yet implemented. Reverting to 2 players.", Toast.LENGTH_LONG).show()
@@ -140,39 +165,16 @@ class MainActivity : AppCompatActivity() {
 
         if (event.action == MotionEvent.ACTION_DOWN) {
             val touchX = event.x
-            val touchY = event.y // Y coordinate might be needed for some orientations
+            val touchY = event.y
             val viewWidth = view.width
             val viewHeight = view.height
 
-            // Determine tap area based on view rotation and player position
-            // This logic assumes standard horizontal or vertical splits.
-            // For 4 players, P1 & P2 are top, P3 & P4 are bottom.
-            // P1 (top-left, rotated 180): left half decreases, right half increases
-            // P2 (top-right, rotated 180): left half decreases, right half increases
-            // P3 (bottom-left, rotation 0): left half decreases, right half increases
-            // P4 (bottom-right, rotation 0): left half decreases, right half increases
-
-            // For views rotated 90 or -90 (like P2 and P3 in 3-player mode):
-            // Rotation 90: top half decreases, bottom half increases
-            // Rotation -90: bottom half decreases, top half increases
-
             var decrease = false
-            val rotation = view.rotation
-
-            if (rotation == 180f || rotation == 0f) { // Horizontal split
-                if (touchX < viewWidth / 2) {
-                    decrease = true
-                }
-            } else if (rotation == 90f) { // Vertical split, text upright towards right
-                if (touchY < viewHeight / 2) { // Top half
-                    decrease = true
-                }
-            } else if (rotation == -90f) { // Vertical split, text upright towards left
-                if (touchY > viewHeight / 2) { // Bottom half
-                    decrease = true
-                }
+            when (view.rotation) {
+                0f, 180f -> if (touchX < viewWidth / 2) decrease = true
+                90f -> if (touchY < viewHeight / 2) decrease = true
+                -90f, 270f -> if (touchY > viewHeight / 2) decrease = true
             }
-
 
             if (decrease) {
                 players[playerIndex].decreaseLife()
@@ -180,7 +182,7 @@ class MainActivity : AppCompatActivity() {
                 players[playerIndex].increaseLife()
             }
             updateLifeDisplay(playerIndex)
-            view.performClick() // Call performClick for accessibility
+            view.performClick()
             return true
         }
         return false
@@ -194,7 +196,7 @@ class MainActivity : AppCompatActivity() {
         when (playerCount) {
             2 -> {
                 if (playerIndex == 0) lifeCounterTextP1TwoPlayer.text = lifeTotal
-                else if (playerIndex == 1) lifeCounterTextP2TwoPlayer.text = lifeTotal
+                else lifeCounterTextP2TwoPlayer.text = lifeTotal
             }
             3 -> {
                 when (playerIndex) {
@@ -203,12 +205,21 @@ class MainActivity : AppCompatActivity() {
                     2 -> lifeCounterTextP3ThreePlayer.text = lifeTotal
                 }
             }
-            4 -> { // Added case for 4 players
+            4 -> {
                 when (playerIndex) {
                     0 -> lifeCounterTextP1FourPlayer.text = lifeTotal
                     1 -> lifeCounterTextP2FourPlayer.text = lifeTotal
                     2 -> lifeCounterTextP3FourPlayer.text = lifeTotal
                     3 -> lifeCounterTextP4FourPlayer.text = lifeTotal
+                }
+            }
+            5 -> { // NEW
+                when (playerIndex) {
+                    0 -> lifeCounterTextP1FivePlayer.text = lifeTotal
+                    1 -> lifeCounterTextP2FivePlayer.text = lifeTotal
+                    2 -> lifeCounterTextP3FivePlayer.text = lifeTotal
+                    3 -> lifeCounterTextP4FivePlayer.text = lifeTotal
+                    4 -> lifeCounterTextP5FivePlayer.text = lifeTotal
                 }
             }
         }
@@ -219,8 +230,7 @@ class MainActivity : AppCompatActivity() {
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, settingsOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
-                val textView = view.findViewById<TextView>(android.R.id.text1)
-                textView.setTextColor(Color.WHITE)
+                (view.findViewById<TextView>(android.R.id.text1)).setTextColor(Color.WHITE)
                 return view
             }
         }
@@ -228,24 +238,20 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this, R.style.CustomAlertDialog)
             .setTitle("Settings")
             .setAdapter(adapter) { dialog, which ->
-                when (which) {
-                    0 -> showPlayerCountSelection()
-                }
+                if (which == 0) showPlayerCountSelection()
                 dialog.dismiss()
             }
-            .setOnCancelListener { /* Dialog automatically closes */ }
             .create()
             .show()
     }
 
     private fun showPlayerCountSelection() {
-        val playerCountOptions = arrayOf("2", "3", "4", "5", "6") // Options available
+        val playerCountOptions = arrayOf("2", "3", "4", "5", "6")
 
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, playerCountOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
-                val textView = view.findViewById<TextView>(android.R.id.text1)
-                textView.setTextColor(Color.WHITE)
+                (view.findViewById<TextView>(android.R.id.text1)).setTextColor(Color.WHITE)
                 return view
             }
         }
@@ -255,15 +261,14 @@ class MainActivity : AppCompatActivity() {
             .setAdapter(adapter) { dialog, which ->
                 val selectedPlayerCount = playerCountOptions[which].toIntOrNull() ?: this.playerCount
 
-                if (selectedPlayerCount == 2 || selectedPlayerCount == 3 || selectedPlayerCount == 4) { // Updated condition
+                if (selectedPlayerCount in 2..5) { // UPDATED condition
                     setupUIForPlayerCount(selectedPlayerCount)
                 } else {
                     Toast.makeText(this, "$selectedPlayerCount players UI not yet implemented. Setting to 2 players.", Toast.LENGTH_LONG).show()
-                    setupUIForPlayerCount(2) // Default to 2 if UI for more isn't ready
+                    setupUIForPlayerCount(2)
                 }
                 dialog.dismiss()
             }
-            .setOnCancelListener { /* Dialog automatically closes */ }
             .create()
             .show()
     }
