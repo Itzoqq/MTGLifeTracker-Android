@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     // Layout Containers
     private lateinit var twoPlayerLayoutContainer: LinearLayout
     private lateinit var threePlayerLayoutContainer: LinearLayout
+    private lateinit var fourPlayerLayoutContainer: LinearLayout // Added
 
     // TextViews for 2-Player Layout
     private lateinit var lifeCounterTextP1TwoPlayer: TextView
@@ -28,6 +29,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var lifeCounterTextP1ThreePlayer: TextView
     private lateinit var lifeCounterTextP2ThreePlayer: TextView
     private lateinit var lifeCounterTextP3ThreePlayer: TextView
+
+    // TextViews for 4-Player Layout (Added)
+    private lateinit var lifeCounterTextP1FourPlayer: TextView
+    private lateinit var lifeCounterTextP2FourPlayer: TextView
+    private lateinit var lifeCounterTextP3FourPlayer: TextView
+    private lateinit var lifeCounterTextP4FourPlayer: TextView
+
 
     // Common UI
     private lateinit var settingsIcon: ImageView
@@ -43,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         // Initialize layout containers
         twoPlayerLayoutContainer = findViewById(R.id.twoPlayerLayoutContainer)
         threePlayerLayoutContainer = findViewById(R.id.threePlayerLayoutContainer)
+        fourPlayerLayoutContainer = findViewById(R.id.fourPlayerLayoutContainer) // Added
 
         // Initialize 2-Player TextViews
         lifeCounterTextP1TwoPlayer = findViewById(R.id.lifeCounterTextP1TwoPlayer)
@@ -52,6 +61,12 @@ class MainActivity : AppCompatActivity() {
         lifeCounterTextP1ThreePlayer = findViewById(R.id.lifeCounterTextP1ThreePlayer)
         lifeCounterTextP2ThreePlayer = findViewById(R.id.lifeCounterTextP2ThreePlayer)
         lifeCounterTextP3ThreePlayer = findViewById(R.id.lifeCounterTextP3ThreePlayer)
+
+        // Initialize 4-Player TextViews (Added)
+        lifeCounterTextP1FourPlayer = findViewById(R.id.lifeCounterTextP1FourPlayer)
+        lifeCounterTextP2FourPlayer = findViewById(R.id.lifeCounterTextP2FourPlayer)
+        lifeCounterTextP3FourPlayer = findViewById(R.id.lifeCounterTextP3FourPlayer)
+        lifeCounterTextP4FourPlayer = findViewById(R.id.lifeCounterTextP4FourPlayer)
 
         settingsIcon = findViewById(R.id.settingsIcon)
         settingsIcon.setOnClickListener {
@@ -75,36 +90,47 @@ class MainActivity : AppCompatActivity() {
         lifeCounterTextP1ThreePlayer.setOnTouchListener(null)
         lifeCounterTextP2ThreePlayer.setOnTouchListener(null)
         lifeCounterTextP3ThreePlayer.setOnTouchListener(null)
+        lifeCounterTextP1FourPlayer.setOnTouchListener(null) // Added
+        lifeCounterTextP2FourPlayer.setOnTouchListener(null) // Added
+        lifeCounterTextP3FourPlayer.setOnTouchListener(null) // Added
+        lifeCounterTextP4FourPlayer.setOnTouchListener(null) // Added
+
+
+        twoPlayerLayoutContainer.visibility = View.GONE
+        threePlayerLayoutContainer.visibility = View.GONE
+        fourPlayerLayoutContainer.visibility = View.GONE
+
 
         when (playerCount) {
             2 -> {
                 twoPlayerLayoutContainer.visibility = View.VISIBLE
-                threePlayerLayoutContainer.visibility = View.GONE
-
                 updateLifeDisplay(0) // P1
                 updateLifeDisplay(1) // P2
-
                 lifeCounterTextP1TwoPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
                 lifeCounterTextP2TwoPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
             }
             3 -> {
-                twoPlayerLayoutContainer.visibility = View.GONE
                 threePlayerLayoutContainer.visibility = View.VISIBLE
-
                 updateLifeDisplay(0) // P1
                 updateLifeDisplay(1) // P2
                 updateLifeDisplay(2) // P3
-
                 lifeCounterTextP1ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
                 lifeCounterTextP2ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
                 lifeCounterTextP3ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 2) }
             }
+            4 -> { // Added case for 4 players
+                fourPlayerLayoutContainer.visibility = View.VISIBLE
+                updateLifeDisplay(0) // P1
+                updateLifeDisplay(1) // P2
+                updateLifeDisplay(3) // P4
+                lifeCounterTextP1FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
+                lifeCounterTextP2FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
+                lifeCounterTextP3FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 2) }
+                lifeCounterTextP4FourPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 3) }
+            }
             else -> {
-                // This case handles playerCount values other than 2 or 3 (e.g., 4, 5, 6 from selection)
-                // Default to 2 players and show a message if UI not implemented.
-                // The redundant 'if (this.playerCount != 2)' condition is removed from here.
                 Toast.makeText(this, "$newPlayerCount players UI not yet implemented. Reverting to 2 players.", Toast.LENGTH_LONG).show()
-                setupUIForPlayerCount(2) // Recursively call to set up for 2 players
+                setupUIForPlayerCount(2)
             }
         }
     }
@@ -113,10 +139,42 @@ class MainActivity : AppCompatActivity() {
         if (playerIndex >= players.size) return false
 
         if (event.action == MotionEvent.ACTION_DOWN) {
-            val textWidth = view.width
             val touchX = event.x
+            val touchY = event.y // Y coordinate might be needed for some orientations
+            val viewWidth = view.width
+            val viewHeight = view.height
 
-            if (touchX < textWidth / 2) {
+            // Determine tap area based on view rotation and player position
+            // This logic assumes standard horizontal or vertical splits.
+            // For 4 players, P1 & P2 are top, P3 & P4 are bottom.
+            // P1 (top-left, rotated 180): left half decreases, right half increases
+            // P2 (top-right, rotated 180): left half decreases, right half increases
+            // P3 (bottom-left, rotation 0): left half decreases, right half increases
+            // P4 (bottom-right, rotation 0): left half decreases, right half increases
+
+            // For views rotated 90 or -90 (like P2 and P3 in 3-player mode):
+            // Rotation 90: top half decreases, bottom half increases
+            // Rotation -90: bottom half decreases, top half increases
+
+            var decrease = false
+            val rotation = view.rotation
+
+            if (rotation == 180f || rotation == 0f) { // Horizontal split
+                if (touchX < viewWidth / 2) {
+                    decrease = true
+                }
+            } else if (rotation == 90f) { // Vertical split, text upright towards right
+                if (touchY < viewHeight / 2) { // Top half
+                    decrease = true
+                }
+            } else if (rotation == -90f) { // Vertical split, text upright towards left
+                if (touchY > viewHeight / 2) { // Bottom half
+                    decrease = true
+                }
+            }
+
+
+            if (decrease) {
                 players[playerIndex].decreaseLife()
             } else {
                 players[playerIndex].increaseLife()
@@ -143,6 +201,14 @@ class MainActivity : AppCompatActivity() {
                     0 -> lifeCounterTextP1ThreePlayer.text = lifeTotal
                     1 -> lifeCounterTextP2ThreePlayer.text = lifeTotal
                     2 -> lifeCounterTextP3ThreePlayer.text = lifeTotal
+                }
+            }
+            4 -> { // Added case for 4 players
+                when (playerIndex) {
+                    0 -> lifeCounterTextP1FourPlayer.text = lifeTotal
+                    1 -> lifeCounterTextP2FourPlayer.text = lifeTotal
+                    2 -> lifeCounterTextP3FourPlayer.text = lifeTotal
+                    3 -> lifeCounterTextP4FourPlayer.text = lifeTotal
                 }
             }
         }
@@ -189,7 +255,7 @@ class MainActivity : AppCompatActivity() {
             .setAdapter(adapter) { dialog, which ->
                 val selectedPlayerCount = playerCountOptions[which].toIntOrNull() ?: this.playerCount
 
-                if (selectedPlayerCount == 2 || selectedPlayerCount == 3) {
+                if (selectedPlayerCount == 2 || selectedPlayerCount == 3 || selectedPlayerCount == 4) { // Updated condition
                     setupUIForPlayerCount(selectedPlayerCount)
                 } else {
                     Toast.makeText(this, "$selectedPlayerCount players UI not yet implemented. Setting to 2 players.", Toast.LENGTH_LONG).show()
