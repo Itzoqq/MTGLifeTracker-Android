@@ -6,4 +6,39 @@
         <item name="android:colorBackground">#2E2E2E</item> <item name="colorOnSurface">#FFFFFF</item> <item name="colorOnBackground">#FFFFFF</item> <item name="android:textColorAlertDialogListItem">#FFFFFF</item> <item name="colorSurface">#2E2E2E</item> <item name="android:colorForeground">#FFFFFF</item> <item name="android:textAppearanceListItem">@style/WhiteListItemText</item> <item name="android:textAppearanceListItemSmall">@style/WhiteListItemText</item> </style>
 
     <style name="WhiteListItemText" parent="TextAppearance.MaterialComponents.Subtitle1"> <item name="android:textColor">#FFFFFF</item> </style>
+
+    <style name="LifeCounterTextViewBase">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_centerInParent">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:padding">16dp</item>
+        <item name="android:text">@string/EDH_initial_life_total</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">80sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="LifeCounterTextViewBase.Medium">
+        <item name="android:textSize">70sp</item>
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <style name="LifeCounterTextViewBase.Small">
+        <item name="android:textSize">60sp</item> <item name="android:padding">8dp</item>
+    </style>
+
+    <style name="HorizontalDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">2dp</item>
+        <item name="android:background">#FFFFFF</item>
+    </style>
+
+    <style name="VerticalDivider">
+        <item name="android:layout_width">2dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">#FFFFFF</item>
+    </style>
+
 </resources>
