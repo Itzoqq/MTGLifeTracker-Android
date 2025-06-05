@@ -7,20 +7,20 @@
     tools:context=".MainActivity">
 
     <LinearLayout
-        android:id="@+id/twoPlayerLayout"
+        android:id="@+id/twoPlayerLayoutContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:visibility="visible">
 
         <RelativeLayout
-            android:id="@+id/player1Section"
+            android:id="@+id/player1SectionTwoPlayer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
 
             <TextView
-                android:id="@+id/lifeCounterTextP1"
+                android:id="@+id/lifeCounterTextP1TwoPlayer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
@@ -28,26 +28,26 @@
                 android:focusable="true"
                 android:padding="16dp"
                 android:rotation="180"
-                android:text="40"
+                android:text="@string/EDH_initial_life_total"
                 android:textColor="#FFFFFF"
                 android:textSize="80sp"
                 android:textStyle="bold" />
         </RelativeLayout>
 
         <View
-            android:id="@+id/playerDivider"
+            android:id="@+id/dividerTwoPlayer"
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:background="#FFFFFF"/>
 
         <RelativeLayout
-            android:id="@+id/player2Section"
+            android:id="@+id/player2SectionTwoPlayer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
 
             <TextView
-                android:id="@+id/lifeCounterTextP2"
+                android:id="@+id/lifeCounterTextP2TwoPlayer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
@@ -55,11 +55,102 @@
                 android:focusable="true"
                 android:padding="16dp"
                 android:rotation="0"
-                android:text="40"
+                android:text="@string/EDH_initial_life_total"
                 android:textColor="#FFFFFF"
                 android:textSize="80sp"
                 android:textStyle="bold" />
         </RelativeLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/threePlayerLayoutContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <RelativeLayout
+            android:id="@+id/player1SectionThreePlayer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/lifeCounterTextP1ThreePlayer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="16dp"
+                android:rotation="180"
+                android:text="@string/EDH_initial_life_total"
+                android:textColor="#FFFFFF"
+                android:textSize="80sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <View
+            android:id="@+id/mainHorizontalDividerThreePlayer"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#FFFFFF"/>
+
+        <LinearLayout
+            android:id="@+id/bottomPlayersLinearLayoutThreePlayer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <RelativeLayout
+                android:id="@+id/player2SubSectionThreePlayer"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/lifeCounterTextP2ThreePlayer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="16dp"
+                    android:rotation="90"
+                    android:text="@string/EDH_initial_life_total"
+                    android:textColor="#FFFFFF"
+                    android:textSize="80sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <View
+                android:id="@+id/verticalPlayerDividerThreePlayer"
+                android:layout_width="2dp"
+                android:layout_height="match_parent"
+                android:background="#FFFFFF"/>
+
+            <RelativeLayout
+                android:id="@+id/player3SubSectionThreePlayer"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/lifeCounterTextP3ThreePlayer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="16dp"
+                    android:rotation="-90"
+                    android:text="@string/EDH_initial_life_total"
+                    android:textColor="#FFFFFF"
+                    android:textSize="80sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <ImageView
@@ -72,6 +163,6 @@
         android:padding="12dp"
         android:clickable="true"
         android:focusable="true"
-        android:contentDescription="Settings" />
+        android:contentDescription="@string/settings_content_description" />
 
 </RelativeLayout>

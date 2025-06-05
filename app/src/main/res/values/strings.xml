@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">MTG Life Tracker</string>
+    <string name="app_name">MTGLifeTracker</string>
+    <string name="EDH_initial_life_total">40</string>
+    <string name="settings_content_description">Settings</string>
 </resources>

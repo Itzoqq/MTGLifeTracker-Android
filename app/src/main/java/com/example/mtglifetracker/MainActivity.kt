@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
-// import android.widget.LinearLayout // No longer needed for singlePlayerLayout
+import android.widget.LinearLayout // Ensure LinearLayout is imported
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -15,15 +15,21 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.mtglifetracker.model.Player
 
 class MainActivity : AppCompatActivity() {
-    // Single Player UI elements are removed
-    // private lateinit var singlePlayerLayout: LinearLayout // REMOVED
-    // private lateinit var lifeCounterText: TextView // REMOVED
 
-    // Two Player UI
-    // private lateinit var twoPlayerLayout: LinearLayout // Not strictly needed as a variable if always visible
-    private lateinit var lifeCounterTextP1: TextView
-    private lateinit var lifeCounterTextP2: TextView
+    // Layout Containers
+    private lateinit var twoPlayerLayoutContainer: LinearLayout
+    private lateinit var threePlayerLayoutContainer: LinearLayout
 
+    // TextViews for 2-Player Layout
+    private lateinit var lifeCounterTextP1TwoPlayer: TextView
+    private lateinit var lifeCounterTextP2TwoPlayer: TextView
+
+    // TextViews for 3-Player Layout
+    private lateinit var lifeCounterTextP1ThreePlayer: TextView
+    private lateinit var lifeCounterTextP2ThreePlayer: TextView
+    private lateinit var lifeCounterTextP3ThreePlayer: TextView
+
+    // Common UI
     private lateinit var settingsIcon: ImageView
 
     private val players = mutableListOf<Player>()
@@ -34,12 +40,18 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.hide()
         setContentView(R.layout.activity_main)
 
-        // FindViewById for single player UI elements are removed
+        // Initialize layout containers
+        twoPlayerLayoutContainer = findViewById(R.id.twoPlayerLayoutContainer)
+        threePlayerLayoutContainer = findViewById(R.id.threePlayerLayoutContainer)
 
-        // Two Player UI
-        // twoPlayerLayout = findViewById(R.id.twoPlayerLayout) // Not strictly needed if always visible
-        lifeCounterTextP1 = findViewById(R.id.lifeCounterTextP1)
-        lifeCounterTextP2 = findViewById(R.id.lifeCounterTextP2)
+        // Initialize 2-Player TextViews
+        lifeCounterTextP1TwoPlayer = findViewById(R.id.lifeCounterTextP1TwoPlayer)
+        lifeCounterTextP2TwoPlayer = findViewById(R.id.lifeCounterTextP2TwoPlayer)
+
+        // Initialize 3-Player TextViews
+        lifeCounterTextP1ThreePlayer = findViewById(R.id.lifeCounterTextP1ThreePlayer)
+        lifeCounterTextP2ThreePlayer = findViewById(R.id.lifeCounterTextP2ThreePlayer)
+        lifeCounterTextP3ThreePlayer = findViewById(R.id.lifeCounterTextP3ThreePlayer)
 
         settingsIcon = findViewById(R.id.settingsIcon)
         settingsIcon.setOnClickListener {
@@ -49,35 +61,52 @@ class MainActivity : AppCompatActivity() {
         setupUIForPlayerCount(playerCount) // Initialize UI for default 2 players
     }
 
-    private fun setupUIForPlayerCount(count: Int) {
-        // Ensure count is at least 2, though the selection dialog will also enforce this.
-        // For now, this function is primarily designed for count = 2.
-        playerCount = if (count < 2) 2 else count
+    private fun setupUIForPlayerCount(newPlayerCount: Int) {
+        playerCount = newPlayerCount // Update the class member
 
         players.clear()
-        for (i in 0 until playerCount) { // Use the validated playerCount
+        for (i in 0 until playerCount) {
             players.add(Player(name = "Player ${i + 1}"))
         }
 
-        // Detach P1/P2 listeners first to avoid conflicts if re-setup
-        lifeCounterTextP1.setOnTouchListener(null)
-        lifeCounterTextP2.setOnTouchListener(null)
+        // Detach all listeners first to prevent issues
+        lifeCounterTextP1TwoPlayer.setOnTouchListener(null)
+        lifeCounterTextP2TwoPlayer.setOnTouchListener(null)
+        lifeCounterTextP1ThreePlayer.setOnTouchListener(null)
+        lifeCounterTextP2ThreePlayer.setOnTouchListener(null)
+        lifeCounterTextP3ThreePlayer.setOnTouchListener(null)
 
-        // Logic for count == 1 is removed.
-        // The twoPlayerLayout is now visible by default in XML.
-        if (playerCount == 2) {
-            updateLifeDisplay(0) // Update P1
-            updateLifeDisplay(1) // Update P2
+        when (playerCount) {
+            2 -> {
+                twoPlayerLayoutContainer.visibility = View.VISIBLE
+                threePlayerLayoutContainer.visibility = View.GONE
 
-            lifeCounterTextP1.setOnTouchListener { view, event ->
-                handleLifeTap(event, view, 0)
+                updateLifeDisplay(0) // P1
+                updateLifeDisplay(1) // P2
+
+                lifeCounterTextP1TwoPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
+                lifeCounterTextP2TwoPlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
             }
-            lifeCounterTextP2.setOnTouchListener { view, event ->
-                handleLifeTap(event, view, 1)
+            3 -> {
+                twoPlayerLayoutContainer.visibility = View.GONE
+                threePlayerLayoutContainer.visibility = View.VISIBLE
+
+                updateLifeDisplay(0) // P1
+                updateLifeDisplay(1) // P2
+                updateLifeDisplay(2) // P3
+
+                lifeCounterTextP1ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 0) }
+                lifeCounterTextP2ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 1) }
+                lifeCounterTextP3ThreePlayer.setOnTouchListener { view, event -> handleLifeTap(event, view, 2) }
+            }
+            else -> {
+                // This case handles playerCount values other than 2 or 3 (e.g., 4, 5, 6 from selection)
+                // Default to 2 players and show a message if UI not implemented.
+                // The redundant 'if (this.playerCount != 2)' condition is removed from here.
+                Toast.makeText(this, "$newPlayerCount players UI not yet implemented. Reverting to 2 players.", Toast.LENGTH_LONG).show()
+                setupUIForPlayerCount(2) // Recursively call to set up for 2 players
             }
         }
-        // TODO: Extend for more players (3, 4, etc.).
-        // This would involve dynamically creating views or having more predefined layouts.
     }
 
     private fun handleLifeTap(event: MotionEvent, view: View, playerIndex: Int): Boolean {
@@ -93,6 +122,7 @@ class MainActivity : AppCompatActivity() {
                 players[playerIndex].increaseLife()
             }
             updateLifeDisplay(playerIndex)
+            view.performClick() // Call performClick for accessibility
             return true
         }
         return false
@@ -103,13 +133,19 @@ class MainActivity : AppCompatActivity() {
 
         val lifeTotal = players[playerIndex].life.toString()
 
-        // Since playerCount is now always >= 2, the 'when' block can be simplified
-        // For now, this is specific to the 2-player UI.
-        if (playerCount == 2) { //
-            if (playerIndex == 0) lifeCounterTextP1.text = lifeTotal
-            else if (playerIndex == 1) lifeCounterTextP2.text = lifeTotal
+        when (playerCount) {
+            2 -> {
+                if (playerIndex == 0) lifeCounterTextP1TwoPlayer.text = lifeTotal
+                else if (playerIndex == 1) lifeCounterTextP2TwoPlayer.text = lifeTotal
+            }
+            3 -> {
+                when (playerIndex) {
+                    0 -> lifeCounterTextP1ThreePlayer.text = lifeTotal
+                    1 -> lifeCounterTextP2ThreePlayer.text = lifeTotal
+                    2 -> lifeCounterTextP3ThreePlayer.text = lifeTotal
+                }
+            }
         }
-        // TODO: Add cases for more players if UI supports them
     }
 
     private fun showSettingsPopup() {
@@ -137,8 +173,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPlayerCountSelection() {
-        // Player count options now start from "2"
-        val playerCountOptions = arrayOf("2", "3", "4", "5", "6")
+        val playerCountOptions = arrayOf("2", "3", "4", "5", "6") // Options available
 
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, playerCountOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -152,12 +187,9 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this, R.style.CustomAlertDialog)
             .setTitle("Number of Players")
             .setAdapter(adapter) { dialog, which ->
-                val selectedPlayerCount = playerCountOptions[which].toIntOrNull() ?: playerCount
+                val selectedPlayerCount = playerCountOptions[which].toIntOrNull() ?: this.playerCount
 
-                // Current UI only fully supports 2 players.
-                // If a different number (e.g., 3, 4) is selected,
-                // we'll show a message and default to 2 players for now.
-                if (selectedPlayerCount == 2) {
+                if (selectedPlayerCount == 2 || selectedPlayerCount == 3) {
                     setupUIForPlayerCount(selectedPlayerCount)
                 } else {
                     Toast.makeText(this, "$selectedPlayerCount players UI not yet implemented. Setting to 2 players.", Toast.LENGTH_LONG).show()
