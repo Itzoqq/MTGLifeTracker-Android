@@ -7,21 +7,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout // <-- Required Import
 import com.example.mtglifetracker.model.Player
 
 class MainActivity : AppCompatActivity() {
 
-    // Layout Containers
-    private lateinit var twoPlayerLayoutContainer: LinearLayout
-    private lateinit var threePlayerLayoutContainer: LinearLayout
-    private lateinit var fourPlayerLayoutContainer: LinearLayout
-    private lateinit var fivePlayerLayoutContainer: LinearLayout
-    private lateinit var sixPlayerLayoutContainer: LinearLayout // NEW
+    // Layout Containers - CORRECTED to ConstraintLayout
+    private lateinit var twoPlayerLayoutContainer: ConstraintLayout
+    private lateinit var threePlayerLayoutContainer: ConstraintLayout
+    private lateinit var fourPlayerLayoutContainer: ConstraintLayout
+    private lateinit var fivePlayerLayoutContainer: ConstraintLayout
+    private lateinit var sixPlayerLayoutContainer: ConstraintLayout
 
     // TextViews for 2-Player Layout
     private lateinit var lifeCounterTextP1TwoPlayer: TextView
@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var lifeCounterTextP4FivePlayer: TextView
     private lateinit var lifeCounterTextP5FivePlayer: TextView
 
-    // TextViews for 6-Player Layout // NEW
+    // TextViews for 6-Player Layout
     private lateinit var lifeCounterTextP1SixPlayer: TextView
     private lateinit var lifeCounterTextP2SixPlayer: TextView
     private lateinit var lifeCounterTextP3SixPlayer: TextView
@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         threePlayerLayoutContainer = findViewById(R.id.threePlayerLayoutContainer)
         fourPlayerLayoutContainer = findViewById(R.id.fourPlayerLayoutContainer)
         fivePlayerLayoutContainer = findViewById(R.id.fivePlayerLayoutContainer)
-        sixPlayerLayoutContainer = findViewById(R.id.sixPlayerLayoutContainer) // NEW
+        sixPlayerLayoutContainer = findViewById(R.id.sixPlayerLayoutContainer)
 
         // Initialize 2-Player TextViews
         lifeCounterTextP1TwoPlayer = findViewById(R.id.lifeCounterTextP1TwoPlayer)
@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         lifeCounterTextP4FivePlayer = findViewById(R.id.lifeCounterTextP4FivePlayer)
         lifeCounterTextP5FivePlayer = findViewById(R.id.lifeCounterTextP5FivePlayer)
 
-        // Initialize 6-Player TextViews // NEW
+        // Initialize 6-Player TextViews
         lifeCounterTextP1SixPlayer = findViewById(R.id.lifeCounterTextP1SixPlayer)
         lifeCounterTextP2SixPlayer = findViewById(R.id.lifeCounterTextP2SixPlayer)
         lifeCounterTextP3SixPlayer = findViewById(R.id.lifeCounterTextP3SixPlayer)
@@ -124,7 +124,7 @@ class MainActivity : AppCompatActivity() {
             lifeCounterTextP1ThreePlayer, lifeCounterTextP2ThreePlayer, lifeCounterTextP3ThreePlayer,
             lifeCounterTextP1FourPlayer, lifeCounterTextP2FourPlayer, lifeCounterTextP3FourPlayer, lifeCounterTextP4FourPlayer,
             lifeCounterTextP1FivePlayer, lifeCounterTextP2FivePlayer, lifeCounterTextP3FivePlayer, lifeCounterTextP4FivePlayer, lifeCounterTextP5FivePlayer,
-            lifeCounterTextP1SixPlayer, lifeCounterTextP2SixPlayer, lifeCounterTextP3SixPlayer, lifeCounterTextP4SixPlayer, lifeCounterTextP5SixPlayer, lifeCounterTextP6SixPlayer // NEW
+            lifeCounterTextP1SixPlayer, lifeCounterTextP2SixPlayer, lifeCounterTextP3SixPlayer, lifeCounterTextP4SixPlayer, lifeCounterTextP5SixPlayer, lifeCounterTextP6SixPlayer
         ).forEach { it.setOnTouchListener(null) }
 
 
@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         threePlayerLayoutContainer.visibility = View.GONE
         fourPlayerLayoutContainer.visibility = View.GONE
         fivePlayerLayoutContainer.visibility = View.GONE
-        sixPlayerLayoutContainer.visibility = View.GONE // NEW
+        sixPlayerLayoutContainer.visibility = View.GONE
 
         when (playerCount) {
             2 -> {
@@ -166,16 +166,15 @@ class MainActivity : AppCompatActivity() {
                 lifeCounterTextP4FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) } // P4 MR
                 lifeCounterTextP5FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 4) } // P5 BR
             }
-            6 -> { // NEW
+            6 -> {
                 sixPlayerLayoutContainer.visibility = View.VISIBLE
                 (0..5).forEach { updateLifeDisplay(it) }
-                // Player indexing: P1(0) TL, P2(1) TR, P3(2) ML, P4(3) MR, P5(4) BL, P6(5) BR
-                lifeCounterTextP1SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) } // P1 Top-Left
-                lifeCounterTextP2SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) } // P2 Top-Right
-                lifeCounterTextP3SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) } // P3 Mid-Left
-                lifeCounterTextP4SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) } // P4 Mid-Right
-                lifeCounterTextP5SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 4) } // P5 Bot-Left
-                lifeCounterTextP6SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 5) } // P6 Bot-Right
+                lifeCounterTextP1SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) } // P1 TL
+                lifeCounterTextP2SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) } // P2 TR
+                lifeCounterTextP3SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) } // P3 ML
+                lifeCounterTextP4SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) } // P4 MR
+                lifeCounterTextP5SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 4) } // P5 BL
+                lifeCounterTextP6SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 5) } // P6 BR
             }
             else -> {
                 Toast.makeText(this, "$newPlayerCount players UI not yet implemented. Reverting to 2 players.", Toast.LENGTH_LONG).show()
@@ -194,31 +193,12 @@ class MainActivity : AppCompatActivity() {
             val viewHeight = view.height
 
             var decrease = false
-            // For 90 degree rotation, left half of the view (when looking at it unrotated) is top.
-            // If text top is towards left (90deg), then touchX < viewWidth/2 means top half.
-            // If text top is towards right (270deg or -90deg), then touchX < viewWidth/2 means bottom half.
-            // It's easier to think: for 90deg, top half is decrease. For -90deg, bottom half is decrease.
             when (view.rotation) {
-                0f, 180f -> if (touchX < viewWidth / 2) decrease = true // Left half decreases
-                90f -> if (touchY < viewHeight / 2) decrease = true       // Top half decreases
-                -90f, 270f -> if (touchY > viewHeight / 2) decrease = true // Top half decreases (touchY > height/2 is bottom half if origin is top-left)
-                // Correcting for -90/270: top half should decrease.
-                // If top is pointing right (text reads downwards), top half is touchY < viewHeight/2
-                // If top is pointing left (text reads upwards), top half is touchY < viewHeight/2
-                // Let's stick to simpler logic:
-                // 90 deg (top of text to left): top area (smaller Y values) decreases life
-                // -90 deg (top of text to right): top area (smaller Y values) decreases life
-                // The current -90/270 logic is effectively "bottom half decreases"
-
+                0f -> if (touchX < viewWidth / 2) decrease = true
+                180f -> if (touchX > viewWidth / 2) decrease = true
+                90f -> if (touchY < viewHeight / 2) decrease = true
+                -90f, 270f -> if (touchY > viewHeight / 2) decrease = true
             }
-            // Refined logic for rotation tap based on visual "up/down" or "left/right" on the rotated view
-            when (view.rotation) {
-                0f -> if (touchX < viewWidth / 2) decrease = true else decrease = false // Left decreases
-                180f -> if (touchX > viewWidth / 2) decrease = true else decrease = false // Visually left (which is touchX > width/2 due to rotation) decreases
-                90f -> if (touchY < viewHeight / 2) decrease = true else decrease = false // Visually top decreases
-                -90f, 270f -> if (touchY > viewHeight / 2) decrease = true else decrease = false // Visually top (which is touchY > height/2 due to rotation) decreases
-            }
-
 
             if (decrease) {
                 players[playerIndex].decreaseLife()
@@ -266,7 +246,7 @@ class MainActivity : AppCompatActivity() {
                     4 -> lifeCounterTextP5FivePlayer.text = lifeTotal
                 }
             }
-            6 -> { // NEW
+            6 -> {
                 when (playerIndex) {
                     0 -> lifeCounterTextP1SixPlayer.text = lifeTotal
                     1 -> lifeCounterTextP2SixPlayer.text = lifeTotal
@@ -315,9 +295,9 @@ class MainActivity : AppCompatActivity() {
             .setAdapter(adapter) { dialog, which ->
                 val selectedPlayerCount = playerCountOptions[which].toIntOrNull() ?: this.playerCount
 
-                if (selectedPlayerCount in 2..6) { // UPDATED condition
+                if (selectedPlayerCount in 2..6) {
                     setupUIForPlayerCount(selectedPlayerCount)
-                } else { // This case should ideally not be hit if options are only 2-6
+                } else {
                     Toast.makeText(this, "$selectedPlayerCount players UI not yet implemented. Setting to 2 players.", Toast.LENGTH_LONG).show()
                     setupUIForPlayerCount(2)
                 }
