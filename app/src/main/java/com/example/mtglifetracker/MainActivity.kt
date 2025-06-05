@@ -2,7 +2,6 @@ package com.example.mtglifetracker
 
 import android.graphics.Color
 import android.os.Bundle
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -11,98 +10,55 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout // <-- Required Import
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mtglifetracker.model.Player
+import com.example.mtglifetracker.view.LifeCounterView
 
 class MainActivity : AppCompatActivity() {
 
-    // Layout Containers - CORRECTED to ConstraintLayout
+    // Layout Containers
     private lateinit var twoPlayerLayoutContainer: ConstraintLayout
     private lateinit var threePlayerLayoutContainer: ConstraintLayout
     private lateinit var fourPlayerLayoutContainer: ConstraintLayout
     private lateinit var fivePlayerLayoutContainer: ConstraintLayout
     private lateinit var sixPlayerLayoutContainer: ConstraintLayout
 
-    // TextViews for 2-Player Layout
-    private lateinit var lifeCounterTextP1TwoPlayer: TextView
-    private lateinit var lifeCounterTextP2TwoPlayer: TextView
-
-    // TextViews for 3-Player Layout
-    private lateinit var lifeCounterTextP1ThreePlayer: TextView
-    private lateinit var lifeCounterTextP2ThreePlayer: TextView
-    private lateinit var lifeCounterTextP3ThreePlayer: TextView
-
-    // TextViews for 4-Player Layout
-    private lateinit var lifeCounterTextP1FourPlayer: TextView
-    private lateinit var lifeCounterTextP2FourPlayer: TextView
-    private lateinit var lifeCounterTextP3FourPlayer: TextView
-    private lateinit var lifeCounterTextP4FourPlayer: TextView
-
-    // TextViews for 5-Player Layout
-    private lateinit var lifeCounterTextP1FivePlayer: TextView
-    private lateinit var lifeCounterTextP2FivePlayer: TextView
-    private lateinit var lifeCounterTextP3FivePlayer: TextView
-    private lateinit var lifeCounterTextP4FivePlayer: TextView
-    private lateinit var lifeCounterTextP5FivePlayer: TextView
-
-    // TextViews for 6-Player Layout
-    private lateinit var lifeCounterTextP1SixPlayer: TextView
-    private lateinit var lifeCounterTextP2SixPlayer: TextView
-    private lateinit var lifeCounterTextP3SixPlayer: TextView
-    private lateinit var lifeCounterTextP4SixPlayer: TextView
-    private lateinit var lifeCounterTextP5SixPlayer: TextView
-    private lateinit var lifeCounterTextP6SixPlayer: TextView
-
+    // Views are now of the custom type LifeCounterView
+    private lateinit var lifeCounterTextP1TwoPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP2TwoPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP1ThreePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP2ThreePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP3ThreePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP1FourPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP2FourPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP3FourPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP4FourPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP1FivePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP2FivePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP3FivePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP4FivePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP5FivePlayer: LifeCounterView
+    private lateinit var lifeCounterTextP1SixPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP2SixPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP3SixPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP4SixPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP5SixPlayer: LifeCounterView
+    private lateinit var lifeCounterTextP6SixPlayer: LifeCounterView
 
     // Common UI
     private lateinit var settingsIcon: ImageView
 
     private val players = mutableListOf<Player>()
-    private var playerCount = 2 // Default to 2 players
+    private var playerCount = 2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
         setContentView(R.layout.activity_main)
 
-        // Initialize layout containers
-        twoPlayerLayoutContainer = findViewById(R.id.twoPlayerLayoutContainer)
-        threePlayerLayoutContainer = findViewById(R.id.threePlayerLayoutContainer)
-        fourPlayerLayoutContainer = findViewById(R.id.fourPlayerLayoutContainer)
-        fivePlayerLayoutContainer = findViewById(R.id.fivePlayerLayoutContainer)
-        sixPlayerLayoutContainer = findViewById(R.id.sixPlayerLayoutContainer)
+        // Find all views
+        bindViews()
 
-        // Initialize 2-Player TextViews
-        lifeCounterTextP1TwoPlayer = findViewById(R.id.lifeCounterTextP1TwoPlayer)
-        lifeCounterTextP2TwoPlayer = findViewById(R.id.lifeCounterTextP2TwoPlayer)
-
-        // Initialize 3-Player TextViews
-        lifeCounterTextP1ThreePlayer = findViewById(R.id.lifeCounterTextP1ThreePlayer)
-        lifeCounterTextP2ThreePlayer = findViewById(R.id.lifeCounterTextP2ThreePlayer)
-        lifeCounterTextP3ThreePlayer = findViewById(R.id.lifeCounterTextP3ThreePlayer)
-
-        // Initialize 4-Player TextViews
-        lifeCounterTextP1FourPlayer = findViewById(R.id.lifeCounterTextP1FourPlayer)
-        lifeCounterTextP2FourPlayer = findViewById(R.id.lifeCounterTextP2FourPlayer)
-        lifeCounterTextP3FourPlayer = findViewById(R.id.lifeCounterTextP3FourPlayer)
-        lifeCounterTextP4FourPlayer = findViewById(R.id.lifeCounterTextP4FourPlayer)
-
-        // Initialize 5-Player TextViews
-        lifeCounterTextP1FivePlayer = findViewById(R.id.lifeCounterTextP1FivePlayer)
-        lifeCounterTextP2FivePlayer = findViewById(R.id.lifeCounterTextP2FivePlayer)
-        lifeCounterTextP3FivePlayer = findViewById(R.id.lifeCounterTextP3FivePlayer)
-        lifeCounterTextP4FivePlayer = findViewById(R.id.lifeCounterTextP4FivePlayer)
-        lifeCounterTextP5FivePlayer = findViewById(R.id.lifeCounterTextP5FivePlayer)
-
-        // Initialize 6-Player TextViews
-        lifeCounterTextP1SixPlayer = findViewById(R.id.lifeCounterTextP1SixPlayer)
-        lifeCounterTextP2SixPlayer = findViewById(R.id.lifeCounterTextP2SixPlayer)
-        lifeCounterTextP3SixPlayer = findViewById(R.id.lifeCounterTextP3SixPlayer)
-        lifeCounterTextP4SixPlayer = findViewById(R.id.lifeCounterTextP4SixPlayer)
-        lifeCounterTextP5SixPlayer = findViewById(R.id.lifeCounterTextP5SixPlayer)
-        lifeCounterTextP6SixPlayer = findViewById(R.id.lifeCounterTextP6SixPlayer)
-
-        settingsIcon = findViewById(R.id.settingsIcon)
         settingsIcon.setOnClickListener {
             showSettingsPopup()
         }
@@ -118,63 +74,58 @@ class MainActivity : AppCompatActivity() {
             players.add(Player(name = "Player ${i + 1}"))
         }
 
-        // Detach all listeners
-        listOf(
-            lifeCounterTextP1TwoPlayer, lifeCounterTextP2TwoPlayer,
-            lifeCounterTextP1ThreePlayer, lifeCounterTextP2ThreePlayer, lifeCounterTextP3ThreePlayer,
-            lifeCounterTextP1FourPlayer, lifeCounterTextP2FourPlayer, lifeCounterTextP3FourPlayer, lifeCounterTextP4FourPlayer,
-            lifeCounterTextP1FivePlayer, lifeCounterTextP2FivePlayer, lifeCounterTextP3FivePlayer, lifeCounterTextP4FivePlayer, lifeCounterTextP5FivePlayer,
-            lifeCounterTextP1SixPlayer, lifeCounterTextP2SixPlayer, lifeCounterTextP3SixPlayer, lifeCounterTextP4SixPlayer, lifeCounterTextP5SixPlayer, lifeCounterTextP6SixPlayer
-        ).forEach { it.setOnTouchListener(null) }
+        // Detach all listeners before setting new ones
+        clearAllListeners()
 
-
-        // Hide all containers initially
+        // Hide all layout containers
         twoPlayerLayoutContainer.visibility = View.GONE
         threePlayerLayoutContainer.visibility = View.GONE
         fourPlayerLayoutContainer.visibility = View.GONE
         fivePlayerLayoutContainer.visibility = View.GONE
         sixPlayerLayoutContainer.visibility = View.GONE
 
+        // Configure the appropriate layout based on player count
         when (playerCount) {
             2 -> {
                 twoPlayerLayoutContainer.visibility = View.VISIBLE
                 (0..1).forEach { updateLifeDisplay(it) }
-                lifeCounterTextP1TwoPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) }
-                lifeCounterTextP2TwoPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) }
+                // Set listeners for the custom view
+                setLifeTapListener(lifeCounterTextP1TwoPlayer, 0)
+                setLifeTapListener(lifeCounterTextP2TwoPlayer, 1)
             }
             3 -> {
                 threePlayerLayoutContainer.visibility = View.VISIBLE
                 (0..2).forEach { updateLifeDisplay(it) }
-                lifeCounterTextP1ThreePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) }
-                lifeCounterTextP2ThreePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) }
-                lifeCounterTextP3ThreePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) }
+                setLifeTapListener(lifeCounterTextP1ThreePlayer, 0)
+                setLifeTapListener(lifeCounterTextP2ThreePlayer, 1)
+                setLifeTapListener(lifeCounterTextP3ThreePlayer, 2)
             }
             4 -> {
                 fourPlayerLayoutContainer.visibility = View.VISIBLE
                 (0..3).forEach { updateLifeDisplay(it) }
-                lifeCounterTextP1FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) }
-                lifeCounterTextP2FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) }
-                lifeCounterTextP3FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) }
-                lifeCounterTextP4FourPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) }
+                setLifeTapListener(lifeCounterTextP1FourPlayer, 0)
+                setLifeTapListener(lifeCounterTextP2FourPlayer, 1)
+                setLifeTapListener(lifeCounterTextP3FourPlayer, 2)
+                setLifeTapListener(lifeCounterTextP4FourPlayer, 3)
             }
             5 -> {
                 fivePlayerLayoutContainer.visibility = View.VISIBLE
                 (0..4).forEach { updateLifeDisplay(it) }
-                lifeCounterTextP1FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) } // P1 TL
-                lifeCounterTextP2FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) } // P2 TR
-                lifeCounterTextP3FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) } // P3 BL
-                lifeCounterTextP4FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) } // P4 MR
-                lifeCounterTextP5FivePlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 4) } // P5 BR
+                setLifeTapListener(lifeCounterTextP1FivePlayer, 0)
+                setLifeTapListener(lifeCounterTextP2FivePlayer, 1)
+                setLifeTapListener(lifeCounterTextP3FivePlayer, 2)
+                setLifeTapListener(lifeCounterTextP4FivePlayer, 3)
+                setLifeTapListener(lifeCounterTextP5FivePlayer, 4)
             }
             6 -> {
                 sixPlayerLayoutContainer.visibility = View.VISIBLE
                 (0..5).forEach { updateLifeDisplay(it) }
-                lifeCounterTextP1SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 0) } // P1 TL
-                lifeCounterTextP2SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 1) } // P2 TR
-                lifeCounterTextP3SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 2) } // P3 ML
-                lifeCounterTextP4SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 3) } // P4 MR
-                lifeCounterTextP5SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 4) } // P5 BL
-                lifeCounterTextP6SixPlayer.setOnTouchListener { v, e -> handleLifeTap(e, v, 5) } // P6 BR
+                setLifeTapListener(lifeCounterTextP1SixPlayer, 0)
+                setLifeTapListener(lifeCounterTextP2SixPlayer, 1)
+                setLifeTapListener(lifeCounterTextP3SixPlayer, 2)
+                setLifeTapListener(lifeCounterTextP4SixPlayer, 3)
+                setLifeTapListener(lifeCounterTextP5SixPlayer, 4)
+                setLifeTapListener(lifeCounterTextP6SixPlayer, 5)
             }
             else -> {
                 Toast.makeText(this, "$newPlayerCount players UI not yet implemented. Reverting to 2 players.", Toast.LENGTH_LONG).show()
@@ -183,33 +134,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun handleLifeTap(event: MotionEvent, view: View, playerIndex: Int): Boolean {
-        if (playerIndex >= players.size) return false
-
-        if (event.action == MotionEvent.ACTION_DOWN) {
-            val touchX = event.x
-            val touchY = event.y
-            val viewWidth = view.width
-            val viewHeight = view.height
-
-            var decrease = false
-            when (view.rotation) {
-                0f -> if (touchX < viewWidth / 2) decrease = true
-                180f -> if (touchX > viewWidth / 2) decrease = true
-                90f -> if (touchY < viewHeight / 2) decrease = true
-                -90f, 270f -> if (touchY > viewHeight / 2) decrease = true
-            }
-
-            if (decrease) {
-                players[playerIndex].decreaseLife()
-            } else {
-                players[playerIndex].increaseLife()
-            }
+    // Helper function to set listeners on our custom LifeCounterView
+    private fun setLifeTapListener(view: LifeCounterView, playerIndex: Int) {
+        view.onLifeIncreasedListener = {
+            players[playerIndex].increaseLife()
             updateLifeDisplay(playerIndex)
-            view.performClick()
-            return true
         }
-        return false
+        view.onLifeDecreasedListener = {
+            players[playerIndex].decreaseLife()
+            updateLifeDisplay(playerIndex)
+        }
     }
 
     private fun updateLifeDisplay(playerIndex: Int) {
@@ -281,7 +215,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun showPlayerCountSelection() {
         val playerCountOptions = arrayOf("2", "3", "4", "5", "6")
-
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, playerCountOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
@@ -294,7 +227,6 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Number of Players")
             .setAdapter(adapter) { dialog, which ->
                 val selectedPlayerCount = playerCountOptions[which].toIntOrNull() ?: this.playerCount
-
                 if (selectedPlayerCount in 2..6) {
                     setupUIForPlayerCount(selectedPlayerCount)
                 } else {
@@ -305,5 +237,50 @@ class MainActivity : AppCompatActivity() {
             }
             .create()
             .show()
+    }
+
+    // Helper function to keep onCreate clean
+    private fun bindViews() {
+        twoPlayerLayoutContainer = findViewById(R.id.twoPlayerLayoutContainer)
+        threePlayerLayoutContainer = findViewById(R.id.threePlayerLayoutContainer)
+        fourPlayerLayoutContainer = findViewById(R.id.fourPlayerLayoutContainer)
+        fivePlayerLayoutContainer = findViewById(R.id.fivePlayerLayoutContainer)
+        sixPlayerLayoutContainer = findViewById(R.id.sixPlayerLayoutContainer)
+        lifeCounterTextP1TwoPlayer = findViewById(R.id.lifeCounterTextP1TwoPlayer)
+        lifeCounterTextP2TwoPlayer = findViewById(R.id.lifeCounterTextP2TwoPlayer)
+        lifeCounterTextP1ThreePlayer = findViewById(R.id.lifeCounterTextP1ThreePlayer)
+        lifeCounterTextP2ThreePlayer = findViewById(R.id.lifeCounterTextP2ThreePlayer)
+        lifeCounterTextP3ThreePlayer = findViewById(R.id.lifeCounterTextP3ThreePlayer)
+        lifeCounterTextP1FourPlayer = findViewById(R.id.lifeCounterTextP1FourPlayer)
+        lifeCounterTextP2FourPlayer = findViewById(R.id.lifeCounterTextP2FourPlayer)
+        lifeCounterTextP3FourPlayer = findViewById(R.id.lifeCounterTextP3FourPlayer)
+        lifeCounterTextP4FourPlayer = findViewById(R.id.lifeCounterTextP4FourPlayer)
+        lifeCounterTextP1FivePlayer = findViewById(R.id.lifeCounterTextP1FivePlayer)
+        lifeCounterTextP2FivePlayer = findViewById(R.id.lifeCounterTextP2FivePlayer)
+        lifeCounterTextP3FivePlayer = findViewById(R.id.lifeCounterTextP3FivePlayer)
+        lifeCounterTextP4FivePlayer = findViewById(R.id.lifeCounterTextP4FivePlayer)
+        lifeCounterTextP5FivePlayer = findViewById(R.id.lifeCounterTextP5FivePlayer)
+        lifeCounterTextP1SixPlayer = findViewById(R.id.lifeCounterTextP1SixPlayer)
+        lifeCounterTextP2SixPlayer = findViewById(R.id.lifeCounterTextP2SixPlayer)
+        lifeCounterTextP3SixPlayer = findViewById(R.id.lifeCounterTextP3SixPlayer)
+        lifeCounterTextP4SixPlayer = findViewById(R.id.lifeCounterTextP4SixPlayer)
+        lifeCounterTextP5SixPlayer = findViewById(R.id.lifeCounterTextP5SixPlayer)
+        lifeCounterTextP6SixPlayer = findViewById(R.id.lifeCounterTextP6SixPlayer)
+        settingsIcon = findViewById(R.id.settingsIcon)
+    }
+
+    // Helper function to clear all listeners
+    private fun clearAllListeners() {
+        val allLifeCounterViews = listOf(
+            lifeCounterTextP1TwoPlayer, lifeCounterTextP2TwoPlayer,
+            lifeCounterTextP1ThreePlayer, lifeCounterTextP2ThreePlayer, lifeCounterTextP3ThreePlayer,
+            lifeCounterTextP1FourPlayer, lifeCounterTextP2FourPlayer, lifeCounterTextP3FourPlayer, lifeCounterTextP4FourPlayer,
+            lifeCounterTextP1FivePlayer, lifeCounterTextP2FivePlayer, lifeCounterTextP3FivePlayer, lifeCounterTextP4FivePlayer, lifeCounterTextP5FivePlayer,
+            lifeCounterTextP1SixPlayer, lifeCounterTextP2SixPlayer, lifeCounterTextP3SixPlayer, lifeCounterTextP4SixPlayer, lifeCounterTextP5SixPlayer, lifeCounterTextP6SixPlayer
+        )
+        allLifeCounterViews.forEach {
+            it.onLifeIncreasedListener = null
+            it.onLifeDecreasedListener = null
+        }
     }
 }

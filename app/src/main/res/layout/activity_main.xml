@@ -21,7 +21,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP1TwoPlayer"
             style="@style/LifeCounterTextViewBase"
             android:rotation="180"
@@ -29,7 +29,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP2TwoPlayer"
             style="@style/LifeCounterTextViewBase"
             android:rotation="0"
@@ -64,7 +64,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/mainHorizontalDividerThreePlayer"
             app:layout_constraintHorizontal_bias="0.5" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP1ThreePlayer"
             style="@style/LifeCounterTextViewBase"
             android:rotation="180"
@@ -72,7 +72,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP2ThreePlayer"
             style="@style/LifeCounterTextViewBase"
             android:rotation="90"
@@ -80,7 +80,7 @@
             app:layout_constraintEnd_toStartOf="@id/verticalPlayerDividerThreePlayer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/mainHorizontalDividerThreePlayer" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP3ThreePlayer"
             style="@style/LifeCounterTextViewBase"
             android:rotation="-90"
@@ -113,7 +113,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP1FourPlayer"
             style="@style/LifeCounterTextViewBase.Medium"
             android:rotation="90"
@@ -121,7 +121,7 @@
             app:layout_constraintEnd_toStartOf="@id/divider_v_4p"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP2FourPlayer"
             style="@style/LifeCounterTextViewBase.Medium"
             android:rotation="-90"
@@ -129,7 +129,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/divider_v_4p"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP3FourPlayer"
             style="@style/LifeCounterTextViewBase.Medium"
             android:rotation="90"
@@ -137,7 +137,7 @@
             app:layout_constraintEnd_toStartOf="@id/divider_v_4p"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/divider_h_4p" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP4FourPlayer"
             style="@style/LifeCounterTextViewBase.Medium"
             android:rotation="-90"
@@ -192,7 +192,7 @@
             app:layout_constraintStart_toEndOf="@id/divider_v_5p"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.66" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP1FivePlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="90"
@@ -200,7 +200,7 @@
             app:layout_constraintEnd_toStartOf="@id/divider_v_5p"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP3FivePlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="90"
@@ -208,7 +208,7 @@
             app:layout_constraintEnd_toStartOf="@id/divider_v_5p"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/divider_h_5p_left" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP2FivePlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="-90"
@@ -216,7 +216,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/divider_v_5p"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP4FivePlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="-90"
@@ -224,7 +224,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/divider_v_5p"
             app:layout_constraintTop_toBottomOf="@id/divider_h_5p_right1" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP5FivePlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="-90"
@@ -269,7 +269,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.66"/>
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP1SixPlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="90"
@@ -277,7 +277,7 @@
             app:layout_constraintEnd_toStartOf="@id/divider_v_6p"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP3SixPlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="90"
@@ -285,7 +285,7 @@
             app:layout_constraintEnd_toStartOf="@id/divider_v_6p"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/divider_h_6p1" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP5SixPlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="90"
@@ -293,7 +293,7 @@
             app:layout_constraintEnd_toStartOf="@id/divider_v_6p"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/divider_h_6p2" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP2SixPlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="-90"
@@ -301,7 +301,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/divider_v_6p"
             app:layout_constraintTop_toTopOf="parent" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP4SixPlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="-90"
@@ -309,7 +309,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/divider_v_6p"
             app:layout_constraintTop_toBottomOf="@id/divider_h_6p1" />
-        <TextView
+        <com.example.mtglifetracker.view.LifeCounterView
             android:id="@+id/lifeCounterTextP6SixPlayer"
             style="@style/LifeCounterTextViewBase.Small"
             android:rotation="-90"
