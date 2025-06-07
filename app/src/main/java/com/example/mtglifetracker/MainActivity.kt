@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -96,17 +97,23 @@ class MainActivity : AppCompatActivity() {
                 segment.lifeCounter.text = player.life.toString()
                 setDynamicLifeTapListener(segment.lifeCounter, index)
 
-                // NEW LOGIC: Check if the player's delta sequence is active.
                 val isDeltaActive = gameState.activeDeltaPlayers.contains(index)
                 val delta = gameState.playerDeltas.getOrNull(index) ?: 0
 
                 if (isDeltaActive) {
-                    // If the sequence is active, the counter is ALWAYS visible, even at 0.
                     segment.deltaCounter.visibility = View.VISIBLE
                     val deltaText = if (delta > 0) "+$delta" else delta.toString()
                     segment.deltaCounter.text = deltaText
+
+                    // NEW LOGIC: Set text color based on the delta value
+                    val colorResId = when {
+                        delta > 0 -> R.color.delta_positive
+                        delta < 0 -> R.color.delta_negative
+                        else -> R.color.white // Default color for 0
+                    }
+                    segment.deltaCounter.setTextColor(ContextCompat.getColor(this, colorResId))
+
                 } else {
-                    // If the sequence is not active (i.e., timed out), hide the counter.
                     segment.deltaCounter.visibility = View.GONE
                 }
             }
