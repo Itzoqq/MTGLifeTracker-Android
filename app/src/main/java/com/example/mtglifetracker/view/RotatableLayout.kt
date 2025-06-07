@@ -9,20 +9,26 @@ import android.widget.FrameLayout
 import androidx.core.graphics.withSave
 import com.example.mtglifetracker.R
 
+/**
+ * A custom FrameLayout that correctly handles measurement and drawing for a rotated view.
+ * It also transforms incoming touch events so that child views receive coordinates relative
+ * to the rotated orientation, making their internal logic much simpler.
+ */
 class RotatableLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    /** A public property to expose the inner LifeCounterView to the MainActivity. */
     val lifeCounter: LifeCounterView
     private var angle: Int = 0
 
-    // Matrix for transforming touch events from the parent's coordinate system
-    // to this view's (rotated) local coordinate system.
+    // A reusable matrix for transforming touch events.
     private val motionEventMatrix = Matrix()
 
     init {
+        // Read the value from our custom 'angle' attribute in the XML.
         context.theme.obtainStyledAttributes(
             attrs,
             R.styleable.RotatableLayout,
@@ -35,13 +41,20 @@ class RotatableLayout @JvmOverloads constructor(
             }
         }
 
-        // We handle rotation manually, so set the default view rotation to 0.
+        // Handle all rotation manually, so neutralize the view's built-in property.
         rotation = 0f
+        // A custom view that draws on its own must disable this flag for dispatchDraw to be called.
         setWillNotDraw(false)
+
+        // Inflate the player segment layout and attach it as a child of this FrameLayout.
         inflate(context, R.layout.layout_player_segment, this)
         lifeCounter = findViewById(R.id.lifeCounter)
     }
 
+    /**
+     * Overridden to swap the width and height measurement specs when the view is rotated
+     * by 90 or 270 degrees, ensuring children are measured for the rotated space.
+     */
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (isRotated90Degrees()) {
             super.onMeasure(heightMeasureSpec, widthMeasureSpec)
@@ -51,10 +64,13 @@ class RotatableLayout @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Overridden to manually transform the canvas before any children are drawn.
+     * This ensures the entire view content is drawn with the correct rotation.
+     */
     override fun dispatchDraw(canvas: Canvas) {
-        // Use the KTX 'withSave' extension to automatically handle save/restore.
+        // Use the KTX 'withSave' to automatically handle canvas.save() and canvas.restore().
         canvas.withSave {
-            // Apply the correct transformation based on the custom angle.
             when (angle) {
                 90 -> {
                     translate(width.toFloat(), 0f)
@@ -68,12 +84,17 @@ class RotatableLayout @JvmOverloads constructor(
                     rotate(270f)
                 }
             }
+            // After the canvas is transformed, draw the children onto it.
             super.dispatchDraw(this)
         }
     }
 
+    /**
+     * Overridden to intercept touch events, transform their coordinates to match the
+     * view's rotation, and then dispatch the transformed event to child views.
+     */
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        // Prepare the transformation matrix.
+        // Prepare the transformation matrix to reverse the rotation.
         motionEventMatrix.reset()
         when (angle) {
             90 -> {
@@ -90,11 +111,11 @@ class RotatableLayout @JvmOverloads constructor(
             }
         }
 
-        // Create a copy of the event and apply the transformation.
+        // Create a copy of the motion event and apply the inverse transformation.
         val transformedEvent = MotionEvent.obtain(event)
         transformedEvent.transform(motionEventMatrix)
 
-        // Dispatch the transformed event to the children.
+        // Dispatch the new, transformed event to the children (e.g., LifeCounterView).
         val handled = super.dispatchTouchEvent(transformedEvent)
 
         // Recycle the copied event to avoid memory leaks.
@@ -103,6 +124,9 @@ class RotatableLayout @JvmOverloads constructor(
         return handled
     }
 
+    /**
+     * Checks if the view's angle is a right-angle rotation.
+     */
     private fun isRotated90Degrees(): Boolean {
         return angle % 180 != 0
     }

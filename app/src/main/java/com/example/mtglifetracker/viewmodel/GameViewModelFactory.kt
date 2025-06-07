@@ -5,7 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.mtglifetracker.data.GameRepository
 
 /**
- * Factory for creating a GameViewModel with a GameRepository dependency.
+ * A factory for creating GameViewModel instances, providing it with its GameRepository dependency.
+ * This is necessary because the ViewModel has a non-empty constructor.
  */
 class GameViewModelFactory(private val repository: GameRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

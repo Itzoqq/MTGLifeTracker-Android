@@ -23,20 +23,24 @@ import com.example.mtglifetracker.viewmodel.GameViewModel
 import com.example.mtglifetracker.viewmodel.GameViewModelFactory
 import kotlinx.coroutines.launch
 
+/**
+ * The main and only activity in the application. It is responsible for observing state
+ * from the GameViewModel and rendering the appropriate UI for the current game state.
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
     private val gameViewModel: GameViewModel by viewModels {
+        // This factory block is used to create our ViewModel with its dependencies.
         val preferences = GamePreferences(applicationContext)
         val repository = GameRepository(preferences)
         GameViewModelFactory(repository)
     }
 
-    // This map will hold a reference to the UI components for each layout type.
-    // The Key is the player count (Int), the Value is a List of the player segments.
+    // A map that holds a reference to the UI components for each layout type.
     private lateinit var playerUiMap: Map<Int, List<RotatableLayout>>
     private lateinit var allLayoutContainers: List<ConstraintLayout>
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,13 +49,10 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize our data structures that hold references to all the UI components.
         setupUiMappings()
+        setupStaticListeners()
 
-        binding.settingsIcon.setOnClickListener {
-            showSettingsPopup()
-        }
-
+        // Observe the game state from the ViewModel in a lifecycle-aware manner.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 gameViewModel.gameState.collect { gameState ->
@@ -62,34 +63,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * This function is now much simpler. It uses the pre-built map to find the
-     * correct UI components for the current player count and then applies the state.
+     * Updates the entire UI based on the new state from the ViewModel.
+     * This function is the single point of entry for all UI rendering.
+     * @param gameState The new state to be rendered.
      */
     private fun updateUiForNewState(gameState: GameState) {
-        // First, hide all layout containers
+        // Hide all layout containers to ensure a clean state before showing the correct one.
         allLayoutContainers.forEach { it.visibility = View.GONE }
 
-        // Find the list of player segments for the current player count
+        // Find the list of player segments for the current player count.
         val activePlayerSegments = playerUiMap[gameState.playerCount] ?: return
 
-        // Show the parent container of the active segments
+        // Show the parent container of the active segments.
         (activePlayerSegments.first().parent as? View)?.visibility = View.VISIBLE
 
         // Loop through the active segments and players to set text and listeners.
-        // This logic is now generic and works for any player count.
         activePlayerSegments.forEachIndexed { index, segment ->
             if (index < gameState.players.size) {
                 segment.lifeCounter.text = gameState.players[index].life.toString()
-                setLifeTapListener(segment.lifeCounter, index)
+                setDynamicLifeTapListener(segment.lifeCounter, index)
             }
         }
     }
 
     /**
-     * Helper function to set listeners on a LifeCounterView.
-     * This remains unchanged.
+     * Sets the click listeners for a specific LifeCounterView.
+     * This tells the ViewModel which player's life to modify.
+     * @param view The LifeCounterView to attach the listener to.
+     * @param playerIndex The index of the player this view represents.
      */
-    private fun setLifeTapListener(view: LifeCounterView, playerIndex: Int) {
+    private fun setDynamicLifeTapListener(view: LifeCounterView, playerIndex: Int) {
         view.onLifeIncreasedListener = {
             gameViewModel.increaseLife(playerIndex)
         }
@@ -99,11 +102,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * This new function populates our maps once, centralizing all view references.
-     * This is where the boilerplate now lives, but it's organized and runs only one time.
+     * This function populates our data structures with references to the UI components.
+     * It centralizes all view lookups to keep onCreate clean.
      */
     private fun setupUiMappings() {
-        // Create a map that links a player count to a list of that layout's segments.
         playerUiMap = mapOf(
             2 to listOf(
                 binding.twoPlayerLayout.player1Segment,
@@ -137,7 +139,6 @@ class MainActivity : AppCompatActivity() {
             )
         )
 
-        // Create a simple list of all parent containers for easy hiding/showing.
         allLayoutContainers = listOf(
             binding.twoPlayerLayout.root,
             binding.threePlayerLayout.root,
@@ -147,6 +148,18 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Sets listeners for UI elements that are always present and don't change.
+     */
+    private fun setupStaticListeners() {
+        binding.settingsIcon.setOnClickListener {
+            showSettingsPopup()
+        }
+    }
+
+    /**
+     * Displays the settings dialog popup.
+     */
     private fun showSettingsPopup() {
         val settingsOptions = arrayOf("Number of Players")
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, settingsOptions) {
@@ -167,6 +180,9 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    /**
+     * Displays the dialog for selecting the number of players.
+     */
     private fun showPlayerCountSelection() {
         val playerCountOptions = arrayOf("2", "3", "4", "5", "6")
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, playerCountOptions) {
