@@ -16,24 +16,17 @@ class LifeCounterView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN) {
-            val decrease = when (rotation) {
-                0f -> event.x < width / 2
-                180f -> event.x > width / 2
-                90f -> event.y < height / 2
-                -90f, 270f -> event.y > height / 2
-                else -> false
-            }
+            // The logic is now always the same, regardless of rotation, because
+            // the parent RotatableLayout has already transformed the coordinates.
+            val isLeftSide = event.x < width / 2
 
-            if (decrease) {
+            if (isLeftSide) {
                 onLifeDecreasedListener?.invoke()
             } else {
                 onLifeIncreasedListener?.invoke()
             }
 
-            // FIXED: Calling performClick() is essential to notify the system
-            // about the click for accessibility and proper UI updates.
             performClick()
-
             return true
         }
         return super.onTouchEvent(event)
