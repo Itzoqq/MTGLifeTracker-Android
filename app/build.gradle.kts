@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -39,6 +40,7 @@ android {
 }
 
 dependencies {
+
     // AndroidX & Material Components
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -49,8 +51,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.fragment.ktx)
 
-    // Gson library for serializing data
-    implementation(libs.google.gson)
+    var roomVersion = "2.7.1" // Use a consistent version for all Room artifacts
+
+    // Room Database Dependencies
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation(libs.androidx.room.ktx) // Kotlin Extensions and Coroutines support
+    ksp("androidx.room:room-compiler:$roomVersion")
+
+    ksp(libs.dagger.compiler)
 
     // Testing Dependencies
     testImplementation(libs.junit)

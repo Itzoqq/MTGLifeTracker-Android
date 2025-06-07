@@ -8,7 +8,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.mtglifetracker.data.GamePreferences
+import com.example.mtglifetracker.data.AppDatabase
 import com.example.mtglifetracker.data.GameRepository
 import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.view.LifeCounterView
@@ -19,17 +19,13 @@ import com.example.mtglifetracker.viewmodel.GameViewModel
 import com.example.mtglifetracker.viewmodel.GameViewModelFactory
 import kotlinx.coroutines.launch
 
-/**
- * The main and only activity in the application. It is responsible for observing state
- * from the [GameViewModel] and rendering the appropriate UI for the current game state.
- * It delegates the creation of complex player layouts to the [PlayerLayoutManager].
- */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val gameViewModel: GameViewModel by viewModels {
-        val preferences = GamePreferences(applicationContext)
-        val repository = GameRepository(preferences)
+        val database = AppDatabase.getDatabase(applicationContext)
+        // Pass both DAOs to the repository and remove GamePreferences
+        val repository = GameRepository(database.playerDao(), database.gameSettingsDao(), lifecycleScope)
         GameViewModelFactory(repository)
     }
 
@@ -42,7 +38,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize the layout manager
         playerLayoutManager = PlayerLayoutManager(binding.mainContainer, this)
 
         setupStaticListeners()
@@ -56,20 +51,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Updates the entire UI based on a new [GameState] from the ViewModel.
-     * This function is the single point of entry for all UI rendering.
-     * @param gameState The new state to be rendered.
-     */
+    // ... rest of MainActivity is unchanged
     private fun updateUiForNewState(gameState: GameState) {
-        // If the player count has changed, rebuild the layout
         if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
             playerLayoutManager.createPlayerLayouts(gameState.playerCount)
-            // Re-add the settings icon to the container after it's cleared
             binding.mainContainer.addView(binding.settingsIcon)
         }
 
-        // Update the life and delta for each player segment
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
@@ -97,21 +85,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Sets the click listeners for a specific [LifeCounterView].
-     * This function connects a UI component to a specific player index in the ViewModel.
-     * @param view The [LifeCounterView] to attach the listener to.
-     * @param playerIndex The index of the player this view represents.
-     */
     private fun setDynamicLifeTapListener(view: LifeCounterView, playerIndex: Int) {
         view.onLifeIncreasedListener = { gameViewModel.increaseLife(playerIndex) }
         view.onLifeDecreasedListener = { gameViewModel.decreaseLife(playerIndex) }
     }
 
-    /**
-     * Sets listeners for UI elements that are always present and do not change,
-     * such as the main settings icon.
-     */
     private fun setupStaticListeners() {
         binding.settingsIcon.setOnClickListener {
             SettingsDialogFragment().show(supportFragmentManager, SettingsDialogFragment.TAG)

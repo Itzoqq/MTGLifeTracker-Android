@@ -1,70 +1,117 @@
 package com.example.mtglifetracker.data
 
+import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.viewmodel.GameState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-/**
- * Manages all game data, acting as the single source of truth for the application's state.
- * It uses a data source (like GamePreferences) to load initial state and persist changes.
- *
- * @param gamePreferences The data source for saving and loading game state.
- */
-class GameRepository(private val gamePreferences: GamePreferences) {
+class GameRepository(
+    private val playerDao: PlayerDao,
+    private val settingsDao: GameSettingsDao,
+    private val externalScope: CoroutineScope
+) {
 
-    private val _gameState = MutableStateFlow(
-        GameState(
-            playerCount = gamePreferences.getPlayerCount(),
-            players = gamePreferences.getPlayers(),
-            playerDeltas = List(gamePreferences.getPlayerCount()) { 0 }
-        )
-    )
+    private val _gameState = MutableStateFlow(GameState())
     val gameState = _gameState.asStateFlow()
 
-    /**
-     * Resets the game state for a new number of players.
-     */
-    fun changePlayerCount(newPlayerCount: Int) {
-        val newPlayers = (1..newPlayerCount).map { Player(name = "Player $it") }
-        _gameState.update {
-            it.copy(
-                playerCount = newPlayerCount,
-                players = newPlayers,
-                playerDeltas = List(newPlayerCount) { 0 },
-                activeDeltaPlayers = emptySet()
-            )
+    init {
+        // This collector updates the players list in the state whenever it changes in the DB
+        externalScope.launch {
+            playerDao.getAllPlayers().collect { players ->
+                _gameState.update { it.copy(players = players) }
+            }
         }
-        saveCurrentState()
+
+        // This collector updates the player count and resets deltas if the count changes
+        externalScope.launch {
+            settingsDao.getSettings().collect { settings ->
+                val currentSettings = settings ?: GameSettings()
+                _gameState.update { currentState ->
+                    // THIS IS THE FIX:
+                    // We now *always* reset the transient state (deltas) when settings change.
+                    // This ensures the lists are always the correct size and avoids the crash.
+                    currentState.copy(
+                        playerCount = currentSettings.playerCount,
+                        playerDeltas = List(currentSettings.playerCount) { 0 },
+                        activeDeltaPlayers = emptySet()
+                    )
+                }
+            }
+        }
+        // This ensures the database is seeded with default values on the very first launch
+        initializeDatabaseIfNeeded()
     }
 
-    /**
-     * Increases a player's life and updates their transient delta counter.
-     */
+    private fun initializeDatabaseIfNeeded() {
+        externalScope.launch {
+            if (settingsDao.getSettings().first() == null) {
+                val defaultSettings = GameSettings(playerCount = 2)
+                settingsDao.saveSettings(defaultSettings)
+                val newPlayers = (1..defaultSettings.playerCount).map { Player(name = "Player $it") }
+                playerDao.insertAll(newPlayers)
+            }
+        }
+    }
+
+    fun changePlayerCount(newPlayerCount: Int) {
+        externalScope.launch {
+            settingsDao.saveSettings(GameSettings(playerCount = newPlayerCount))
+            playerDao.deleteAll()
+            val newPlayers = (1..newPlayerCount).map { Player(name = "Player $it") }
+            playerDao.insertAll(newPlayers)
+        }
+    }
+
     fun increaseLife(playerIndex: Int) {
         updatePlayerState(playerIndex, 1)
     }
 
-    /**
-     * Decreases a player's life and updates their transient delta counter.
-     */
     fun decreaseLife(playerIndex: Int) {
         updatePlayerState(playerIndex, -1)
     }
 
-    /**
-     * Resets the delta counter for a single player back to 0 and marks the sequence as inactive.
-     * This is called after the 3-second timeout.
-     */
+    private fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
+        if (playerIndex >= _gameState.value.players.size || playerIndex >= _gameState.value.playerDeltas.size) {
+            return
+        }
+
+        val currentState = _gameState.value
+        val playerToUpdate = currentState.players[playerIndex]
+        val updatedPlayer = playerToUpdate.copy(life = playerToUpdate.life + lifeChange)
+
+        externalScope.launch(Dispatchers.IO) {
+            playerDao.updatePlayer(updatedPlayer)
+        }
+
+        val currentDelta = currentState.playerDeltas[playerIndex]
+        val updatedDeltas = currentState.playerDeltas.toMutableList().apply {
+            this[playerIndex] = currentDelta + lifeChange
+        }
+        val updatedActivePlayers = currentState.activeDeltaPlayers.toMutableSet().apply {
+            add(playerIndex)
+        }
+        _gameState.update {
+            it.copy(
+                playerDeltas = updatedDeltas,
+                activeDeltaPlayers = updatedActivePlayers
+            )
+        }
+    }
+
     fun resetDeltaForPlayer(playerIndex: Int) {
-        if (playerIndex >= _gameState.value.players.size) return
+        if (playerIndex >= _gameState.value.playerDeltas.size) return
 
         val currentState = _gameState.value
         val updatedDeltas = currentState.playerDeltas.toMutableList()
         val updatedActivePlayers = currentState.activeDeltaPlayers.toMutableSet()
 
-        if (!updatedActivePlayers.contains(playerIndex)) return // No change needed
+        if (!updatedActivePlayers.contains(playerIndex)) return
 
         updatedDeltas[playerIndex] = 0
         updatedActivePlayers.remove(playerIndex)
@@ -75,45 +122,5 @@ class GameRepository(private val gamePreferences: GamePreferences) {
                 activeDeltaPlayers = updatedActivePlayers
             )
         }
-    }
-
-    /**
-     * A generic function to handle player state updates for life and deltas.
-     * It now also manages the activeDeltaPlayers set.
-     */
-    private fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
-        if (playerIndex >= _gameState.value.players.size) return
-
-        val currentState = _gameState.value
-        val currentDelta = currentState.playerDeltas.getOrNull(playerIndex) ?: 0
-
-        val updatedPlayers = currentState.players.mapIndexed { index, player ->
-            if (index == playerIndex) player.copy(life = player.life + lifeChange) else player
-        }
-        val updatedDeltas = currentState.playerDeltas.toMutableList().apply {
-            this[playerIndex] = currentDelta + lifeChange
-        }
-        // When a life change occurs, always add the player to the set of active deltas.
-        val updatedActivePlayers = currentState.activeDeltaPlayers.toMutableSet().apply {
-            add(playerIndex)
-        }
-
-        _gameState.update {
-            it.copy(
-                players = updatedPlayers,
-                playerDeltas = updatedDeltas,
-                activeDeltaPlayers = updatedActivePlayers
-            )
-        }
-        saveCurrentState()
-    }
-
-    /**
-     * Persists the core game state to the data source.
-     */
-    private fun saveCurrentState() {
-        val currentState = _gameState.value
-        gamePreferences.savePlayerCount(currentState.playerCount)
-        gamePreferences.savePlayers(currentState.players)
     }
 }
