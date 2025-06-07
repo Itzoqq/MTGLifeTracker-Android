@@ -11,29 +11,16 @@ class LifeCounterView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
 
-    // Listeners to communicate life changes back to the Activity
     var onLifeIncreasedListener: (() -> Unit)? = null
     var onLifeDecreasedListener: (() -> Unit)? = null
 
-    init {
-        // Ensure the view is clickable so it can receive focus and accessibility events
-        isClickable = true
-    }
-
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // We are only interested in the initial press down event
         if (event.action == MotionEvent.ACTION_DOWN) {
-            // This logic determines if the touch was on the "decrease" or "increase" side,
-            // taking the view's rotation into account to match the visual layout.
-            val decrease: Boolean
-            val touchX = event.x
-            val touchY = event.y
-
-            decrease = when (rotation) {
-                0f -> touchX < width / 2                 // Left half
-                180f -> touchX > width / 2                // Visually left half (due to rotation)
-                90f -> touchY < height / 2                // Visually top half
-                -90f, 270f -> touchY > height / 2     // Visually top half (due to rotation)
+            val decrease = when (rotation) {
+                0f -> event.x < width / 2
+                180f -> event.x > width / 2
+                90f -> event.y < height / 2
+                -90f, 270f -> event.y > height / 2
                 else -> false
             }
 
@@ -43,16 +30,16 @@ class LifeCounterView @JvmOverloads constructor(
                 onLifeIncreasedListener?.invoke()
             }
 
-            // By calling performClick, we properly handle accessibility events (like TalkBack)
-            // and provide visual feedback like the ripple effect. This is key to fixing the warnings.
+            // FIXED: Calling performClick() is essential to notify the system
+            // about the click for accessibility and proper UI updates.
             performClick()
+
+            return true
         }
-        // Return true to indicate that we have handled the touch event.
         return super.onTouchEvent(event)
     }
 
-    // Overriding performClick is good practice for custom touch handling.
-    // We call super.performClick() to ensure default behavior (like accessibility announcements) happens.
+    // It's good practice to also override performClick and call the superclass's method.
     override fun performClick(): Boolean {
         super.performClick()
         return true

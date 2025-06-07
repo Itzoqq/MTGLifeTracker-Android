@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSettingsPopup() {
-        // This function remains the same as before
+        // REMOVED "Reset Game" from the options
         val settingsOptions = arrayOf("Number of Players")
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, settingsOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -144,7 +144,10 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this, R.style.CustomAlertDialog)
             .setTitle("Settings")
             .setAdapter(adapter) { dialog, which ->
-                if (which == 0) showPlayerCountSelection()
+                when (which) {
+                    0 -> showPlayerCountSelection()
+                    // Case for "Reset Game" is removed
+                }
                 dialog.dismiss()
             }
             .create()
