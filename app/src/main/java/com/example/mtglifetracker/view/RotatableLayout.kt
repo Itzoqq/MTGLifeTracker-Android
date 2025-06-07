@@ -6,6 +6,7 @@ import android.graphics.Matrix
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.core.graphics.withSave
 import com.example.mtglifetracker.R
 
@@ -22,6 +23,7 @@ class RotatableLayout @JvmOverloads constructor(
 
     /** A public property to expose the inner LifeCounterView to the MainActivity. */
     val lifeCounter: LifeCounterView
+    val deltaCounter: TextView
     private var angle: Int = 0
 
     // A reusable matrix for transforming touch events.
@@ -49,6 +51,7 @@ class RotatableLayout @JvmOverloads constructor(
         // Inflate the player segment layout and attach it as a child of this FrameLayout.
         inflate(context, R.layout.layout_player_segment, this)
         lifeCounter = findViewById(R.id.lifeCounter)
+        deltaCounter = findViewById(R.id.deltaCounter)
     }
 
     /**
