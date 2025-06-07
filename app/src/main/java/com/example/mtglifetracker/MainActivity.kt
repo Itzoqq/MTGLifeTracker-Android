@@ -1,13 +1,8 @@
 package com.example.mtglifetracker
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.TextView
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -19,6 +14,7 @@ import com.example.mtglifetracker.data.GameRepository
 import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.view.LifeCounterView
 import com.example.mtglifetracker.view.RotatableLayout
+import com.example.mtglifetracker.view.SettingsDialogFragment
 import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import com.example.mtglifetracker.viewmodel.GameViewModelFactory
@@ -190,54 +186,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun setupStaticListeners() {
         binding.settingsIcon.setOnClickListener {
-            showSettingsPopup()
+            // *** REFACTORED LOGIC ***
+            // Instead of building the dialog here, we simply create and show
+            // our dedicated SettingsDialogFragment. This keeps MainActivity clean.
+            SettingsDialogFragment().show(supportFragmentManager, SettingsDialogFragment.TAG)
         }
     }
 
-    /**
-     * Builds and displays the main settings dialog popup.
-     */
-    private fun showSettingsPopup() {
-        val settingsOptions = arrayOf("Number of Players")
-        val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, settingsOptions) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getView(position, convertView, parent)
-                (view.findViewById<TextView>(android.R.id.text1)).setTextColor(Color.WHITE)
-                return view
-            }
-        }
-
-        AlertDialog.Builder(this, R.style.CustomAlertDialog)
-            .setTitle("Settings")
-            .setAdapter(adapter) { dialog, which ->
-                if (which == 0) showPlayerCountSelection()
-                dialog.dismiss()
-            }
-            .create()
-            .show()
-    }
-
-    /**
-     * Displays the sub-dialog for selecting the number of players.
-     */
-    private fun showPlayerCountSelection() {
-        val playerCountOptions = arrayOf("2", "3", "4", "5", "6")
-        val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, playerCountOptions) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getView(position, convertView, parent)
-                (view.findViewById<TextView>(android.R.id.text1)).setTextColor(Color.WHITE)
-                return view
-            }
-        }
-
-        AlertDialog.Builder(this, R.style.CustomAlertDialog)
-            .setTitle("Number of Players")
-            .setAdapter(adapter) { dialog, which ->
-                val selectedPlayerCount = playerCountOptions[which].toIntOrNull() ?: gameViewModel.gameState.value.playerCount
-                gameViewModel.changePlayerCount(selectedPlayerCount)
-                dialog.dismiss()
-            }
-            .create()
-            .show()
-    }
+    // *** REMOVED The following methods are no longer needed in MainActivity ***
+    // - showSettingsPopup()
+    // - showPlayerCountSelection()
+    // Their logic now lives inside SettingsDialogFragment.kt
 }
