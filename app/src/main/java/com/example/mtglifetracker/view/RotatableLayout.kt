@@ -24,7 +24,7 @@ class RotatableLayout @JvmOverloads constructor(
     val lifeCounter: LifeCounterView
     val deltaCounter: TextView
 
-    private var angle: Int = 0
+    internal var angle: Int = 0
 
     init {
         context.theme.obtainStyledAttributes(

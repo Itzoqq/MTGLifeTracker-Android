@@ -1,46 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#2E2E2E"
     tools:context=".MainActivity">
 
-    <include
-        android:id="@+id/twoPlayerLayout"
-        layout="@layout/layout_2_player"
-        android:visibility="gone"/>
-
-    <include
-        android:id="@+id/threePlayerLayout"
-        layout="@layout/layout_3_player"
-        android:visibility="gone"/>
-
-    <include
-        android:id="@+id/fourPlayerLayout"
-        layout="@layout/layout_4_player"
-        android:visibility="gone"/>
-
-    <include
-        android:id="@+id/fivePlayerLayout"
-        layout="@layout/layout_5_player"
-        android:visibility="gone"/>
-
-    <include
-        android:id="@+id/sixPlayerLayout"
-        layout="@layout/layout_6_player"
-        android:visibility="gone"/>
-
     <ImageView
         android:id="@+id/settingsIcon"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_centerInParent="true"
         android:background="#2E2E2E"
         android:clickable="true"
         android:contentDescription="@string/settings_content_description"
         android:focusable="true"
         android:padding="12dp"
-        android:src="@android:drawable/ic_menu_manage" />
+        android:src="@android:drawable/ic_menu_manage"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

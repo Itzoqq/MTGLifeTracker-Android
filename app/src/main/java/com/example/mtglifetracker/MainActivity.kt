@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -13,7 +12,7 @@ import com.example.mtglifetracker.data.GamePreferences
 import com.example.mtglifetracker.data.GameRepository
 import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.view.LifeCounterView
-import com.example.mtglifetracker.view.RotatableLayout
+import com.example.mtglifetracker.view.PlayerLayoutManager
 import com.example.mtglifetracker.view.SettingsDialogFragment
 import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
@@ -23,49 +22,31 @@ import kotlinx.coroutines.launch
 /**
  * The main and only activity in the application. It is responsible for observing state
  * from the [GameViewModel] and rendering the appropriate UI for the current game state.
- * It does not contain any game logic itself.
+ * It delegates the creation of complex player layouts to the [PlayerLayoutManager].
  */
 class MainActivity : AppCompatActivity() {
 
-    /** The auto-generated binding object for the activity's layout (activity_main.xml). */
     private lateinit var binding: ActivityMainBinding
-
-    /**
-     * The ViewModel instance for this activity.
-     * It is created using a custom factory to provide the [GameRepository] dependency.
-     */
     private val gameViewModel: GameViewModel by viewModels {
         val preferences = GamePreferences(applicationContext)
         val repository = GameRepository(preferences)
         GameViewModelFactory(repository)
     }
 
-    /**
-     * A map that holds a reference to the UI components for each layout type.
-     * The Key is the player count (e.g., 4) and the Value is a list of the [RotatableLayout]
-     * segments for that specific layout. This avoids repetitive logic in the UI update function.
-     */
-    private lateinit var playerUiMap: Map<Int, List<RotatableLayout>>
-
-    /** A simple list of all the main layout containers to make hiding them easier. */
-    private lateinit var allLayoutContainers: List<ConstraintLayout>
-
+    private lateinit var playerLayoutManager: PlayerLayoutManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
 
-        // Inflate the layout using View Binding and set it as the content view.
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Build the data structures that map player counts to their UI components.
-        setupUiMappings()
-        // Set listeners for static UI elements that are always present.
+        // Initialize the layout manager
+        playerLayoutManager = PlayerLayoutManager(binding.mainContainer, this)
+
         setupStaticListeners()
 
-        // Launch a coroutine that observes the game state from the ViewModel.
-        // repeatOnLifecycle ensures the collector is only active when the Activity is started.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 gameViewModel.gameState.collect { gameState ->
@@ -81,13 +62,15 @@ class MainActivity : AppCompatActivity() {
      * @param gameState The new state to be rendered.
      */
     private fun updateUiForNewState(gameState: GameState) {
-        allLayoutContainers.forEach { it.visibility = View.GONE }
+        // If the player count has changed, rebuild the layout
+        if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
+            playerLayoutManager.createPlayerLayouts(gameState.playerCount)
+            // Re-add the settings icon to the container after it's cleared
+            binding.mainContainer.addView(binding.settingsIcon)
+        }
 
-        val activePlayerSegments = playerUiMap[gameState.playerCount] ?: return
-
-        (activePlayerSegments.first().parent as? View)?.visibility = View.VISIBLE
-
-        activePlayerSegments.forEachIndexed { index, segment ->
+        // Update the life and delta for each player segment
+        playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
                 segment.lifeCounter.text = player.life.toString()
@@ -101,14 +84,12 @@ class MainActivity : AppCompatActivity() {
                     val deltaText = if (delta > 0) "+$delta" else delta.toString()
                     segment.deltaCounter.text = deltaText
 
-                    // NEW LOGIC: Set text color based on the delta value
                     val colorResId = when {
                         delta > 0 -> R.color.delta_positive
                         delta < 0 -> R.color.delta_negative
-                        else -> R.color.white // Default color for 0
+                        else -> R.color.white
                     }
                     segment.deltaCounter.setTextColor(ContextCompat.getColor(this, colorResId))
-
                 } else {
                     segment.deltaCounter.visibility = View.GONE
                 }
@@ -123,61 +104,8 @@ class MainActivity : AppCompatActivity() {
      * @param playerIndex The index of the player this view represents.
      */
     private fun setDynamicLifeTapListener(view: LifeCounterView, playerIndex: Int) {
-        view.onLifeIncreasedListener = {
-            gameViewModel.increaseLife(playerIndex)
-        }
-        view.onLifeDecreasedListener = {
-            gameViewModel.decreaseLife(playerIndex)
-        }
-    }
-
-    /**
-     * Populates the [playerUiMap] and [allLayoutContainers] data structures once.
-     * This method centralizes all view references to keep the rest of the code clean.
-     */
-    private fun setupUiMappings() {
-        // Create a map that links a player count to a list of that layout's RotatableLayout segments.
-        playerUiMap = mapOf(
-            2 to listOf(
-                binding.twoPlayerLayout.player1Segment,
-                binding.twoPlayerLayout.player2Segment
-            ),
-            3 to listOf(
-                binding.threePlayerLayout.player1Segment,
-                binding.threePlayerLayout.player2Segment,
-                binding.threePlayerLayout.player3Segment
-            ),
-            4 to listOf(
-                binding.fourPlayerLayout.player1Segment,
-                binding.fourPlayerLayout.player2Segment,
-                binding.fourPlayerLayout.player3Segment,
-                binding.fourPlayerLayout.player4Segment
-            ),
-            5 to listOf(
-                binding.fivePlayerLayout.player1Segment,
-                binding.fivePlayerLayout.player2Segment,
-                binding.fivePlayerLayout.player3Segment,
-                binding.fivePlayerLayout.player4Segment,
-                binding.fivePlayerLayout.player5Segment
-            ),
-            6 to listOf(
-                binding.sixPlayerLayout.player1Segment,
-                binding.sixPlayerLayout.player2Segment,
-                binding.sixPlayerLayout.player3Segment,
-                binding.sixPlayerLayout.player4Segment,
-                binding.sixPlayerLayout.player5Segment,
-                binding.sixPlayerLayout.player6Segment
-            )
-        )
-
-        // Create a simple list of all parent containers for easy hiding/showing.
-        allLayoutContainers = listOf(
-            binding.twoPlayerLayout.root,
-            binding.threePlayerLayout.root,
-            binding.fourPlayerLayout.root,
-            binding.fivePlayerLayout.root,
-            binding.sixPlayerLayout.root
-        )
+        view.onLifeIncreasedListener = { gameViewModel.increaseLife(playerIndex) }
+        view.onLifeDecreasedListener = { gameViewModel.decreaseLife(playerIndex) }
     }
 
     /**
@@ -186,15 +114,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun setupStaticListeners() {
         binding.settingsIcon.setOnClickListener {
-            // *** REFACTORED LOGIC ***
-            // Instead of building the dialog here, we simply create and show
-            // our dedicated SettingsDialogFragment. This keeps MainActivity clean.
             SettingsDialogFragment().show(supportFragmentManager, SettingsDialogFragment.TAG)
         }
     }
-
-    // *** REMOVED The following methods are no longer needed in MainActivity ***
-    // - showSettingsPopup()
-    // - showPlayerCountSelection()
-    // Their logic now lives inside SettingsDialogFragment.kt
 }
