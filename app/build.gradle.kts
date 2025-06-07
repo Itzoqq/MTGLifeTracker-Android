@@ -51,6 +51,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
     implementation("androidx.fragment:fragment-ktx:1.8.0") // Provides the "by viewModels()" delegate
 
+    // NEW: Add the Gson library for serializing data
+    implementation("com.google.code.gson:gson:2.10.1")
+
     // Testing Dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -12,16 +12,26 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.mtglifetracker.data.GamePreferences
+import com.example.mtglifetracker.data.GameRepository
 import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.view.LifeCounterView
 import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
+import com.example.mtglifetracker.viewmodel.GameViewModelFactory
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val gameViewModel: GameViewModel by viewModels()
+
+    // The ViewModel is now created using our custom factory
+    private val gameViewModel: GameViewModel by viewModels {
+        // Manually create our dependencies here
+        val preferences = GamePreferences(applicationContext)
+        val repository = GameRepository(preferences)
+        GameViewModelFactory(repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,30 +53,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Updates the UI by showing the correct included layout and setting the data.
-     */
     private fun updateUiForNewState(gameState: GameState) {
-        // First, hide all layout containers using the .root property of the included binding
-        binding.twoPlayerLayout.root.visibility = View.GONE
-        binding.threePlayerLayout.root.visibility = View.GONE
-        binding.fourPlayerLayout.root.visibility = View.GONE
-        binding.fivePlayerLayout.root.visibility = View.GONE
-        binding.sixPlayerLayout.root.visibility = View.GONE
+        // This function remains the same as before
+        binding.twoPlayerLayout.root.visibility = if (gameState.playerCount == 2) View.VISIBLE else View.GONE
+        binding.threePlayerLayout.root.visibility = if (gameState.playerCount == 3) View.VISIBLE else View.GONE
+        binding.fourPlayerLayout.root.visibility = if (gameState.playerCount == 4) View.VISIBLE else View.GONE
+        binding.fivePlayerLayout.root.visibility = if (gameState.playerCount == 5) View.VISIBLE else View.GONE
+        binding.sixPlayerLayout.root.visibility = if (gameState.playerCount == 6) View.VISIBLE else View.GONE
 
-        // Configure the specific layout based on the player count
         when (gameState.playerCount) {
             2 -> {
-                binding.twoPlayerLayout.root.visibility = View.VISIBLE
                 val (p1, p2) = gameState.players
-                // Access views via the nested binding object (e.g., binding.twoPlayerLayout)
                 binding.twoPlayerLayout.lifeCounterTextP1TwoPlayer.text = p1.life.toString()
                 binding.twoPlayerLayout.lifeCounterTextP2TwoPlayer.text = p2.life.toString()
                 setLifeTapListener(binding.twoPlayerLayout.lifeCounterTextP1TwoPlayer, 0)
                 setLifeTapListener(binding.twoPlayerLayout.lifeCounterTextP2TwoPlayer, 1)
             }
             3 -> {
-                binding.threePlayerLayout.root.visibility = View.VISIBLE
                 val (p1, p2, p3) = gameState.players
                 binding.threePlayerLayout.lifeCounterTextP1ThreePlayer.text = p1.life.toString()
                 binding.threePlayerLayout.lifeCounterTextP2ThreePlayer.text = p2.life.toString()
@@ -76,7 +79,6 @@ class MainActivity : AppCompatActivity() {
                 setLifeTapListener(binding.threePlayerLayout.lifeCounterTextP3ThreePlayer, 2)
             }
             4 -> {
-                binding.fourPlayerLayout.root.visibility = View.VISIBLE
                 val (p1, p2, p3, p4) = gameState.players
                 binding.fourPlayerLayout.lifeCounterTextP1FourPlayer.text = p1.life.toString()
                 binding.fourPlayerLayout.lifeCounterTextP2FourPlayer.text = p2.life.toString()
@@ -88,7 +90,6 @@ class MainActivity : AppCompatActivity() {
                 setLifeTapListener(binding.fourPlayerLayout.lifeCounterTextP4FourPlayer, 3)
             }
             5 -> {
-                binding.fivePlayerLayout.root.visibility = View.VISIBLE
                 val (p1, p2, p3, p4, p5) = gameState.players
                 binding.fivePlayerLayout.lifeCounterTextP1FivePlayer.text = p1.life.toString()
                 binding.fivePlayerLayout.lifeCounterTextP2FivePlayer.text = p2.life.toString()
@@ -102,7 +103,6 @@ class MainActivity : AppCompatActivity() {
                 setLifeTapListener(binding.fivePlayerLayout.lifeCounterTextP5FivePlayer, 4)
             }
             6 -> {
-                binding.sixPlayerLayout.root.visibility = View.VISIBLE
                 val players = gameState.players
                 binding.sixPlayerLayout.lifeCounterTextP1SixPlayer.text = players[0].life.toString()
                 binding.sixPlayerLayout.lifeCounterTextP2SixPlayer.text = players[1].life.toString()
@@ -121,6 +121,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setLifeTapListener(view: LifeCounterView, playerIndex: Int) {
+        // This function remains the same as before
         view.onLifeIncreasedListener = {
             gameViewModel.increaseLife(playerIndex)
         }
@@ -130,6 +131,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSettingsPopup() {
+        // This function remains the same as before
         val settingsOptions = arrayOf("Number of Players")
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, settingsOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -150,6 +152,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPlayerCountSelection() {
+        // This function remains the same as before
         val playerCountOptions = arrayOf("2", "3", "4", "5", "6")
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, playerCountOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
