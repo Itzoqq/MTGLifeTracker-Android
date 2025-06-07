@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -16,6 +17,7 @@ import com.example.mtglifetracker.data.GamePreferences
 import com.example.mtglifetracker.data.GameRepository
 import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.view.LifeCounterView
+import com.example.mtglifetracker.view.RotatableLayout
 import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import com.example.mtglifetracker.viewmodel.GameViewModelFactory
@@ -24,14 +26,17 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-
-    // The ViewModel is now created using our custom factory
     private val gameViewModel: GameViewModel by viewModels {
-        // Manually create our dependencies here
         val preferences = GamePreferences(applicationContext)
         val repository = GameRepository(preferences)
         GameViewModelFactory(repository)
     }
+
+    // This map will hold a reference to the UI components for each layout type.
+    // The Key is the player count (Int), the Value is a List of the player segments.
+    private lateinit var playerUiMap: Map<Int, List<RotatableLayout>>
+    private lateinit var allLayoutContainers: List<ConstraintLayout>
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +44,9 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Initialize our data structures that hold references to all the UI components.
+        setupUiMappings()
 
         binding.settingsIcon.setOnClickListener {
             showSettingsPopup()
@@ -53,75 +61,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * This function is now much simpler. It uses the pre-built map to find the
+     * correct UI components for the current player count and then applies the state.
+     */
     private fun updateUiForNewState(gameState: GameState) {
-        // This function remains the same as before
-        binding.twoPlayerLayout.root.visibility = if (gameState.playerCount == 2) View.VISIBLE else View.GONE
-        binding.threePlayerLayout.root.visibility = if (gameState.playerCount == 3) View.VISIBLE else View.GONE
-        binding.fourPlayerLayout.root.visibility = if (gameState.playerCount == 4) View.VISIBLE else View.GONE
-        binding.fivePlayerLayout.root.visibility = if (gameState.playerCount == 5) View.VISIBLE else View.GONE
-        binding.sixPlayerLayout.root.visibility = if (gameState.playerCount == 6) View.VISIBLE else View.GONE
+        // First, hide all layout containers
+        allLayoutContainers.forEach { it.visibility = View.GONE }
 
-        when (gameState.playerCount) {
-            2 -> {
-                val (p1, p2) = gameState.players
-                binding.twoPlayerLayout.lifeCounterTextP1TwoPlayer.text = p1.life.toString()
-                binding.twoPlayerLayout.lifeCounterTextP2TwoPlayer.text = p2.life.toString()
-                setLifeTapListener(binding.twoPlayerLayout.lifeCounterTextP1TwoPlayer, 0)
-                setLifeTapListener(binding.twoPlayerLayout.lifeCounterTextP2TwoPlayer, 1)
-            }
-            3 -> {
-                val (p1, p2, p3) = gameState.players
-                binding.threePlayerLayout.lifeCounterTextP1ThreePlayer.text = p1.life.toString()
-                binding.threePlayerLayout.lifeCounterTextP2ThreePlayer.text = p2.life.toString()
-                binding.threePlayerLayout.lifeCounterTextP3ThreePlayer.text = p3.life.toString()
-                setLifeTapListener(binding.threePlayerLayout.lifeCounterTextP1ThreePlayer, 0)
-                setLifeTapListener(binding.threePlayerLayout.lifeCounterTextP2ThreePlayer, 1)
-                setLifeTapListener(binding.threePlayerLayout.lifeCounterTextP3ThreePlayer, 2)
-            }
-            4 -> {
-                val (p1, p2, p3, p4) = gameState.players
-                binding.fourPlayerLayout.lifeCounterTextP1FourPlayer.text = p1.life.toString()
-                binding.fourPlayerLayout.lifeCounterTextP2FourPlayer.text = p2.life.toString()
-                binding.fourPlayerLayout.lifeCounterTextP3FourPlayer.text = p3.life.toString()
-                binding.fourPlayerLayout.lifeCounterTextP4FourPlayer.text = p4.life.toString()
-                setLifeTapListener(binding.fourPlayerLayout.lifeCounterTextP1FourPlayer, 0)
-                setLifeTapListener(binding.fourPlayerLayout.lifeCounterTextP2FourPlayer, 1)
-                setLifeTapListener(binding.fourPlayerLayout.lifeCounterTextP3FourPlayer, 2)
-                setLifeTapListener(binding.fourPlayerLayout.lifeCounterTextP4FourPlayer, 3)
-            }
-            5 -> {
-                val (p1, p2, p3, p4, p5) = gameState.players
-                binding.fivePlayerLayout.lifeCounterTextP1FivePlayer.text = p1.life.toString()
-                binding.fivePlayerLayout.lifeCounterTextP2FivePlayer.text = p2.life.toString()
-                binding.fivePlayerLayout.lifeCounterTextP3FivePlayer.text = p3.life.toString()
-                binding.fivePlayerLayout.lifeCounterTextP4FivePlayer.text = p4.life.toString()
-                binding.fivePlayerLayout.lifeCounterTextP5FivePlayer.text = p5.life.toString()
-                setLifeTapListener(binding.fivePlayerLayout.lifeCounterTextP1FivePlayer, 0)
-                setLifeTapListener(binding.fivePlayerLayout.lifeCounterTextP2FivePlayer, 1)
-                setLifeTapListener(binding.fivePlayerLayout.lifeCounterTextP3FivePlayer, 2)
-                setLifeTapListener(binding.fivePlayerLayout.lifeCounterTextP4FivePlayer, 3)
-                setLifeTapListener(binding.fivePlayerLayout.lifeCounterTextP5FivePlayer, 4)
-            }
-            6 -> {
-                val players = gameState.players
-                binding.sixPlayerLayout.lifeCounterTextP1SixPlayer.text = players[0].life.toString()
-                binding.sixPlayerLayout.lifeCounterTextP2SixPlayer.text = players[1].life.toString()
-                binding.sixPlayerLayout.lifeCounterTextP3SixPlayer.text = players[2].life.toString()
-                binding.sixPlayerLayout.lifeCounterTextP4SixPlayer.text = players[3].life.toString()
-                binding.sixPlayerLayout.lifeCounterTextP5SixPlayer.text = players[4].life.toString()
-                binding.sixPlayerLayout.lifeCounterTextP6SixPlayer.text = players[5].life.toString()
-                setLifeTapListener(binding.sixPlayerLayout.lifeCounterTextP1SixPlayer, 0)
-                setLifeTapListener(binding.sixPlayerLayout.lifeCounterTextP2SixPlayer, 1)
-                setLifeTapListener(binding.sixPlayerLayout.lifeCounterTextP3SixPlayer, 2)
-                setLifeTapListener(binding.sixPlayerLayout.lifeCounterTextP4SixPlayer, 3)
-                setLifeTapListener(binding.sixPlayerLayout.lifeCounterTextP5SixPlayer, 4)
-                setLifeTapListener(binding.sixPlayerLayout.lifeCounterTextP6SixPlayer, 5)
+        // Find the list of player segments for the current player count
+        val activePlayerSegments = playerUiMap[gameState.playerCount] ?: return
+
+        // Show the parent container of the active segments
+        (activePlayerSegments.first().parent as? View)?.visibility = View.VISIBLE
+
+        // Loop through the active segments and players to set text and listeners.
+        // This logic is now generic and works for any player count.
+        activePlayerSegments.forEachIndexed { index, segment ->
+            if (index < gameState.players.size) {
+                segment.lifeCounter.text = gameState.players[index].life.toString()
+                setLifeTapListener(segment.lifeCounter, index)
             }
         }
     }
 
+    /**
+     * Helper function to set listeners on a LifeCounterView.
+     * This remains unchanged.
+     */
     private fun setLifeTapListener(view: LifeCounterView, playerIndex: Int) {
-        // This function remains the same as before
         view.onLifeIncreasedListener = {
             gameViewModel.increaseLife(playerIndex)
         }
@@ -130,8 +98,56 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * This new function populates our maps once, centralizing all view references.
+     * This is where the boilerplate now lives, but it's organized and runs only one time.
+     */
+    private fun setupUiMappings() {
+        // Create a map that links a player count to a list of that layout's segments.
+        playerUiMap = mapOf(
+            2 to listOf(
+                binding.twoPlayerLayout.player1Segment,
+                binding.twoPlayerLayout.player2Segment
+            ),
+            3 to listOf(
+                binding.threePlayerLayout.player1Segment,
+                binding.threePlayerLayout.player2Segment,
+                binding.threePlayerLayout.player3Segment
+            ),
+            4 to listOf(
+                binding.fourPlayerLayout.player1Segment,
+                binding.fourPlayerLayout.player2Segment,
+                binding.fourPlayerLayout.player3Segment,
+                binding.fourPlayerLayout.player4Segment
+            ),
+            5 to listOf(
+                binding.fivePlayerLayout.player1Segment,
+                binding.fivePlayerLayout.player2Segment,
+                binding.fivePlayerLayout.player3Segment,
+                binding.fivePlayerLayout.player4Segment,
+                binding.fivePlayerLayout.player5Segment
+            ),
+            6 to listOf(
+                binding.sixPlayerLayout.player1Segment,
+                binding.sixPlayerLayout.player2Segment,
+                binding.sixPlayerLayout.player3Segment,
+                binding.sixPlayerLayout.player4Segment,
+                binding.sixPlayerLayout.player5Segment,
+                binding.sixPlayerLayout.player6Segment
+            )
+        )
+
+        // Create a simple list of all parent containers for easy hiding/showing.
+        allLayoutContainers = listOf(
+            binding.twoPlayerLayout.root,
+            binding.threePlayerLayout.root,
+            binding.fourPlayerLayout.root,
+            binding.fivePlayerLayout.root,
+            binding.sixPlayerLayout.root
+        )
+    }
+
     private fun showSettingsPopup() {
-        // REMOVED "Reset Game" from the options
         val settingsOptions = arrayOf("Number of Players")
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, settingsOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -144,10 +160,7 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this, R.style.CustomAlertDialog)
             .setTitle("Settings")
             .setAdapter(adapter) { dialog, which ->
-                when (which) {
-                    0 -> showPlayerCountSelection()
-                    // Case for "Reset Game" is removed
-                }
+                if (which == 0) showPlayerCountSelection()
                 dialog.dismiss()
             }
             .create()
@@ -155,7 +168,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPlayerCountSelection() {
-        // This function remains the same as before
         val playerCountOptions = arrayOf("2", "3", "4", "5", "6")
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, playerCountOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {

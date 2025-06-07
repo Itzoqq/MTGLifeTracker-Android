@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+
     <View
         android:id="@+id/dividerTwoPlayer"
         android:layout_width="0dp"
@@ -15,20 +16,25 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP1TwoPlayer"
-        style="@style/LifeCounterTextViewBase"
-        android:rotation="180"
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player1_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="180"
         app:layout_constraintBottom_toTopOf="@id/dividerTwoPlayer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP2TwoPlayer"
-        style="@style/LifeCounterTextViewBase"
-        android:rotation="0"
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player2_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/dividerTwoPlayer" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

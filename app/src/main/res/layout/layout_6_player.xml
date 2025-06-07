@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+
     <View
         android:id="@+id/divider_v_6p"
         android:layout_width="2dp"
@@ -16,6 +17,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintHorizontal_bias="0.5"/>
+
     <View
         android:id="@+id/divider_h_6p1"
         android:layout_width="0dp"
@@ -26,6 +28,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.33"/>
+
     <View
         android:id="@+id/divider_h_6p2"
         android:layout_width="0dp"
@@ -36,52 +39,65 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.66"/>
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP1SixPlayer"
-        style="@style/LifeCounterTextViewBase.Small"
-        android:rotation="90"
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player1_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="90"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/divider_h_6p1"
-        app:layout_constraintEnd_toStartOf="@id/divider_v_6p"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP3SixPlayer"
-        style="@style/LifeCounterTextViewBase.Small"
-        android:rotation="90"
-        app:layout_constraintBottom_toTopOf="@id/divider_h_6p2"
-        app:layout_constraintEnd_toStartOf="@id/divider_v_6p"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/divider_h_6p1" />
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP5SixPlayer"
-        style="@style/LifeCounterTextViewBase.Small"
-        android:rotation="90"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/divider_v_6p"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/divider_h_6p2" />
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP2SixPlayer"
-        style="@style/LifeCounterTextViewBase.Small"
-        android:rotation="-90"
+        app:layout_constraintEnd_toStartOf="@id/divider_v_6p" />
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player2_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="-90"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/divider_h_6p1"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/divider_v_6p"
-        app:layout_constraintTop_toTopOf="parent" />
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP4SixPlayer"
-        style="@style/LifeCounterTextViewBase.Small"
-        android:rotation="-90"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player3_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="90"
+        app:layout_constraintTop_toBottomOf="@id/divider_h_6p1"
         app:layout_constraintBottom_toTopOf="@id/divider_h_6p2"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/divider_v_6p" />
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player4_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="-90"
+        app:layout_constraintTop_toBottomOf="@id/divider_h_6p1"
+        app:layout_constraintBottom_toTopOf="@id/divider_h_6p2"
         app:layout_constraintStart_toEndOf="@id/divider_v_6p"
-        app:layout_constraintTop_toBottomOf="@id/divider_h_6p1" />
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounterTextP6SixPlayer"
-        style="@style/LifeCounterTextViewBase.Small"
-        android:rotation="-90"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player5_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="90"
+        app:layout_constraintTop_toBottomOf="@id/divider_h_6p2"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/divider_v_6p" />
+
+    <com.example.mtglifetracker.view.RotatableLayout
+        android:id="@+id/player6_segment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:angle="-90"
+        app:layout_constraintTop_toBottomOf="@id/divider_h_6p2"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/divider_v_6p"
-        app:layout_constraintTop_toBottomOf="@id/divider_h_6p2" />
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
