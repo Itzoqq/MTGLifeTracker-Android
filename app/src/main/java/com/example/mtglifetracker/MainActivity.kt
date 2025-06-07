@@ -24,7 +24,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val gameViewModel: GameViewModel by viewModels {
         val database = AppDatabase.getDatabase(applicationContext)
-        // Pass both DAOs to the repository and remove GamePreferences
         val repository = GameRepository(database.playerDao(), database.gameSettingsDao(), lifecycleScope)
         GameViewModelFactory(repository)
     }
@@ -51,18 +50,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ... rest of MainActivity is unchanged
     private fun updateUiForNewState(gameState: GameState) {
+        // First, create the player layouts if the player count has changed.
         if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
             playerLayoutManager.createPlayerLayouts(gameState.playerCount)
             binding.mainContainer.addView(binding.settingsIcon)
         }
 
+        // Now, iterate through all the player segments that exist in the layout.
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
+            // THE FIX: Attach the listener for this segment immediately.
+            // This only depends on the segment's index, not on the player data,
+            // so it's safe to do right away.
+            setDynamicLifeTapListener(segment.lifeCounter, index)
+
+            // Then, update the UI with player-specific data only if that data exists.
+            // This prevents crashes and handles the initial state where the player
+            // list may be temporarily empty.
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
                 segment.lifeCounter.text = player.life.toString()
-                setDynamicLifeTapListener(segment.lifeCounter, index)
 
                 val isDeltaActive = gameState.activeDeltaPlayers.contains(index)
                 val delta = gameState.playerDeltas.getOrNull(index) ?: 0

@@ -16,8 +16,11 @@ interface PlayerDao {
     @Update
     suspend fun updatePlayer(player: Player)
 
-    @Query("SELECT * FROM players ORDER BY id ASC")
-    fun getAllPlayers(): Flow<List<Player>>
+    @Query("SELECT * FROM players WHERE gameSize = :gameSize ORDER BY playerIndex ASC")
+    fun getPlayers(gameSize: Int): Flow<List<Player>>
+
+    @Query("DELETE FROM players WHERE gameSize = :gameSize")
+    suspend fun deletePlayersForGame(gameSize: Int)
 
     @Query("DELETE FROM players")
     suspend fun deleteAll()

@@ -9,18 +9,18 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.activityViewModels
 import com.example.mtglifetracker.R
+import com.example.mtglifetracker.viewmodel.GameViewModel
 
-/**
- * A DialogFragment that encapsulates the main settings menu.
- *
- * This fragment's responsibility is now only to show the top-level settings.
- * It navigates to other DialogFragments for specific settings.
- */
 class SettingsDialogFragment : DialogFragment() {
 
+    // Get a reference to the shared ViewModel.
+    private val gameViewModel: GameViewModel by activityViewModels()
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val settingsOptions = arrayOf("Number of Players")
+        // Add the new options to the settings menu.
+        val settingsOptions = arrayOf("Number of Players", "Reset Current Game", "Reset All Games")
 
         val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, settingsOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -33,12 +33,20 @@ class SettingsDialogFragment : DialogFragment() {
         return AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
             .setTitle("Settings")
             .setAdapter(adapter) { dialog, which ->
-                if (which == 0) {
-                    // *** CORRECTED LOGIC ***
-                    // Instead of showing an AlertDialog, we show our new PlayerCountDialogFragment.
-                    // We use parentFragmentManager to ensure it's managed correctly.
-                    parentFragmentManager.let {
-                        PlayerCountDialogFragment().show(it, PlayerCountDialogFragment.TAG)
+                when (which) {
+                    0 -> {
+                        // Show the player count selection dialog.
+                        parentFragmentManager.let {
+                            PlayerCountDialogFragment().show(it, PlayerCountDialogFragment.TAG)
+                        }
+                    }
+                    1 -> {
+                        // Call the ViewModel to reset the current game.
+                        gameViewModel.resetCurrentGame()
+                    }
+                    2 -> {
+                        // Call the ViewModel to reset all games.
+                        gameViewModel.resetAllGames()
                     }
                 }
                 // Dismiss this (the main settings) dialog.
@@ -46,9 +54,6 @@ class SettingsDialogFragment : DialogFragment() {
             }
             .create()
     }
-
-    // *** REMOVED ***
-    // The showPlayerCountSelection() method has been moved to its own Fragment.
 
     companion object {
         const val TAG = "SettingsDialogFragment"

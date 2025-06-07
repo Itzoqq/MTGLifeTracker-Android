@@ -19,7 +19,7 @@ data class GameState(
     val playerCount: Int = 2,
     val players: List<Player> = emptyList(),
     val playerDeltas: List<Int> = emptyList(),
-    val activeDeltaPlayers: Set<Int> = emptySet() // NEW: Track active sequences
+    val activeDeltaPlayers: Set<Int> = emptySet()
 )
 
 /**
@@ -39,6 +39,20 @@ class GameViewModel(private val repository: GameRepository) : ViewModel() {
     /** Forwards the request to change the player count to the repository. */
     fun changePlayerCount(newPlayerCount: Int) {
         repository.changePlayerCount(newPlayerCount)
+    }
+
+    /**
+     * Forwards the request to reset the current game state to the repository.
+     */
+    fun resetCurrentGame() {
+        repository.resetCurrentGame()
+    }
+
+    /**
+     * Forwards the request to reset all game states to the repository.
+     */
+    fun resetAllGames() {
+        repository.resetAllGames()
     }
 
     /**

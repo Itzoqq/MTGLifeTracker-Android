@@ -5,12 +5,15 @@ import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.viewmodel.GameState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GameRepository(
     private val playerDao: PlayerDao,
     private val settingsDao: GameSettingsDao,
@@ -21,50 +24,95 @@ class GameRepository(
     val gameState = _gameState.asStateFlow()
 
     init {
-        // This collector updates the players list in the state whenever it changes in the DB
         externalScope.launch {
-            playerDao.getAllPlayers().collect { players ->
-                _gameState.update { it.copy(players = players) }
-            }
-        }
+            // First, ensure the database is initialized before we start collecting flows.
+            // This prevents race conditions on the first launch.
+            initializeDatabase()
 
-        // This collector updates the player count and resets deltas if the count changes
-        externalScope.launch {
-            settingsDao.getSettings().collect { settings ->
-                val currentSettings = settings ?: GameSettings()
-                _gameState.update { currentState ->
-                    // THIS IS THE FIX:
-                    // We now *always* reset the transient state (deltas) when settings change.
-                    // This ensures the lists are always the correct size and avoids the crash.
-                    currentState.copy(
-                        playerCount = currentSettings.playerCount,
-                        playerDeltas = List(currentSettings.playerCount) { 0 },
-                        activeDeltaPlayers = emptySet()
-                    )
+            // Main reactive stream. It listens for changes in player count
+            // and switches to the corresponding player data stream from the database.
+            settingsDao.getSettings()
+                .flatMapLatest { settings ->
+                    // After initialization, settings should never be null.
+                    val playerCount = settings!!.playerCount
+                    playerDao.getPlayers(playerCount)
                 }
-            }
+                .collect { players ->
+                    // This collector receives player lists for the active game size.
+                    _gameState.update { currentState ->
+                        val newPlayerCount = players.firstOrNull()?.gameSize ?: currentState.playerCount
+
+                        // If the player count has changed, reset the transient UI state (deltas).
+                        val needsReset = currentState.playerCount != newPlayerCount
+
+                        if (needsReset) {
+                            currentState.copy(
+                                playerCount = newPlayerCount,
+                                players = players,
+                                playerDeltas = List(newPlayerCount) { 0 },
+                                activeDeltaPlayers = emptySet()
+                            )
+                        } else {
+                            currentState.copy(players = players)
+                        }
+                    }
+                }
         }
-        // This ensures the database is seeded with default values on the very first launch
-        initializeDatabaseIfNeeded()
     }
 
-    private fun initializeDatabaseIfNeeded() {
-        externalScope.launch {
-            if (settingsDao.getSettings().first() == null) {
-                val defaultSettings = GameSettings(playerCount = 2)
-                settingsDao.saveSettings(defaultSettings)
-                val newPlayers = (1..defaultSettings.playerCount).map { Player(name = "Player $it") }
-                playerDao.insertAll(newPlayers)
-            }
+    /**
+     * A suspending function that checks for initial data and creates it if missing.
+     * This runs to completion before any flows are collected.
+     */
+    private suspend fun initializeDatabase() {
+        if (settingsDao.getSettings().first() == null) {
+            val defaultSettings = GameSettings(playerCount = 2)
+            settingsDao.saveSettings(defaultSettings)
+            ensurePlayersExistForGameSize(defaultSettings.playerCount)
         }
     }
 
+    /**
+     * Checks if players for a given game size exist in the database.
+     * If not, it creates and inserts a default set of players.
+     */
+    private suspend fun ensurePlayersExistForGameSize(gameSize: Int) {
+        if (playerDao.getPlayers(gameSize).first().isEmpty()) {
+            val newPlayers = (0 until gameSize).map { index ->
+                Player(
+                    gameSize = gameSize,
+                    playerIndex = index,
+                    name = "Player ${index + 1}"
+                )
+            }
+            playerDao.insertAll(newPlayers)
+        }
+    }
+
+    /**
+     * Changes the active player count. It also ensures that player entries exist
+     * for the new count before the settings are updated, which will trigger the flow.
+     */
     fun changePlayerCount(newPlayerCount: Int) {
         externalScope.launch {
+            ensurePlayersExistForGameSize(newPlayerCount)
             settingsDao.saveSettings(GameSettings(playerCount = newPlayerCount))
+        }
+    }
+
+    fun resetCurrentGame() {
+        externalScope.launch {
+            val currentGameSize = _gameState.value.playerCount
+            playerDao.deletePlayersForGame(currentGameSize)
+            ensurePlayersExistForGameSize(currentGameSize)
+        }
+    }
+
+    fun resetAllGames() {
+        externalScope.launch {
             playerDao.deleteAll()
-            val newPlayers = (1..newPlayerCount).map { Player(name = "Player $it") }
-            playerDao.insertAll(newPlayers)
+            val currentGameSize = _gameState.value.playerCount
+            ensurePlayersExistForGameSize(currentGameSize)
         }
     }
 
@@ -77,11 +125,11 @@ class GameRepository(
     }
 
     private fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
-        if (playerIndex >= _gameState.value.players.size || playerIndex >= _gameState.value.playerDeltas.size) {
+        val currentState = _gameState.value
+        if (playerIndex >= currentState.players.size || playerIndex >= currentState.playerDeltas.size) {
             return
         }
 
-        val currentState = _gameState.value
         val playerToUpdate = currentState.players[playerIndex]
         val updatedPlayer = playerToUpdate.copy(life = playerToUpdate.life + lifeChange)
 

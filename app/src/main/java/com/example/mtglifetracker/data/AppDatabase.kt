@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
 
-@Database(entities = [Player::class, GameSettings::class], version = 2, exportSchema = false)
+@Database(entities = [Player::class, GameSettings::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun playerDao(): PlayerDao
@@ -24,7 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "mtg_database"
                 )
-                    // We've changed the DB schema, so a migration is needed.
+                    // The schema has changed, so we need a migration.
                     // This will clear the database on upgrade.
                     .fallbackToDestructiveMigration(false)
                     .build()
