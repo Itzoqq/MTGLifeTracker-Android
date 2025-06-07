@@ -33,26 +33,24 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    // ADD THIS BLOCK TO ENABLE VIEW BINDING
     buildFeatures {
         viewBinding = true
     }
 }
 
-// THIS IS THE BLOCK WHERE YOU ADD THE NEW DEPENDENCIES
 dependencies {
     // AndroidX & Material Components
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
-    // ViewModel and Lifecycle Dependencies (NEW)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.2")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
-    implementation("androidx.fragment:fragment-ktx:1.8.0") // Provides the "by viewModels()" delegate
+    // ViewModel and Lifecycle Dependencies
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.fragment.ktx)
 
-    // NEW: Add the Gson library for serializing data
-    implementation("com.google.code.gson:gson:2.10.1")
+    // Gson library for serializing data
+    implementation(libs.google.gson)
 
     // Testing Dependencies
     testImplementation(libs.junit)
