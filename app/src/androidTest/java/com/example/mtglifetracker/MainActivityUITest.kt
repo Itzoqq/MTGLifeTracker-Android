@@ -4,7 +4,6 @@ import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.GeneralClickAction
 import androidx.test.espresso.action.Press
@@ -87,6 +86,7 @@ class MainActivityUITest {
         )
     }
 
+    @Suppress("SameParameterValue")
     private fun hasViewCount(viewClass: Class<out View>, expectedCount: Int): Matcher<View> {
         return object : org.hamcrest.BaseMatcher<View>() {
             override fun describeTo(description: Description?) {
@@ -102,6 +102,7 @@ class MainActivityUITest {
         }
     }
 
+    @Suppress("SameParameterValue")
     private fun withAngle(expectedAngle: Int): Matcher<View> {
         return object : BoundedMatcher<View, RotatableLayout>(RotatableLayout::class.java) {
             // FIX: Redundant qualifier removed
