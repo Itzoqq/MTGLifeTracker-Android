@@ -17,7 +17,20 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.mtglifetracker.HiltTestRunner"
+    }
+
+    // Add this testOptions block to configure JVM arguments for unit tests
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.jvmArgs(
+                    "-XX:+EnableDynamicAgentLoading",
+                    "-Djdk.instrument.traceUsage"
+                )
+            }
+        }
     }
 
     buildTypes {
@@ -42,7 +55,6 @@ android {
 }
 
 dependencies {
-
     // AndroidX & Material Components
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -53,22 +65,34 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.fragment.ktx)
 
-    var roomVersion = "2.7.1" // Use a consistent version for all Room artifacts
-
     // Room Database Dependencies
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation(libs.androidx.room.ktx) // Kotlin Extensions and Coroutines support
-    ksp("androidx.room:room-compiler:$roomVersion")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Hilt Dependency Injection
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    kapt(libs.hilt.android.compiler)
 
-
-    // Testing Dependencies
+    // --- Dependencies for local Unit Tests (for ViewModel, etc.) ---
     testImplementation(libs.junit)
+    testImplementation(libs.core.ktx)
+
+    // Updated Mockito versions
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.inline)
+
+    // Alternative: Use MockK instead of Mockito (Kotlin-first mocking)
+    // testImplementation("io.mockk:mockk:1.13.13")
+
+    testImplementation(libs.androidx.core.testing)
+    testImplementation(libs.kotlinx.coroutines.test)
+
+    // --- Dependencies for Android Instrumentation (UI) Tests ---
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.hilt.android.testing)
+    kaptAndroidTest(libs.hilt.android.compiler)
 }
 
 kapt {
