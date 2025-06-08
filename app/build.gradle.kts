@@ -83,9 +83,6 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.inline)
 
-    // Alternative: Use MockK instead of Mockito (Kotlin-first mocking)
-    // testImplementation("io.mockk:mockk:1.13.13")
-
     testImplementation(libs.androidx.core.testing)
     testImplementation(libs.kotlinx.coroutines.test)
 
@@ -96,8 +93,13 @@ dependencies {
     kaptAndroidTest(libs.hilt.android.compiler)
 
     testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
 }
 
 kapt {
     correctErrorTypes = true
+    arguments {
+        arg("dagger.fastInit", "enabled")
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+    }
 }

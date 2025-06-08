@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
+@Suppress("RedundantConstructorKeyword")
 @Singleton
 @OptIn(ExperimentalCoroutinesApi::class)
 class GameRepository constructor(
