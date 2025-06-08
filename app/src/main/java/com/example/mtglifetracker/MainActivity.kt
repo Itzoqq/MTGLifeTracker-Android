@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -51,28 +52,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUiForNewState(gameState: GameState) {
-        // First, create the player layouts if the player count has changed.
         if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
             playerLayoutManager.createPlayerLayouts(gameState.playerCount)
             binding.mainContainer.addView(binding.settingsIcon)
         }
 
-        // Now, iterate through all the player segments that exist in the layout.
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
-            // THE FIX: Attach the listener for this segment immediately.
-            // This only depends on the segment's index, not on the player data,
-            // so it's safe to do right away.
             setDynamicLifeTapListener(segment.lifeCounter, index)
 
-            // Then, update the UI with player-specific data only if that data exists.
-            // This prevents crashes and handles the initial state where the player
-            // list may be temporarily empty.
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
                 segment.lifeCounter.text = player.life.toString()
 
                 val isDeltaActive = gameState.activeDeltaPlayers.contains(index)
                 val delta = gameState.playerDeltas.getOrNull(index) ?: 0
+
+                // This logic now precisely targets only the segments that need adjustment.
+                val layoutParams = segment.deltaCounter.layoutParams as ConstraintLayout.LayoutParams
+
+                val playerCount = gameState.playerCount
+                val angle = segment.angle
+                val isSidewaysSegment = angle == 90 || angle == -90 || angle == 270
+
+                // The wider bias is needed only when there are 3 segments stacked vertically.
+                // This happens on both sides for 6 players, and only on the right side for 5 players.
+                val needsWiderBias = (playerCount == 6 && isSidewaysSegment) ||
+                        (playerCount == 5 && (angle == -90 || angle == 270))
+
+                if (needsWiderBias) {
+                    // Apply wider spacing for the truly crowded segments.
+                    layoutParams.horizontalBias = 0.75f
+                } else {
+                    // All other segments get the default "glued" position.
+                    layoutParams.horizontalBias = 0.65f
+                }
+                segment.deltaCounter.layoutParams = layoutParams
+
 
                 if (isDeltaActive) {
                     segment.deltaCounter.visibility = View.VISIBLE
@@ -82,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                     val colorResId = when {
                         delta > 0 -> R.color.delta_positive
                         delta < 0 -> R.color.delta_negative
-                        else -> R.color.white
+                        else -> R.color.white // Should not happen if delta is not 0
                     }
                     segment.deltaCounter.setTextColor(ContextCompat.getColor(this, colorResId))
                 } else {
