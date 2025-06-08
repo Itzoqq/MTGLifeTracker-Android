@@ -2,4 +2,5 @@
     <string name="app_name">MTGLifeTracker</string>
     <string name="EDH_initial_life_total">40</string>
     <string name="settings_content_description">Settings</string>
+    <string name="reset_current_game_formatted">Reset current (%d players) game</string>
 </resources>

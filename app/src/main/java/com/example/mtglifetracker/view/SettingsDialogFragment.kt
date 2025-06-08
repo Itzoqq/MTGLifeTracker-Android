@@ -9,18 +9,13 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.activityViewModels
 import com.example.mtglifetracker.R
-import com.example.mtglifetracker.viewmodel.GameViewModel
 
 class SettingsDialogFragment : DialogFragment() {
 
-    // Get a reference to the shared ViewModel.
-    private val gameViewModel: GameViewModel by activityViewModels()
-
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        // Add the new options to the settings menu.
-        val settingsOptions = arrayOf("Number of Players", "Reset Current Game", "Reset All Games")
+        // The list of options is now simplified.
+        val settingsOptions = arrayOf("Number of Players", "Reset Game")
 
         val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, settingsOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -41,12 +36,10 @@ class SettingsDialogFragment : DialogFragment() {
                         }
                     }
                     1 -> {
-                        // Call the ViewModel to reset the current game.
-                        gameViewModel.resetCurrentGame()
-                    }
-                    2 -> {
-                        // Call the ViewModel to reset all games.
-                        gameViewModel.resetAllGames()
+                        // Show the new reset confirmation dialog.
+                        parentFragmentManager.let {
+                            ResetConfirmationDialogFragment().show(it, ResetConfirmationDialogFragment.TAG)
+                        }
                     }
                 }
                 // Dismiss this (the main settings) dialog.
