@@ -4,7 +4,6 @@ import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.viewmodel.GameState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,36 +19,32 @@ import javax.inject.Singleton
 class GameRepository @Inject constructor(
     private val playerDao: PlayerDao,
     private val settingsDao: GameSettingsDao,
-    private val externalScope: CoroutineScope
+    // This scope is now only used for the long-running collector in the init block.
+    // This is the correct use for an application-level scope.
+    externalScope: CoroutineScope
 ) {
 
     private val _gameState = MutableStateFlow(GameState())
     val gameState = _gameState.asStateFlow()
 
     init {
+        // This coroutine should live for as long as the application is alive,
+        // so using the externalScope here is the correct approach. It ensures
+        // the app is always listening for database changes.
         externalScope.launch {
-            // First, ensure the database is initialized before we start collecting flows.
-            // This prevents race conditions on the first launch.
             initializeDatabase()
-
-            // Main reactive stream. It listens for changes in player count
-            // and switches to the corresponding player data stream from the database.
             settingsDao.getSettings()
                 .flatMapLatest { settings ->
-                    // After initialization, settings should never be null.
                     val playerCount = settings!!.playerCount
                     playerDao.getPlayers(playerCount)
                 }
                 .collect { players ->
                     _gameState.update { currentState ->
                         val newPlayerCount = players.firstOrNull()?.gameSize ?: currentState.playerCount
-
-                        // Check if player count changed OR if the deltas list is the wrong size
                         val playerCountChanged = currentState.playerCount != newPlayerCount
                         val deltasNeedInit = currentState.playerDeltas.size != players.size
 
                         if (playerCountChanged || deltasNeedInit) {
-                            // This block will now run on first launch AND on player count change
                             currentState.copy(
                                 playerCount = newPlayerCount,
                                 players = players,
@@ -64,10 +59,6 @@ class GameRepository @Inject constructor(
         }
     }
 
-    /**
-     * A suspending function that checks for initial data and creates it if missing.
-     * This runs to completion before any flows are collected.
-     */
     private suspend fun initializeDatabase() {
         if (settingsDao.getSettings().first() == null) {
             val defaultSettings = GameSettings(playerCount = 2)
@@ -76,10 +67,6 @@ class GameRepository @Inject constructor(
         }
     }
 
-    /**
-     * Checks if players for a given game size exist in the database.
-     * If not, it creates and inserts a default set of players.
-     */
     private suspend fun ensurePlayersExistForGameSize(gameSize: Int) {
         if (playerDao.getPlayers(gameSize).first().isEmpty()) {
             val newPlayers = (0 until gameSize).map { index ->
@@ -94,41 +81,55 @@ class GameRepository @Inject constructor(
     }
 
     /**
-     * Changes the active player count. It also ensures that player entries exist
-     * for the new count before the settings are updated, which will trigger the flow.
+     * MODIFIED: This is now a suspend function.
+     * The responsibility of choosing a CoroutineScope is moved to the caller (the ViewModel).
+     * This makes the repository more testable and respects the caller's lifecycle.
      */
-    fun changePlayerCount(newPlayerCount: Int) {
-        externalScope.launch {
-            ensurePlayersExistForGameSize(newPlayerCount)
-            settingsDao.saveSettings(GameSettings(playerCount = newPlayerCount))
-        }
+    suspend fun changePlayerCount(newPlayerCount: Int) {
+        ensurePlayersExistForGameSize(newPlayerCount)
+        settingsDao.saveSettings(GameSettings(playerCount = newPlayerCount))
     }
 
-    fun resetCurrentGame() {
-        externalScope.launch {
-            val currentGameSize = _gameState.value.playerCount
-            playerDao.deletePlayersForGame(currentGameSize)
-            ensurePlayersExistForGameSize(currentGameSize)
-        }
+    /**
+     * MODIFIED: Converted to a suspend function.
+     * It no longer launches its own coroutine.
+     */
+    suspend fun resetCurrentGame() {
+        val currentGameSize = _gameState.value.playerCount
+        playerDao.deletePlayersForGame(currentGameSize)
+        ensurePlayersExistForGameSize(currentGameSize)
     }
 
-    fun resetAllGames() {
-        externalScope.launch {
-            playerDao.deleteAll()
-            val currentGameSize = _gameState.value.playerCount
-            ensurePlayersExistForGameSize(currentGameSize)
-        }
+    /**
+     * MODIFIED: Converted to a suspend function.
+     */
+    suspend fun resetAllGames() {
+        playerDao.deleteAll()
+        val currentGameSize = _gameState.value.playerCount
+        ensurePlayersExistForGameSize(currentGameSize)
     }
 
-    fun increaseLife(playerIndex: Int) {
+    /**
+     * MODIFIED: This is now a suspend function that handles the full update logic.
+     */
+    suspend fun increaseLife(playerIndex: Int) {
         updatePlayerState(playerIndex, 1)
     }
 
-    fun decreaseLife(playerIndex: Int) {
+    /**
+     * MODIFIED: This is now a suspend function that handles the full update logic.
+     */
+    suspend fun decreaseLife(playerIndex: Int) {
         updatePlayerState(playerIndex, -1)
     }
 
-    private fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
+    /**
+     * MODIFIED: This is now a suspend function.
+     * The database write operation (`playerDao.updatePlayer`) is a suspend call
+     * that will run within the scope provided by the ViewModel.
+     * The `externalScope.launch` has been removed.
+     */
+    private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
         val currentState = _gameState.value
         if (playerIndex >= currentState.players.size || playerIndex >= currentState.playerDeltas.size) {
             return
@@ -137,9 +138,10 @@ class GameRepository @Inject constructor(
         val playerToUpdate = currentState.players[playerIndex]
         val updatedPlayer = playerToUpdate.copy(life = playerToUpdate.life + lifeChange)
 
-        externalScope.launch(Dispatchers.IO) {
-            playerDao.updatePlayer(updatedPlayer)
-        }
+        // The database update is now called directly as a suspend function.
+        // It will run on the dispatcher provided by the ViewModel's scope (typically Dispatchers.Main)
+        // but Room ensures the actual DB work is done on a background thread.
+        playerDao.updatePlayer(updatedPlayer)
 
         val currentDelta = currentState.playerDeltas[playerIndex]
         val updatedDeltas = currentState.playerDeltas.toMutableList().apply {
