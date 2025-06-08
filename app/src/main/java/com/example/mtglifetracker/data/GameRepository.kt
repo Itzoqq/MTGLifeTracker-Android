@@ -11,16 +11,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 @OptIn(ExperimentalCoroutinesApi::class)
-class GameRepository @Inject constructor(
+class GameRepository constructor(
     private val playerDao: PlayerDao,
     private val settingsDao: GameSettingsDao,
-    // This scope is now only used for the long-running collector in the init block.
-    // This is the correct use for an application-level scope.
     externalScope: CoroutineScope
 ) {
 
@@ -28,9 +25,6 @@ class GameRepository @Inject constructor(
     val gameState = _gameState.asStateFlow()
 
     init {
-        // This coroutine should live for as long as the application is alive,
-        // so using the externalScope here is the correct approach. It ensures
-        // the app is always listening for database changes.
         externalScope.launch {
             initializeDatabase()
             settingsDao.getSettings()
@@ -80,81 +74,67 @@ class GameRepository @Inject constructor(
         }
     }
 
-    /**
-     * MODIFIED: This is now a suspend function.
-     * The responsibility of choosing a CoroutineScope is moved to the caller (the ViewModel).
-     * This makes the repository more testable and respects the caller's lifecycle.
-     */
     suspend fun changePlayerCount(newPlayerCount: Int) {
         ensurePlayersExistForGameSize(newPlayerCount)
         settingsDao.saveSettings(GameSettings(playerCount = newPlayerCount))
     }
 
-    /**
-     * MODIFIED: Converted to a suspend function.
-     * It no longer launches its own coroutine.
-     */
     suspend fun resetCurrentGame() {
         val currentGameSize = _gameState.value.playerCount
         playerDao.deletePlayersForGame(currentGameSize)
         ensurePlayersExistForGameSize(currentGameSize)
     }
 
-    /**
-     * MODIFIED: Converted to a suspend function.
-     */
     suspend fun resetAllGames() {
         playerDao.deleteAll()
         val currentGameSize = _gameState.value.playerCount
         ensurePlayersExistForGameSize(currentGameSize)
     }
 
-    /**
-     * MODIFIED: This is now a suspend function that handles the full update logic.
-     */
     suspend fun increaseLife(playerIndex: Int) {
         updatePlayerState(playerIndex, 1)
     }
 
-    /**
-     * MODIFIED: This is now a suspend function that handles the full update logic.
-     */
     suspend fun decreaseLife(playerIndex: Int) {
         updatePlayerState(playerIndex, -1)
     }
 
-    /**
-     * MODIFIED: This is now a suspend function.
-     * The database write operation (`playerDao.updatePlayer`) is a suspend call
-     * that will run within the scope provided by the ViewModel.
-     * The `externalScope.launch` has been removed.
-     */
     private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
-        val currentState = _gameState.value
-        if (playerIndex >= currentState.players.size || playerIndex >= currentState.playerDeltas.size) {
-            return
-        }
+        var playerToUpdate: Player? = null
 
-        val playerToUpdate = currentState.players[playerIndex]
-        val updatedPlayer = playerToUpdate.copy(life = playerToUpdate.life + lifeChange)
+        _gameState.update { currentState ->
+            // Get the player from the most current state
+            val player = currentState.players.getOrNull(playerIndex)
+            if (player == null) {
+                return@update currentState // Abort if player not found
+            }
 
-        // The database update is now called directly as a suspend function.
-        // It will run on the dispatcher provided by the ViewModel's scope (typically Dispatchers.Main)
-        // but Room ensures the actual DB work is done on a background thread.
-        playerDao.updatePlayer(updatedPlayer)
+            // Calculate the new player state
+            val updatedPlayer = player.copy(life = player.life + lifeChange)
+            playerToUpdate = updatedPlayer // Store for database update
 
-        val currentDelta = currentState.playerDeltas[playerIndex]
-        val updatedDeltas = currentState.playerDeltas.toMutableList().apply {
-            this[playerIndex] = currentDelta + lifeChange
-        }
-        val updatedActivePlayers = currentState.activeDeltaPlayers.toMutableSet().apply {
-            add(playerIndex)
-        }
-        _gameState.update {
-            it.copy(
+            val updatedPlayers = currentState.players.toMutableList().apply {
+                this[playerIndex] = updatedPlayer // Use the non-null updatedPlayer
+            }
+
+            // Calculate the new delta state
+            val currentDelta = currentState.playerDeltas.getOrElse(playerIndex) { 0 }
+            val updatedDeltas = currentState.playerDeltas.toMutableList().apply {
+                this[playerIndex] = currentDelta + lifeChange
+            }
+            val updatedActivePlayers = currentState.activeDeltaPlayers + playerIndex
+
+            // Return the new state with all changes applied at once
+            currentState.copy(
+                players = updatedPlayers,
                 playerDeltas = updatedDeltas,
                 activeDeltaPlayers = updatedActivePlayers
             )
+        }
+
+        // Now that the state is updated, persist the change to the database
+        playerToUpdate?.let {
+            playerDao.updatePlayer(it)
         }
     }
 

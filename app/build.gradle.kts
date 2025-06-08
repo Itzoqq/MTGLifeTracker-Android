@@ -80,6 +80,7 @@ dependencies {
 
     // Updated Mockito versions
     testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.inline)
 
     // Alternative: Use MockK instead of Mockito (Kotlin-first mocking)
@@ -93,6 +94,8 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.hilt.android.testing)
     kaptAndroidTest(libs.hilt.android.compiler)
+
+    testImplementation(libs.turbine)
 }
 
 kapt {
