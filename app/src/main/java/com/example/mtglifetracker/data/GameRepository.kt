@@ -12,9 +12,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 @OptIn(ExperimentalCoroutinesApi::class)
-class GameRepository(
+class GameRepository @Inject constructor(
     private val playerDao: PlayerDao,
     private val settingsDao: GameSettingsDao,
     private val externalScope: CoroutineScope

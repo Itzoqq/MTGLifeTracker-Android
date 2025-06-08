@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mtglifetracker.data.GameRepository
 import com.example.mtglifetracker.model.Player
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+
 
 /**
  * Represents the complete state of the game UI at any given time.
@@ -28,7 +31,8 @@ data class GameState(
  *
  * @param repository The repository that manages the game data.
  */
-class GameViewModel(private val repository: GameRepository) : ViewModel() {
+@HiltViewModel
+class GameViewModel @Inject constructor(private val repository: GameRepository) : ViewModel() {
 
     /** Exposes the game state flow from the repository directly to the UI. */
     val gameState = repository.gameState
