@@ -38,14 +38,15 @@ class GameRepository(
                     playerDao.getPlayers(playerCount)
                 }
                 .collect { players ->
-                    // This collector receives player lists for the active game size.
                     _gameState.update { currentState ->
                         val newPlayerCount = players.firstOrNull()?.gameSize ?: currentState.playerCount
 
-                        // If the player count has changed, reset the transient UI state (deltas).
-                        val needsReset = currentState.playerCount != newPlayerCount
+                        // Check if player count changed OR if the deltas list is the wrong size
+                        val playerCountChanged = currentState.playerCount != newPlayerCount
+                        val deltasNeedInit = currentState.playerDeltas.size != players.size
 
-                        if (needsReset) {
+                        if (playerCountChanged || deltasNeedInit) {
+                            // This block will now run on first launch AND on player count change
                             currentState.copy(
                                 playerCount = newPlayerCount,
                                 players = players,
