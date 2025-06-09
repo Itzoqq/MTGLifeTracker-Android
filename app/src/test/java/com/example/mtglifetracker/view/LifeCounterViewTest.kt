@@ -53,7 +53,7 @@ class LifeCounterViewTest {
     }
 
     @Test
-    fun `single tap on right half should trigger increase listener once`() {
+    fun singleTapOnRightHalf_shouldTriggerIncreaseListenerOnce() {
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_DOWN, 150f, 50f))
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_UP, 150f, 50f))
 
@@ -62,7 +62,7 @@ class LifeCounterViewTest {
     }
 
     @Test
-    fun `single tap on left half should trigger decrease listener once`() {
+    fun singleTapOnLeftHalf_shouldTriggerDecreaseListenerOnce() {
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_DOWN, 50f, 50f))
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_UP, 50f, 50f))
 
@@ -71,11 +71,11 @@ class LifeCounterViewTest {
     }
 
     @Test
-    fun `press and hold on right half should trigger increase listener multiple times`() {
+    fun pressAndHoldOnRightHalf_shouldTriggerIncreaseListenerMultipleTimes() {
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_DOWN, 150f, 50f))
         verify(mockIncreaseListener, times(1)).invoke() // First call is immediate
 
-        // FIX: Use Robolectric's ShadowLooper to advance the clock
+        // Use Robolectric's ShadowLooper to advance the clock
         Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(800))
 
         verify(mockIncreaseListener, atLeast(3)).invoke()
@@ -83,11 +83,11 @@ class LifeCounterViewTest {
     }
 
     @Test
-    fun `press and hold on left half should trigger decrease listener multiple times`() {
+    fun pressAndHoldOnLeftHalf_shouldTriggerDecreaseListenerMultipleTimes() {
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_DOWN, 50f, 50f))
         verify(mockDecreaseListener, times(1)).invoke() // First call is immediate
 
-        // FIX: Use Robolectric's ShadowLooper to advance the clock
+        // Use Robolectric's ShadowLooper to advance the clock
         Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(800))
 
         verify(mockDecreaseListener, atLeast(3)).invoke()
@@ -95,7 +95,7 @@ class LifeCounterViewTest {
     }
 
     @Test
-    fun `releasing finger should stop continuous updates`() {
+    fun releasingFinger_shouldStopContinuousUpdates() {
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_DOWN, 150f, 50f))
         verify(mockIncreaseListener, times(1)).invoke()
 

@@ -32,7 +32,7 @@ class PlayerLayoutManagerTest {
     }
 
     @Test
-    fun `createPlayerLayouts for 2 players should add 2 segments and 1 divider`() {
+    fun createPlayerLayouts_for2Players_shouldAdd2SegmentsAnd1Divider() {
         // Act
         playerLayoutManager.createPlayerLayouts(2)
 
@@ -49,7 +49,7 @@ class PlayerLayoutManagerTest {
     }
 
     @Test
-    fun `createPlayerLayouts for 3 players should add 3 segments and 2 dividers`() {
+    fun createPlayerLayouts_for3Players_shouldAdd3SegmentsAnd2Dividers() {
         // Act
         playerLayoutManager.createPlayerLayouts(3)
 
@@ -71,7 +71,7 @@ class PlayerLayoutManagerTest {
     }
 
     @Test
-    fun `createPlayerLayouts for 4 players should add 4 segments and 2 dividers`() {
+    fun createPlayerLayouts_for4Players_shouldAdd4SegmentsAnd2Dividers() {
         // Act
         playerLayoutManager.createPlayerLayouts(4)
 
@@ -94,7 +94,7 @@ class PlayerLayoutManagerTest {
     }
 
     @Test
-    fun `createPlayerLayouts for 5 players should add 5 segments and 4 dividers`() {
+    fun createPlayerLayouts_for5Players_shouldAdd5SegmentsAnd4Dividers() {
         // Act
         playerLayoutManager.createPlayerLayouts(5)
 
@@ -122,7 +122,7 @@ class PlayerLayoutManagerTest {
     }
 
     @Test
-    fun `createPlayerLayouts for 6 players should add 6 segments and 3 dividers`() {
+    fun createPlayerLayouts_for6Players_shouldAdd6SegmentsAnd3Dividers() {
         // Act
         playerLayoutManager.createPlayerLayouts(6)
 

@@ -41,7 +41,7 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `changePlayerCount should call repository`() = runTest {
+    fun changePlayerCount_shouldCallRepository() = runTest {
         val newPlayerCount = 4
         viewModel.changePlayerCount(newPlayerCount)
         dispatcher.scheduler.runCurrent() // Use runCurrent for consistency
@@ -49,21 +49,21 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `resetCurrentGame should call repository`() = runTest {
+    fun resetCurrentGame_shouldCallRepository() = runTest {
         viewModel.resetCurrentGame()
         dispatcher.scheduler.runCurrent()
         verify(mockRepository).resetCurrentGame()
     }
 
     @Test
-    fun `resetAllGames should call repository`() = runTest {
+    fun resetAllGames_shouldCallRepository() = runTest {
         viewModel.resetAllGames()
         dispatcher.scheduler.runCurrent()
         verify(mockRepository).resetAllGames()
     }
 
     @Test
-    fun `increaseLife should call repository and start reset timer`() = runTest {
+    fun increaseLife_shouldCallRepositoryAndStartResetTimer() = runTest {
         val playerIndex = 0
         viewModel.increaseLife(playerIndex)
 
@@ -71,7 +71,7 @@ class GameViewModelTest {
         dispatcher.scheduler.runCurrent()
         verify(mockRepository).increaseLife(playerIndex)
 
-        // **THE FIX:** The timer is scheduled, but the delay hasn't passed,
+        // The timer is scheduled, but the delay hasn't passed,
         // so resetDeltaForPlayer should not have been called.
         verify(mockRepository, never()).resetDeltaForPlayer(playerIndex)
 
@@ -84,7 +84,7 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `decreaseLife should call repository and start reset timer`() = runTest {
+    fun decreaseLife_shouldCallRepositoryAndStartResetTimer() = runTest {
         val playerIndex = 1
         viewModel.decreaseLife(playerIndex)
 
@@ -92,7 +92,7 @@ class GameViewModelTest {
         dispatcher.scheduler.runCurrent()
         verify(mockRepository).decreaseLife(playerIndex)
 
-        // **THE FIX:** Verify the reset function has NOT been called yet
+        // Verify the reset function has NOT been called yet
         verify(mockRepository, never()).resetDeltaForPlayer(playerIndex)
 
         // Advance time by 3000ms to trigger the timer
@@ -104,7 +104,7 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `multiple life changes should restart the reset timer`() = runTest {
+    fun multipleLifeChanges_shouldRestartTheResetTimer() = runTest {
         val playerIndex = 0
         // First life change
         viewModel.increaseLife(playerIndex)

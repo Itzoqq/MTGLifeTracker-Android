@@ -46,7 +46,7 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `repository init should load initial data and gameState should reflect it`() = testScope.runTest {
+    fun repositoryInit_shouldLoadInitialDataAndGameStateShouldReflectIt() = testScope.runTest {
         // Arrange
         initializeRepositoryWithPlayers()
 
@@ -64,7 +64,7 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `changePlayerCount should save new settings and create new players if needed`() = testScope.runTest {
+    fun changePlayerCount_shouldSaveNewSettingsAndCreateNewPlayersIfNeeded() = testScope.runTest {
         // Arrange
         val newPlayerCount = 4
         // Start with existing players for the old count
@@ -88,7 +88,7 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `increaseLife should update player in DAO and reflect in gameState`() = testScope.runTest {
+    fun increaseLife_shouldUpdatePlayerInDaoAndReflectInGameState() = testScope.runTest {
         // Arrange
         initializeRepositoryWithPlayers()
         advanceUntilIdle()
@@ -107,7 +107,7 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `decreaseLife should update player in DAO and reflect in gameState`() = testScope.runTest {
+    fun decreaseLife_shouldUpdatePlayerInDaoAndReflectInGameState() = testScope.runTest {
         // Arrange
         initializeRepositoryWithPlayers()
         advanceUntilIdle()
@@ -126,14 +126,11 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `resetCurrentGame should delete and recreate players for the current game size`() = testScope.runTest {
+    fun resetCurrentGame_shouldDeleteAndRecreatePlayersForCurrentGameSize() = testScope.runTest {
         // Arrange
         val currentGameSize = 2
         val initialPlayers = listOf(Player(gameSize = currentGameSize, playerIndex = 0))
 
-        // **THE FIX IS HERE**
-        // We tell Mockito to return a list of players for the initial setup,
-        // and then an empty list for the check that happens inside ensurePlayersExistForGameSize.
         whenever(mockPlayerDao.getPlayers(currentGameSize))
             .thenReturn(flowOf(initialPlayers)) // First call for init
             .thenReturn(flowOf(emptyList()))     // Second call after deletion
@@ -153,12 +150,11 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `resetAllGames should delete all players and recreate for current game size`() = testScope.runTest {
+    fun resetAllGames_shouldDeleteAllPlayersAndRecreateForCurrentGameSize() = testScope.runTest {
         // Arrange
         val currentGameSize = 2
         val initialPlayers = listOf(Player(gameSize = currentGameSize, playerIndex = 0))
 
-        // **THE FIX IS HERE** (Same logic as resetCurrentGame)
         whenever(mockPlayerDao.getPlayers(currentGameSize))
             .thenReturn(flowOf(initialPlayers))
             .thenReturn(flowOf(emptyList()))
@@ -178,7 +174,7 @@ class GameRepositoryTest {
     }
 
     @Test
-    fun `resetDeltaForPlayer should clear the delta and active status in gameState`() = testScope.runTest {
+    fun resetDeltaForPlayer_shouldClearDeltaAndActiveStatusInGameState() = testScope.runTest {
         // Arrange
         initializeRepositoryWithPlayers()
         advanceUntilIdle()
