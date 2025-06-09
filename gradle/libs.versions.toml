@@ -21,6 +21,8 @@ roomVersion = "2.7.1"
 turbine = "1.1.0"
 androidx-test-ext-junit = "1.2.1"
 androidx-test-runner = "1.6.2"
+fragmentTesting = "1.8.8"
+androidxMonitor = "1.7.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -48,6 +50,8 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 androidx-test-ext-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidx-test-ext-junit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
+androidx-fragment-testing = { module = "androidx.fragment:fragment-testing", version.ref = "fragmentTesting" }
+androidx-test-monitor = { group = "androidx.test", name = "monitor", version.ref = "androidxMonitor" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

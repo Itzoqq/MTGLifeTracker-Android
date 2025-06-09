@@ -54,6 +54,14 @@ android {
     }
 }
 
+// FIX: Add this block to resolve the dependency version conflict.
+configurations.all {
+    resolutionStrategy {
+        force(libs.androidx.test.monitor)
+    }
+}
+
+
 dependencies {
     // AndroidX & Material Components
     implementation(libs.androidx.core.ktx)
@@ -77,25 +85,24 @@ dependencies {
     // --- Dependencies for local Unit Tests (for ViewModel, etc.) ---
     testImplementation(libs.junit)
     testImplementation(libs.core.ktx)
-
-    // Updated Mockito versions
+    debugImplementation(libs.androidx.fragment.testing)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.inline)
-
     testImplementation(libs.androidx.core.testing)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
 
     // --- Dependencies for Android Instrumentation (UI) Tests ---
+    androidTestImplementation(libs.core.ktx)
+    androidTestImplementation(libs.androidx.test.monitor)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.test.ext.junit.ktx) // Add this for Kotlin extensions
-    androidTestImplementation(libs.androidx.test.runner)      // Add the test runner
+    androidTestImplementation(libs.androidx.test.ext.junit.ktx)
+    androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.hilt.android.testing)
     kaptAndroidTest(libs.hilt.android.compiler)
-
-    testImplementation(libs.turbine)
-    testImplementation(libs.robolectric)
 }
 
 kapt {
