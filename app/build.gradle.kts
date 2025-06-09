@@ -88,6 +88,8 @@ dependencies {
 
     // --- Dependencies for Android Instrumentation (UI) Tests ---
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit.ktx) // Add this for Kotlin extensions
+    androidTestImplementation(libs.androidx.test.runner)      // Add the test runner
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.hilt.android.testing)
     kaptAndroidTest(libs.hilt.android.compiler)
