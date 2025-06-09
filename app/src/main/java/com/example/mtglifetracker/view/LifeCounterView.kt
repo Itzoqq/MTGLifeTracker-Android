@@ -37,27 +37,28 @@ class LifeCounterView @JvmOverloads constructor(
     private var currentInterval = startInterval
 
     /**
-     * This Runnable is defined as an object to correctly scope `this` in the postDelayed call.
-     * It checks the `isIncreasing` flag to determine whether to increment or decrement.
+     * This Runnable handles the continuous updates for a long-press gesture.
+     * It will only start firing after the `initialDelay`.
      */
     private val continuousUpdateRunnable = object : Runnable {
         override fun run() {
+            // Check if the user is still holding their finger down.
             if (!isHeldDown) {
-                stopContinuousUpdates()
                 return
             }
 
-            // Trigger the appropriate life change based on the flag
+            // Trigger the appropriate life change. This is the first and all
+            // subsequent calls for a long-press.
             if (isIncreasing) {
                 onLifeIncreasedListener?.invoke()
             } else {
                 onLifeDecreasedListener?.invoke()
             }
 
-            // Accelerate the update rate
+            // Accelerate the update rate for the next interval.
             currentInterval = (currentInterval - accelerationRate).coerceAtLeast(minInterval)
 
-            // Schedule the next update by passing a reference to this runnable
+            // Schedule the next update.
             handler.postDelayed(this, currentInterval)
         }
     }
@@ -69,47 +70,54 @@ class LifeCounterView @JvmOverloads constructor(
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 isHeldDown = true
-                val isLeftSide = event.x < width / 2
-                isIncreasing = !isLeftSide // Set the direction flag
+                isIncreasing = event.x >= width / 2
 
-                // Immediately trigger the first change
-                if (isIncreasing) {
-                    onLifeIncreasedListener?.invoke()
-                } else {
-                    onLifeDecreasedListener?.invoke()
-                }
+                // Reset the long-press speed for each new press.
+                currentInterval = startInterval
 
-                // Start the continuous update runnable after an initial delay
+                // Schedule the long-press runnable. It will execute only if the
+                // user holds their finger down longer than `initialDelay`.
                 handler.postDelayed(continuousUpdateRunnable, initialDelay)
-
-                performClick()
                 return true
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                // If this "up" event doesn't correspond to a "down" we handled, ignore it.
+                if (!isHeldDown) {
+                    return false
+                }
                 isHeldDown = false
-                // Stop the continuous updates when the finger is lifted
-                stopContinuousUpdates()
+
+                // Crucially, ALWAYS cancel the scheduled long-press runnable.
+                handler.removeCallbacks(continuousUpdateRunnable)
+
+                // If the user lifts their finger *before* the long-press delay has
+                // passed, we interpret it as a single tap.
+                if (event.eventTime - event.downTime < initialDelay) {
+                    if (isIncreasing) {
+                        onLifeIncreasedListener?.invoke()
+                    } else {
+                        onLifeDecreasedListener?.invoke()
+                    }
+                }
                 return true
             }
         }
         return super.onTouchEvent(event)
     }
 
-    /**
-     * Stops the continuous update runnable and resets the update interval.
-     */
-    private fun stopContinuousUpdates() {
-        handler.removeCallbacks(continuousUpdateRunnable)
-        currentInterval = startInterval
-    }
-
-    /**
-     * Overriding performClick is good practice for custom touch handling.
-     * We call the superclass' method to ensure default accessibility behaviors are triggered.
-     */
     override fun performClick(): Boolean {
+        // Calling super.performClick() is required to trigger standard
+        // accessibility events, like playing click sounds.
         super.performClick()
+
+        // Since a programmatic click from an accessibility service has no (x, y)
+        // coordinates, we cannot determine whether to increase or decrease the life.
+        // The safest behavior is to do nothing. We return true to indicate
+        // that the click event has been handled.
         return true
     }
+
+    // The old `stopContinuousUpdates` and `performClick` methods are no longer needed
+    // with this new, cleaner implementation. You can remove them if you wish.
 }
