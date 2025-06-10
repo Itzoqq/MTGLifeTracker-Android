@@ -1,7 +1,9 @@
 package com.example.mtglifetracker.view
 
+import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.action.ViewActions.click
@@ -11,12 +13,14 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
+import com.example.mtglifetracker.data.AppDatabase
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.AssertionFailedError
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.TypeSafeMatcher
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +48,19 @@ class PlayerCountDialogFragmentTest {
      */
     @get:Rule(order = 1)
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
+
+    /**
+     * This method runs after each test to clear all data from the database.
+     * It uses ApplicationProvider to get the context and perform the database
+     * operation on a background thread, avoiding the main thread.
+     */
+    @After
+    fun tearDown() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = AppDatabase.getDatabase(context)
+        db.clearAllTables()
+        activityRule.scenario.recreate()
+    }
 
     /**
      * Tests the entire flow of changing the number of players from the default (2) to 4.

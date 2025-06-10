@@ -58,9 +58,9 @@ class ResetGameFlowTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val db = AppDatabase.getDatabase(context)
         db.clearAllTables()
+        activityRule.scenario.recreate()
     }
 
-    // ... ALL OTHER TEST METHODS AND HELPER FUNCTIONS REMAIN THE SAME ...
     // A specific matcher to target the LifeCounterView for the player at angle 0.
     private val lifeCounterForPlayerAtAngleZero = allOf(
         withId(R.id.lifeCounter),

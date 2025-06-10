@@ -113,3 +113,9 @@ kapt {
         arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
     }
 }
+
+tasks.register("runAllTests") {
+    group = "verification"
+    description = "Runs all unit and instrumented tests for the debug build."
+    dependsOn("testDebugUnitTest", "connectedDebugAndroidTest")
+}
