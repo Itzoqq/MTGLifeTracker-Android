@@ -94,11 +94,10 @@ class LifeCounterView @JvmOverloads constructor(
                 // If the user lifts their finger *before* the long-press delay has
                 // passed, we interpret it as a single tap.
                 if (event.eventTime - event.downTime < initialDelay) {
-                    if (isIncreasing) {
-                        onLifeIncreasedListener?.invoke()
-                    } else {
-                        onLifeDecreasedListener?.invoke()
-                    }
+                    // A "click" was detected, so we call performClick()
+                    // to handle it. This is the recommended practice for
+                    // accessibility and consistent behavior.
+                    performClick()
                 }
                 return true
             }
@@ -111,10 +110,15 @@ class LifeCounterView @JvmOverloads constructor(
         // accessibility events, like playing click sounds.
         super.performClick()
 
-        // Since a programmatic click from an accessibility service has no (x, y)
-        // coordinates, we cannot determine whether to increase or decrease the life.
-        // The safest behavior is to do nothing. We return true to indicate
-        // that the click event has been handled.
+        // The click action logic is moved here from onTouchEvent.
+        // This will now be executed when a tap is detected.
+        if (isIncreasing) {
+            onLifeIncreasedListener?.invoke()
+        } else {
+            onLifeDecreasedListener?.invoke()
+        }
+
+        // Return true to indicate that the click event has been handled.
         return true
     }
 
