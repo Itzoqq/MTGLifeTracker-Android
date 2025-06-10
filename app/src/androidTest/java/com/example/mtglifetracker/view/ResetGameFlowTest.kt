@@ -50,8 +50,7 @@ class ResetGameFlowTest {
 
     /**
      * This method runs after each test to clear all data from the database.
-     * It uses ApplicationProvider to get the context and perform the database
-     * operation on a background thread, avoiding the main thread.
+     * This ensures that each test starts with a fresh, default state.
      */
     @After
     fun tearDown() {
