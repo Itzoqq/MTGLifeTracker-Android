@@ -4,6 +4,12 @@ plugins {
     id("com.google.devtools.ksp")
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    id("jacoco") // Apply the JaCoCo plugin
+}
+
+// Configure the JaCoCo version at the top level
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
 }
 
 android {
@@ -20,7 +26,6 @@ android {
         testInstrumentationRunner = "com.example.mtglifetracker.HiltTestRunner"
     }
 
-    // Add this testOptions block to configure JVM arguments for unit tests
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -41,6 +46,11 @@ android {
                 "proguard-rules.pro"
             )
         }
+        // Enable coverage for unit and instrumented tests using the new properties
+        getByName("debug") {
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -60,7 +70,6 @@ configurations.all {
         force(libs.androidx.test.monitor)
     }
 }
-
 
 dependencies {
     // AndroidX & Material Components
@@ -118,4 +127,51 @@ tasks.register("runAllTests") {
     group = "verification"
     description = "Runs all unit and instrumented tests for the debug build."
     dependsOn("testDebugUnitTest", "connectedDebugAndroidTest")
+}
+
+// Task to generate a unified JaCoCo test report
+tasks.register("jacocoTestReport", JacocoReport::class) {
+    dependsOn("testDebugUnitTest", "createDebugCoverageReport")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    val fileFilter = listOf(
+        // Android
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        // Hilt
+        "**/*_HiltModules*.*",
+        "**/Dagger*Component.*",
+        "**/*Module_*",
+        "**/*_Factory.*",
+        "**/*_Provide*Factory*.*",
+        "**/*_ViewBinding*.*",
+        // Others
+        "**/*Directions$*",
+        "**/*Directions.*",
+    )
+
+    val mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.setFrom(files(mainSrc))
+    classDirectories.setFrom(
+        fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+            exclude(fileFilter)
+        }
+    )
+    executionData.setFrom(
+        fileTree(layout.buildDirectory) {
+            include(
+                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+                "outputs/code_coverage/debugAndroidTest/connected/*/*.ec"
+            )
+        }
+    )
 }

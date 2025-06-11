@@ -23,6 +23,7 @@ androidx-test-ext-junit = "1.2.1"
 androidx-test-runner = "1.6.2"
 fragmentTesting = "1.8.8"
 androidxMonitor = "1.7.2"
+jacoco = "0.8.12"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
