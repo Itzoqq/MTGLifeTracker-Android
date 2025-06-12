@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap // Import ConcurrentHashMap
 import javax.inject.Inject
 
 
@@ -23,72 +24,62 @@ class GameViewModel @Inject constructor(private val repository: GameRepository) 
 
     val gameState = repository.gameState
 
-    private val timeoutJobs = mutableMapOf<Int, Job>()
+    // Use ConcurrentHashMap for explicit thread safety.
+    private val timeoutJobs = ConcurrentHashMap<Int, Job>()
 
-    /**
-     * MODIFIED: All calls to the repository are now wrapped in `viewModelScope.launch`.
-     * This ensures that if the ViewModel is cleared, the coroutine is cancelled,
-     * and the repository's suspend function will not complete.
-     */
     fun changePlayerCount(newPlayerCount: Int) {
         viewModelScope.launch {
             repository.changePlayerCount(newPlayerCount)
         }
     }
 
-    /**
-     * MODIFIED: Wrapped in `viewModelScope.launch`.
-     */
     fun resetCurrentGame() {
         viewModelScope.launch {
             repository.resetCurrentGame()
         }
     }
 
-    /**
-     * MODIFIED: Wrapped in `viewModelScope.launch`.
-     */
     fun resetAllGames() {
         viewModelScope.launch {
             repository.resetAllGames()
         }
     }
 
-    /**
-     * MODIFIED: The call to the repository is now inside a viewModelScope.launch block.
-     * The delta reset timer is also launched within this same scope.
-     */
     fun increaseLife(playerIndex: Int) {
-        cancelTimeout(playerIndex)
-        viewModelScope.launch {
+        // Delegate to the new centralized function
+        updateLife(playerIndex) {
             repository.increaseLife(playerIndex)
-            launchResetTimer(playerIndex)
         }
     }
 
-    /**
-     * MODIFIED: The call to the repository is now inside a viewModelScope.launch block.
-     */
     fun decreaseLife(playerIndex: Int) {
-        cancelTimeout(playerIndex)
-        viewModelScope.launch {
+        // Delegate to the new centralized function
+        updateLife(playerIndex) {
             repository.decreaseLife(playerIndex)
-            launchResetTimer(playerIndex)
         }
     }
 
-    private fun cancelTimeout(playerIndex: Int) {
-        timeoutJobs[playerIndex]?.cancel()
-        timeoutJobs.remove(playerIndex)
-    }
-
     /**
-     * This now launches a coroutine within the existing viewModelScope,
-     * which is fine as it's part of the same lifecycle.
+     * Centralized function to handle life updates and restart the delta timer.
+     * This avoids repeating logic and makes the process clearer.
+     *
+     * @param playerIndex The index of the player being updated.
+     * @param lifeUpdateAction The suspend function to execute (increase or decrease life).
      */
-    private fun launchResetTimer(playerIndex: Int) {
+    private fun updateLife(playerIndex: Int, lifeUpdateAction: suspend () -> Unit) {
+        // Cancel any existing timer job for this player. This is a thread-safe operation.
+        timeoutJobs[playerIndex]?.cancel()
+
+        // Launch a new coroutine to handle the entire flow.
+        // We store the new Job to make it cancellable.
         timeoutJobs[playerIndex] = viewModelScope.launch {
+            // 1. Perform the actual life update in the repository.
+            lifeUpdateAction()
+
+            // 2. Wait for 3 seconds.
             delay(3000)
+
+            // 3. Reset the delta for the player.
             repository.resetDeltaForPlayer(playerIndex)
         }
     }
