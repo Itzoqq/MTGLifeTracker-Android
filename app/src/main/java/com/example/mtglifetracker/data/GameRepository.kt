@@ -35,7 +35,8 @@ class GameRepository constructor(
                 }
                 .collect { players ->
                     _gameState.update { currentState ->
-                        val newPlayerCount = players.firstOrNull()?.gameSize ?: currentState.playerCount
+                        val settings = settingsDao.getSettings().first()
+                        val newPlayerCount = settings?.playerCount ?: currentState.playerCount
                         val playerCountChanged = currentState.playerCount != newPlayerCount
                         val deltasNeedInit = currentState.playerDeltas.size != players.size
 
@@ -56,40 +57,50 @@ class GameRepository constructor(
 
     private suspend fun initializeDatabase() {
         if (settingsDao.getSettings().first() == null) {
-            val defaultSettings = GameSettings(playerCount = 2)
+            val defaultSettings = GameSettings(playerCount = 2, startingLife = 40)
             settingsDao.saveSettings(defaultSettings)
-            ensurePlayersExistForGameSize(defaultSettings.playerCount)
+            ensurePlayersExistForGameSize(defaultSettings.playerCount, defaultSettings.startingLife)
         }
     }
 
-    private suspend fun ensurePlayersExistForGameSize(gameSize: Int) {
+    private suspend fun ensurePlayersExistForGameSize(gameSize: Int, startingLife: Int) {
         if (playerDao.getPlayers(gameSize).first().isEmpty()) {
             val newPlayers = (0 until gameSize).map { index ->
                 Player(
                     gameSize = gameSize,
                     playerIndex = index,
-                    name = "Player ${index + 1}"
+                    name = "Player ${index + 1}",
+                    life = startingLife
                 )
             }
             playerDao.insertAll(newPlayers)
         }
     }
-
     suspend fun changePlayerCount(newPlayerCount: Int) {
-        ensurePlayersExistForGameSize(newPlayerCount)
-        settingsDao.saveSettings(GameSettings(playerCount = newPlayerCount))
+        val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
+        ensurePlayersExistForGameSize(newPlayerCount, currentSettings.startingLife)
+        settingsDao.saveSettings(currentSettings.copy(playerCount = newPlayerCount))
+    }
+
+
+    suspend fun changeStartingLife(newStartingLife: Int) {
+        val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
+        settingsDao.saveSettings(currentSettings.copy(startingLife = newStartingLife))
+        resetAllGames() // Reset games to apply new life total
     }
 
     suspend fun resetCurrentGame() {
-        val currentGameSize = _gameState.value.playerCount
-        playerDao.deletePlayersForGame(currentGameSize)
-        ensurePlayersExistForGameSize(currentGameSize)
+        val currentSettings = settingsDao.getSettings().first()!!
+        playerDao.deletePlayersForGame(currentSettings.playerCount)
+        ensurePlayersExistForGameSize(currentSettings.playerCount, currentSettings.startingLife)
     }
 
     suspend fun resetAllGames() {
+        val currentSettings = settingsDao.getSettings().first()!!
         playerDao.deleteAll()
-        val currentGameSize = _gameState.value.playerCount
-        ensurePlayersExistForGameSize(currentGameSize)
+        (2..6).forEach { gameSize ->
+            ensurePlayersExistForGameSize(gameSize, currentSettings.startingLife)
+        }
     }
 
     suspend fun increaseLife(playerIndex: Int) {

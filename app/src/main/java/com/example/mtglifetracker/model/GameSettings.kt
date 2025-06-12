@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class GameSettings(
     @PrimaryKey
     val id: Int = 1,
-    val playerCount: Int = 2
+    val playerCount: Int = 2,
+    val startingLife: Int = 40 // New field
 )

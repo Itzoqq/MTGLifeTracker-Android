@@ -23,13 +23,17 @@ data class GameState(
 class GameViewModel @Inject constructor(private val repository: GameRepository) : ViewModel() {
 
     val gameState = repository.gameState
-
-    // Use ConcurrentHashMap for explicit thread safety.
     private val timeoutJobs = ConcurrentHashMap<Int, Job>()
 
     fun changePlayerCount(newPlayerCount: Int) {
         viewModelScope.launch {
             repository.changePlayerCount(newPlayerCount)
+        }
+    }
+
+    fun changeStartingLife(newStartingLife: Int) {
+        viewModelScope.launch {
+            repository.changeStartingLife(newStartingLife)
         }
     }
 

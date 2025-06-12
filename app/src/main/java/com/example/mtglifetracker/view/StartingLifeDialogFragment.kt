@@ -9,14 +9,18 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.activityViewModels
 import com.example.mtglifetracker.R
+import com.example.mtglifetracker.viewmodel.GameViewModel
 
-class SettingsDialogFragment : DialogFragment() {
+class StartingLifeDialogFragment : DialogFragment() {
+
+    private val gameViewModel: GameViewModel by activityViewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val settingsOptions = arrayOf("Number of Players", "Starting Life", "Reset Game")
+        val lifeOptions = arrayOf("20", "40", "Custom")
 
-        val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, settingsOptions) {
+        val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, lifeOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
                 (view.findViewById<TextView>(android.R.id.text1)).setTextColor(Color.WHITE)
@@ -25,25 +29,20 @@ class SettingsDialogFragment : DialogFragment() {
         }
 
         return AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-            .setTitle("Settings")
-            .setAdapter(adapter) { dialog, which ->
-                when (which) {
-                    0 -> {
-                        PlayerCountDialogFragment().show(parentFragmentManager, PlayerCountDialogFragment.TAG)
-                    }
-                    1 -> {
-                        StartingLifeDialogFragment().show(parentFragmentManager, StartingLifeDialogFragment.TAG)
-                    }
-                    2 -> {
-                        ResetConfirmationDialogFragment().show(parentFragmentManager, ResetConfirmationDialogFragment.TAG)
+            .setTitle("Starting Life")
+            .setAdapter(adapter) { _, which ->
+                when (lifeOptions[which]) {
+                    "20" -> gameViewModel.changeStartingLife(20)
+                    "40" -> gameViewModel.changeStartingLife(40)
+                    "Custom" -> {
+                        CustomLifeDialogFragment().show(parentFragmentManager, CustomLifeDialogFragment.TAG)
                     }
                 }
-                dialog.dismiss()
             }
             .create()
     }
 
     companion object {
-        const val TAG = "SettingsDialogFragment"
+        const val TAG = "StartingLifeDialogFragment"
     }
 }

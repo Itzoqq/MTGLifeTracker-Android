@@ -18,6 +18,6 @@ import androidx.room.Entity
 data class Player(
     val gameSize: Int,
     val playerIndex: Int,
-    val life: Int = 40,
+    val life: Int, // Default value removed
     val name: String = "Player"
 )
