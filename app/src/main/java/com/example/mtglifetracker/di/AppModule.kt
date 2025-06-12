@@ -6,6 +6,8 @@ import com.example.mtglifetracker.data.AppDatabase
 import com.example.mtglifetracker.data.GameRepository
 import com.example.mtglifetracker.data.GameSettingsDao
 import com.example.mtglifetracker.data.PlayerDao
+import com.example.mtglifetracker.data.ProfileDao
+import com.example.mtglifetracker.data.ProfileRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -45,6 +47,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideProfileDao(appDatabase: AppDatabase): ProfileDao {
+        return appDatabase.profileDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
@@ -57,5 +65,11 @@ object AppModule {
         externalScope: CoroutineScope
     ): GameRepository {
         return GameRepository(playerDao, settingsDao, externalScope)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfileRepository(profileDao: ProfileDao): ProfileRepository {
+        return ProfileRepository(profileDao)
     }
 }

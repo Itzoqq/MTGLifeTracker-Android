@@ -6,12 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
+import com.example.mtglifetracker.model.Profile
 
-@Database(entities = [Player::class, GameSettings::class], version = 3, exportSchema = false)
+@Database(entities = [Player::class, GameSettings::class, Profile::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun playerDao(): PlayerDao
     abstract fun gameSettingsDao(): GameSettingsDao
+    abstract fun profileDao(): ProfileDao
 
     companion object {
         @Volatile

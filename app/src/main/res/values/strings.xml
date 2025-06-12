@@ -5,4 +5,8 @@
     <string name="reset_current_game_formatted">Reset current (%d players) game</string>
     <string name="enter_starting_life">Enter starting life</string>
     <string name="player_settings">Player settings</string>
+    <string name="no_profiles_created_yet">No profiles created yet.</string>
+    <string name="add_new_profile">Add new profile</string>
+    <string name="choose_a_profile">Choose a profile...</string>
+    <string name="delete_profile">Delete profile</string>
 </resources>

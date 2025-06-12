@@ -39,7 +39,7 @@
         android:src="@android:drawable/ic_menu_manage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:contentDescription="Player settings"
+        android:contentDescription="@string/player_settings"
         android:clickable="true"
         android:focusable="true"
         app:tint="@android:color/white" />
@@ -62,8 +62,11 @@
             android:background="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
-            android:padding="12dp"
-            android:text="Choose a profile..."
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="@string/choose_a_profile"
             android:textColor="@android:color/white"
             android:textSize="16sp" />
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="color_swatch_size">40dp</dimen>
+    <dimen name="selected_stroke_width">3dp</dimen>
+    <dimen name="default_stroke_width">1dp</dimen>
+</resources>
