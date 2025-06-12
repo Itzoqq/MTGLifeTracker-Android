@@ -1,33 +1,19 @@
 package com.example.mtglifetracker
 
-import android.view.InputDevice
-import android.view.MotionEvent
-import android.view.View
-import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.ViewAction
-import androidx.test.espresso.action.GeneralClickAction
-import androidx.test.espresso.action.Press
-import androidx.test.espresso.action.Tap
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.BoundedMatcher
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.view.LifeCounterView
-import com.example.mtglifetracker.view.RotatableLayout
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import org.hamcrest.Description
-import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.ArrayList
 
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
@@ -64,6 +50,9 @@ class MainActivityUITest {
 
         onView(lifeCounterMatcher).perform(clickInXPercent(75))
         onView(lifeCounterMatcher).check(matches(withText("40")))
+        // Note: The delta text is now "0" but the view itself may still be visible briefly.
+        // A better check might be for the text or its visibility after a delay.
+        // For this test, we'll assume checking the text is sufficient.
         onView(deltaCounterMatcher).check(matches(allOf(isDisplayed(), withText("0"))))
     }
 
@@ -73,7 +62,9 @@ class MainActivityUITest {
         onView(withText("Number of Players")).perform(click())
         onView(withText("4")).perform(click())
 
-        onView(isRoot()).check(matches(hasViewCount(LifeCounterView::class.java, 4)))
+        // --- THIS IS THE CORRECTED LINE ---
+        // We now pass a Matcher and use withViewCount directly in check()
+        onView(isRoot()).check(withViewCount(isAssignableFrom(LifeCounterView::class.java), 4))
     }
 
     @Test
@@ -87,10 +78,8 @@ class MainActivityUITest {
             isDescendantOfA(withAngle(0))
         )
 
-        // Click on the right side to increase life
         onView(lifeCounterMatcher).perform(clickInXPercent(75))
 
-        // Check that the delta is displayed with the correct positive color
         onView(deltaCounterMatcher).check(matches(allOf(
             isDisplayed(),
             withText("+1"),
@@ -109,10 +98,8 @@ class MainActivityUITest {
             isDescendantOfA(withAngle(0))
         )
 
-        // Click on the left side to decrease life
         onView(lifeCounterMatcher).perform(clickInXPercent(25))
 
-        // Check that the delta is displayed with the correct negative color
         onView(deltaCounterMatcher).check(matches(allOf(
             isDisplayed(),
             withText("-1"),
@@ -131,75 +118,11 @@ class MainActivityUITest {
             isDescendantOfA(withAngle(0))
         )
 
-        // Decrease life to make the delta appear
         onView(lifeCounterMatcher).perform(clickInXPercent(25))
         onView(deltaCounterMatcher).check(matches(isDisplayed()))
 
-        // Wait for 3 seconds
         Thread.sleep(3000)
 
-        // The delta counter should be gone
         onView(deltaCounterMatcher).check(matches(not(isDisplayed())))
-    }
-
-
-    private fun clickInXPercent(pct: Int): ViewAction {
-        return GeneralClickAction(
-            Tap.SINGLE,
-            { view ->
-                val screenPos = IntArray(2)
-                view.getLocationOnScreen(screenPos)
-                val screenX = screenPos[0] + (view.width * pct / 100f)
-                val screenY = screenPos[1] + (view.height / 2f)
-                floatArrayOf(screenX, screenY)
-            },
-            Press.FINGER,
-            InputDevice.SOURCE_UNKNOWN,
-            MotionEvent.BUTTON_PRIMARY
-        )
-    }
-
-    @Suppress("SameParameterValue")
-    private fun hasViewCount(viewClass: Class<out View>, expectedCount: Int): Matcher<View> {
-        return object : org.hamcrest.BaseMatcher<View>() {
-            override fun describeTo(description: Description?) {
-                description?.appendText("has $expectedCount views of class ${viewClass.simpleName}")
-            }
-
-            override fun matches(item: Any?): Boolean {
-                val rootView = item as? View ?: return false
-                val views = ArrayList<View>()
-                rootView.findViewsWithText(views, "40", View.FIND_VIEWS_WITH_TEXT)
-                return views.filterIsInstance(viewClass).size == expectedCount
-            }
-        }
-    }
-
-    private fun withTextColor(expectedColorId: Int): Matcher<View> {
-        return object : BoundedMatcher<View, TextView>(TextView::class.java) {
-            override fun describeTo(description: Description) {
-                description.appendText("with text color from resource id: $expectedColorId")
-            }
-
-            override fun matchesSafely(item: TextView): Boolean {
-                val context = item.context
-                val expectedColor = ContextCompat.getColor(context, expectedColorId)
-                return item.currentTextColor == expectedColor
-            }
-        }
-    }
-
-    @Suppress("SameParameterValue")
-    private fun withAngle(expectedAngle: Int): Matcher<View> {
-        return object : BoundedMatcher<View, RotatableLayout>(RotatableLayout::class.java) {
-            // FIX: Redundant qualifier removed
-            override fun describeTo(description: Description) {
-                description.appendText("with angle: $expectedAngle")
-            }
-
-            override fun matchesSafely(item: RotatableLayout): Boolean {
-                return item.angle == expectedAngle
-            }
-        }
     }
 }
