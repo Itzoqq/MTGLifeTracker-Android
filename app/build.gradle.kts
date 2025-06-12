@@ -162,7 +162,7 @@ tasks.register("jacocoTestReport", JacocoReport::class) {
 
     sourceDirectories.setFrom(files(mainSrc))
     classDirectories.setFrom(
-        fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+        fileTree("${layout.buildDirectory.get().asFile}/classes/kotlin/debug") {
             exclude(fileFilter)
         }
     )
