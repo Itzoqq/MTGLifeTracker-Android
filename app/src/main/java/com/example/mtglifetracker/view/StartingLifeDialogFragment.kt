@@ -18,7 +18,7 @@ class StartingLifeDialogFragment : DialogFragment() {
     private val gameViewModel: GameViewModel by activityViewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val lifeOptions = arrayOf("20", "40", "Custom")
+        val lifeOptions = arrayOf("20", "30", "40", "Custom") // Added "30"
 
         val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, lifeOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -33,6 +33,7 @@ class StartingLifeDialogFragment : DialogFragment() {
             .setAdapter(adapter) { _, which ->
                 when (lifeOptions[which]) {
                     "20" -> gameViewModel.changeStartingLife(20)
+                    "30" -> gameViewModel.changeStartingLife(30)
                     "40" -> gameViewModel.changeStartingLife(40)
                     "Custom" -> {
                         CustomLifeDialogFragment().show(parentFragmentManager, CustomLifeDialogFragment.TAG)
