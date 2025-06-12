@@ -14,7 +14,7 @@ import com.example.mtglifetracker.R
 class SettingsDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val settingsOptions = arrayOf("Number of Players", "Starting Life", "Reset Game")
+        val settingsOptions = arrayOf("Number of Players", "Starting Life", "Manage profiles", "Reset Game")
 
         val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, settingsOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -35,6 +35,9 @@ class SettingsDialogFragment : DialogFragment() {
                         StartingLifeDialogFragment().show(parentFragmentManager, StartingLifeDialogFragment.TAG)
                     }
                     2 -> {
+                        // "Create a profile" - No action yet
+                    }
+                    3 -> {
                         ResetConfirmationDialogFragment().show(parentFragmentManager, ResetConfirmationDialogFragment.TAG)
                     }
                 }

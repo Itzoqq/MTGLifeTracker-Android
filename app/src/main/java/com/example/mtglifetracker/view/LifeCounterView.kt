@@ -5,7 +5,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.isVisible
 
 /**
  * A custom TextView designed to act as a life counter button. It detects touches
@@ -29,12 +31,24 @@ class LifeCounterView @JvmOverloads constructor(
     private var isHeldDown = false
     private var isIncreasing = false
 
+    private val dismissableOverlays = mutableListOf<View>()
+
     // Configuration for the hold-to-update feature
     private val initialDelay = 400L  // Time to wait before continuous updates start
     private val startInterval = 150L // The initial interval between updates
     private val minInterval = 50L    // The fastest interval for updates
     private val accelerationRate = 10L  // How much to decrease the interval on each step (in ms)
     private var currentInterval = startInterval
+
+    fun addDismissableOverlay(view: View) {
+        if (!dismissableOverlays.contains(view)) {
+            dismissableOverlays.add(view)
+        }
+    }
+
+    fun clearDismissableOverlays() {
+        dismissableOverlays.clear()
+    }
 
     /**
      * This Runnable handles the continuous updates for a long-press gesture.
@@ -67,6 +81,14 @@ class LifeCounterView @JvmOverloads constructor(
      * Overrides the default touch event handling to implement custom click and hold logic.
      */
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            val wasOverlayVisible = dismissableOverlays.any { it.isVisible }
+            if (wasOverlayVisible) {
+                dismissableOverlays.forEach { it.visibility = GONE }
+                return true // Consume the touch; don't change life total.
+            }
+        }
+
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 isHeldDown = true

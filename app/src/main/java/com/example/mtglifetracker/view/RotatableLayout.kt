@@ -5,7 +5,9 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.graphics.withSave
 import com.example.mtglifetracker.R
@@ -23,6 +25,8 @@ class RotatableLayout @JvmOverloads constructor(
     // Public properties to expose the inner views to the MainActivity.
     val lifeCounter: LifeCounterView
     val deltaCounter: TextView
+    val playerSettingsIcon: ImageView
+    val playerSettingsPopup: View
 
     internal var angle: Int = 0
 
@@ -48,6 +52,8 @@ class RotatableLayout @JvmOverloads constructor(
         // Find the views within the inflated layout and assign them to the public properties.
         lifeCounter = findViewById(R.id.lifeCounter)
         deltaCounter = findViewById(R.id.deltaCounter)
+        playerSettingsIcon = findViewById(R.id.player_settings_icon)
+        playerSettingsPopup = findViewById(R.id.player_settings_popup)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

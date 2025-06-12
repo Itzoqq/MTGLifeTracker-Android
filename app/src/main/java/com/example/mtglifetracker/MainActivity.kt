@@ -17,6 +17,7 @@ import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import androidx.core.view.isVisible
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -46,26 +47,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateUiForNewState(gameState: GameState) {
-        if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
-            playerLayoutManager.createPlayerLayouts(gameState.playerCount)
+    private fun updateUiForNewState(GameState: GameState) {
+        if (playerLayoutManager.playerSegments.size != GameState.playerCount) {
+            playerLayoutManager.createPlayerLayouts(GameState.playerCount)
             binding.mainContainer.addView(binding.settingsIcon)
         }
 
-        // ***FIXED*** The typo 'playerLayoutManger' is corrected to 'playerLayoutManager'
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
+            // Clear any previous overlays and register the new one.
+            // This prevents issues when the layout is rebuilt.
+            segment.lifeCounter.clearDismissableOverlays()
+            segment.lifeCounter.addDismissableOverlay(segment.playerSettingsPopup)
+
+            // The icon now toggles the visibility of the in-layout popup.
+            segment.playerSettingsIcon.setOnClickListener {
+                val popup = segment.playerSettingsPopup
+                popup.visibility = if (popup.isVisible) View.GONE else View.VISIBLE
+            }
+
             setDynamicLifeTapListener(segment.lifeCounter, index)
 
-            if (index < gameState.players.size) {
-                val player = gameState.players[index]
+            if (index < GameState.players.size) {
+                val player = GameState.players[index]
                 segment.lifeCounter.text = player.life.toString()
 
-                val isDeltaActive = gameState.activeDeltaPlayers.contains(index)
-                val delta = gameState.playerDeltas.getOrNull(index) ?: 0
+                val isDeltaActive = GameState.activeDeltaPlayers.contains(index)
+                val delta = GameState.playerDeltas.getOrNull(index) ?: 0
 
                 val layoutParams = segment.deltaCounter.layoutParams as ConstraintLayout.LayoutParams
 
-                val playerCount = gameState.playerCount
+                val playerCount = GameState.playerCount
                 val angle = segment.angle
                 val isSidewaysSegment = angle == 90 || angle == -90 || angle == 270
 
