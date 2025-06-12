@@ -1,9 +1,7 @@
 package com.example.mtglifetracker.view
 
-import android.content.Context
 import android.view.View
 import android.view.ViewGroup
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.action.ViewActions.click
@@ -11,16 +9,15 @@ import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.mtglifetracker.DatabaseClearingRule
 import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
-import com.example.mtglifetracker.data.AppDatabase
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.AssertionFailedError
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.TypeSafeMatcher
-import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,24 +39,16 @@ class PlayerCountDialogFragmentTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
+    @get:Rule(order = 1)
+    val clearDatabaseRule = DatabaseClearingRule()
+
     /**
      * ActivityScenarioRule launches the MainActivity before each test.
      * This provides a consistent starting point for UI tests.
      */
-    @get:Rule(order = 1)
+    @get:Rule(order = 2)
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
-    /**
-     * This method runs after each test to clear all data from the database.
-     * This ensures that each test starts with a fresh, default state.
-     */
-    @After
-    fun tearDown() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val db = AppDatabase.getDatabase(context)
-        db.clearAllTables()
-        activityRule.scenario.recreate()
-    }
 
     /**
      * Tests the entire flow of changing the number of players from the default (2) to 4.

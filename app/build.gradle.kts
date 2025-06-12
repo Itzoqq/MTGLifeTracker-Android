@@ -129,7 +129,6 @@ tasks.register("runAllTests") {
     dependsOn("testDebugUnitTest", "connectedDebugAndroidTest")
 }
 
-// Task to generate a unified JaCoCo test report
 tasks.register("jacocoTestReport", JacocoReport::class) {
     dependsOn("testDebugUnitTest", "createDebugCoverageReport")
 

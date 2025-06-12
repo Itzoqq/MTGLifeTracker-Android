@@ -1,10 +1,8 @@
 package com.example.mtglifetracker.view
 
-import android.content.Context
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.GeneralClickAction
@@ -18,15 +16,14 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.mtglifetracker.DatabaseClearingRule
 import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
-import com.example.mtglifetracker.data.AppDatabase
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
-import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,20 +42,11 @@ class ResetGameFlowTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 1)
-    val activityRule = ActivityScenarioRule(MainActivity::class.java)
+    @get:Rule(order = 2)
+    val clearDatabaseRule = DatabaseClearingRule()
 
-    /**
-     * This method runs after each test to clear all data from the database.
-     * This ensures that each test starts with a fresh, default state.
-     */
-    @After
-    fun tearDown() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val db = AppDatabase.getDatabase(context)
-        db.clearAllTables()
-        activityRule.scenario.recreate()
-    }
+    @get:Rule(order = 3)
+    val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     // A specific matcher to target the LifeCounterView for the player at angle 0.
     private val lifeCounterForPlayerAtAngleZero = allOf(

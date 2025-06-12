@@ -1,12 +1,10 @@
 package com.example.mtglifetracker
 
-import android.content.Context
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.GeneralClickAction
@@ -18,7 +16,6 @@ import androidx.test.espresso.matcher.BoundedMatcher
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.mtglifetracker.data.AppDatabase
 import com.example.mtglifetracker.view.LifeCounterView
 import com.example.mtglifetracker.view.RotatableLayout
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -27,7 +24,6 @@ import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
-import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,18 +37,10 @@ class MainActivityUITest {
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    val activityRule = ActivityScenarioRule(MainActivity::class.java)
+    val clearDatabaseRule = DatabaseClearingRule()
 
-    /**
-     * This method runs after each test to clear all data from the database.
-     * This ensures that each test starts with a fresh, default state.
-     */
-    @After
-    fun tearDown() {
-        val context: Context = ApplicationProvider.getApplicationContext()
-        val db = AppDatabase.getDatabase(context)
-        db.clearAllTables()
-    }
+    @get:Rule(order = 2)
+    val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
     fun settingsIcon_shouldBeDisplayed_onLaunch() {
