@@ -133,4 +133,12 @@ class GameViewModelTest {
         // Verify the reset function was finally called once.
         verify(mockRepository).resetDeltaForPlayer(playerIndex)
     }
+
+    @Test
+    fun changeStartingLife_shouldCallRepository() = runTest {
+        val newStartingLife = 20
+        viewModel.changeStartingLife(newStartingLife)
+        dispatcher.scheduler.runCurrent()
+        verify(mockRepository).changeStartingLife(newStartingLife)
+    }
 }

@@ -46,19 +46,21 @@ class DaosTest {
     @Test
     @Throws(Exception::class)
     fun settingsDao_saveAndGetSettings() = runTest {
-        val newSettings = GameSettings(playerCount = 4)
+        val newSettings = GameSettings(playerCount = 4, startingLife = 20)
         settingsDao.saveSettings(newSettings)
 
         val retrievedSettings = settingsDao.getSettings().first()
         assertEquals(4, retrievedSettings?.playerCount)
+        assertEquals(20, retrievedSettings?.startingLife)
     }
 
     @Test
     @Throws(Exception::class)
     fun playerDao_insertAndGetPlayers() = runTest {
+        // ***FIXED***: Added the 'life' parameter here
         val players = listOf(
-            Player(gameSize = 2, playerIndex = 0, name = "Player 1"),
-            Player(gameSize = 2, playerIndex = 1, name = "Player 2")
+            Player(gameSize = 2, playerIndex = 0, name = "Player 1", life = 40),
+            Player(gameSize = 2, playerIndex = 1, name = "Player 2", life = 40)
         )
         playerDao.insertAll(players)
 
@@ -70,6 +72,7 @@ class DaosTest {
     @Test
     @Throws(Exception::class)
     fun playerDao_updatePlayer() = runTest {
+        // ***FIXED***: Added the 'life' parameter here
         val player = Player(gameSize = 2, playerIndex = 0, life = 40)
         playerDao.insertAll(listOf(player))
 
@@ -83,9 +86,10 @@ class DaosTest {
     @Test
     @Throws(Exception::class)
     fun playerDao_deletePlayersForGame() = runTest {
+        // ***FIXED***: Added the 'life' parameter here
         val players = listOf(
-            Player(gameSize = 2, playerIndex = 0),
-            Player(gameSize = 4, playerIndex = 0)
+            Player(gameSize = 2, playerIndex = 0, life = 40),
+            Player(gameSize = 4, playerIndex = 0, life = 20)
         )
         playerDao.insertAll(players)
 
@@ -101,9 +105,10 @@ class DaosTest {
     @Test
     @Throws(Exception::class)
     fun playerDao_deleteAll() = runTest {
+        // ***FIXED***: Added the 'life' parameter here
         val players = listOf(
-            Player(gameSize = 2, playerIndex = 0),
-            Player(gameSize = 4, playerIndex = 0)
+            Player(gameSize = 2, playerIndex = 0, life = 40),
+            Player(gameSize = 4, playerIndex = 0, life = 20)
         )
         playerDao.insertAll(players)
 

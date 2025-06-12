@@ -8,7 +8,7 @@
       <SelectionState runConfigName="MTG_Life_Tracker">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="SettingsFlowTest">
+      <SelectionState runConfigName="StartingLifeFlowTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
