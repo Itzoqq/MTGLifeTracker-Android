@@ -23,4 +23,8 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    // New suspend function for the UI to call for validation.
+    suspend fun doesNicknameExist(nickname: String): Boolean {
+        return repository.doesNicknameExist(nickname)
+    }
 }

@@ -12,4 +12,9 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
     suspend fun addProfile(profile: Profile) {
         profileDao.insert(profile)
     }
+
+    // New method to check for nickname existence using the DAO.
+    suspend fun doesNicknameExist(nickname: String): Boolean {
+        return profileDao.getProfileByNickname(nickname) != null
+    }
 }

@@ -13,9 +13,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.graphics.toColorInt
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class CreateProfileDialogFragment : DialogFragment() {
@@ -35,7 +37,7 @@ class CreateProfileDialogFragment : DialogFragment() {
 
         builder.setView(view)
             .setTitle("Create Profile")
-            .setPositiveButton("Save", null) // Set to null to override and control closing
+            .setPositiveButton("Save", null)
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.cancel()
             }
@@ -46,12 +48,20 @@ class CreateProfileDialogFragment : DialogFragment() {
             val saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             saveButton.setOnClickListener {
                 val nickname = nicknameEditText.text.toString().trim()
-                // *** THE FIX: Re-introducing the check for nickname length ***
                 if (nickname.length < 3) {
                     Toast.makeText(requireContext(), "Nickname must be at least 3 characters", Toast.LENGTH_SHORT).show()
                 } else {
-                    profileViewModel.addProfile(nickname, selectedColor)
-                    dialog.dismiss()
+                    // Launch a coroutine to perform the database check
+                    lifecycleScope.launch {
+                        if (profileViewModel.doesNicknameExist(nickname)) {
+                            // If it exists, show an error Toast
+                            Toast.makeText(requireContext(), "Nickname already exists.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // If it doesn't exist, add the profile and close the dialog
+                            profileViewModel.addProfile(nickname, selectedColor)
+                            dialog.dismiss()
+                        }
+                    }
                 }
             }
         }
@@ -89,36 +99,30 @@ class CreateProfileDialogFragment : DialogFragment() {
         val selectedStrokeWidth = resources.getDimensionPixelSize(R.dimen.selected_stroke_width)
         val defaultStrokeWidth = resources.getDimensionPixelSize(R.dimen.default_stroke_width)
 
-        // Drawable for the selected state
         val selectedDrawable = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(color)
             setStroke(selectedStrokeWidth, Color.WHITE)
         }
 
-        // Drawable for the default state
         val defaultDrawable = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(color)
             setStroke(defaultStrokeWidth, Color.GRAY)
         }
 
-        // StateListDrawable to switch between default and selected states
         return StateListDrawable().apply {
             addState(intArrayOf(android.R.attr.state_selected), selectedDrawable)
-            addState(intArrayOf(), defaultDrawable) // Default state must be last
+            addState(intArrayOf(), defaultDrawable)
         }
     }
 
     private fun selectColor(selectedView: View, colorString: String) {
-        // If the same color is tapped again, deselect it
         if (selectedColor == colorString) {
             selectedView.isSelected = false
             selectedColor = null
         } else {
-            // Deselect all other swatches
             colorSwatches.forEach { it.isSelected = false }
-            // Select the new one
             selectedView.isSelected = true
             selectedColor = colorString
         }

@@ -11,19 +11,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.model.Profile
 
-// Accept a click listener in the constructor
 class ProfileAdapter(private val onProfileClicked: (Profile) -> Unit) : ListAdapter<Profile, ProfileAdapter.ProfileViewHolder>(ProfileDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProfileViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_profile, parent, false)
         return ProfileViewHolder(view).apply {
-            // Set the click listener on the item view itself
-            itemView.setOnClickListener {
-                // Ensure the position is valid
+            // Change to a long-click listener
+            itemView.setOnLongClickListener {
                 if (adapterPosition != RecyclerView.NO_POSITION) {
-                    // Trigger the lambda with the clicked profile
                     onProfileClicked(getItem(adapterPosition))
                 }
+                // Return true to indicate we've handled the event
+                // and no further action (like a regular click) should be processed.
+                true
             }
         }
     }

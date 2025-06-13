@@ -28,9 +28,18 @@ class ManageProfilesDialogFragment : DialogFragment() {
         val recyclerView: RecyclerView = view.findViewById(R.id.rv_profiles)
         val emptyTextView: TextView = view.findViewById(R.id.tv_empty_profiles)
 
-        // Initialize the adapter and pass the click handler lambda
+        // --- Limit the height of the RecyclerView ---
+        // Get the screen height from the display metrics
+        val screenHeight = resources.displayMetrics.heightPixels
+        // Get the current layout parameters of the RecyclerView
+        val layoutParams = recyclerView.layoutParams
+        // Set the height to be 50% of the screen height
+        layoutParams.height = screenHeight / 2
+        // Apply the new layout parameters
+        recyclerView.layoutParams = layoutParams
+        // --- End of height limit logic ---
+
         val profileAdapter = ProfileAdapter { profile ->
-            // When a profile is clicked, create and show the EditProfileDialogFragment
             EditDeleteProfileDialogFragment.newInstance(profile.id, profile.nickname)
                 .show(parentFragmentManager, EditDeleteProfileDialogFragment.TAG)
         }
@@ -58,10 +67,6 @@ class ManageProfilesDialogFragment : DialogFragment() {
 
         builder.setView(view)
             .setTitle("Manage Profiles")
-            .setNegativeButton("Close") { dialog, _ ->
-                dialog.cancel()
-            }
-
         return builder.create()
     }
 
