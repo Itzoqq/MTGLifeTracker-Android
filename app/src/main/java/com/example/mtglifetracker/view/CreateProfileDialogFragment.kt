@@ -15,6 +15,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.mtglifetracker.R
+import com.example.mtglifetracker.model.Profile
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -26,7 +27,15 @@ class CreateProfileDialogFragment : DialogFragment() {
     private var selectedColor: String? = null
     private val colorSwatches = mutableListOf<View>()
 
+    // Define the colors as a class property to access them later
+    private val colors = listOf(
+        "#F44336", "#9C27B0", "#2196F3", "#4CAF50", "#FFEB3B", "#FF9800"
+    )
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val editingProfileId = arguments?.getLong(ARG_EDIT_MODE_ID, -1L)
+        val isEditMode = editingProfileId != -1L
+
         val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
         val inflater = requireActivity().layoutInflater
         val view = inflater.inflate(R.layout.dialog_create_profile, null)
@@ -36,44 +45,66 @@ class CreateProfileDialogFragment : DialogFragment() {
         setupColorGrid(colorGrid)
 
         builder.setView(view)
-            .setTitle("Create Profile")
+            .setTitle(if (isEditMode) "Edit Profile" else "Create Profile")
             .setPositiveButton("Save", null)
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.cancel()
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+
+        if (isEditMode) {
+            val nickname = arguments?.getString(ARG_EDIT_MODE_NICKNAME) ?: ""
+            val color = arguments?.getString(ARG_EDIT_MODE_COLOR)
+
+            nicknameEditText.setText(nickname)
+            nicknameEditText.isEnabled = false // Disable editing the nickname
+
+            // Pre-select the existing color
+            color?.let { savedColor ->
+                val colorIndex = colors.indexOf(savedColor)
+                if (colorIndex != -1) {
+                    val swatchToSelect = colorSwatches.getOrNull(colorIndex)
+                    swatchToSelect?.let { selectColor(it, savedColor) }
+                } else {
+                    // if color is not in our list, we can't pre-select it
+                    selectedColor = savedColor
+                }
             }
+        }
 
         val dialog = builder.create()
 
         dialog.setOnShowListener {
             val saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             saveButton.setOnClickListener {
-                val nickname = nicknameEditText.text.toString().trim()
-                if (nickname.length < 3) {
-                    Toast.makeText(requireContext(), "Nickname must be at least 3 characters", Toast.LENGTH_SHORT).show()
+                if (isEditMode) {
+                    // Logic for UPDATING an existing profile
+                    val updatedProfile = Profile(
+                        id = editingProfileId!!,
+                        nickname = nicknameEditText.text.toString(), // Use existing nickname
+                        color = selectedColor
+                    )
+                    profileViewModel.updateProfile(updatedProfile)
+                    dialog.dismiss()
                 } else {
-                    // Launch a coroutine to perform the database check
-                    lifecycleScope.launch {
-                        if (profileViewModel.doesNicknameExist(nickname)) {
-                            // If it exists, show an error Toast
-                            Toast.makeText(requireContext(), "Nickname already exists.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            // If it doesn't exist, add the profile and close the dialog
-                            profileViewModel.addProfile(nickname, selectedColor)
-                            dialog.dismiss()
+                    // Logic for CREATING a new profile
+                    val nickname = nicknameEditText.text.toString().trim()
+                    if (nickname.length < 3) {
+                        Toast.makeText(requireContext(), "Nickname must be at least 3 characters", Toast.LENGTH_SHORT).show()
+                    } else {
+                        lifecycleScope.launch {
+                            if (profileViewModel.doesNicknameExist(nickname)) {
+                                Toast.makeText(requireContext(), "Nickname already exists.", Toast.LENGTH_SHORT).show()
+                            } else {
+                                profileViewModel.addProfile(nickname, selectedColor)
+                                dialog.dismiss()
+                            }
                         }
                     }
                 }
             }
         }
-
         return dialog
     }
 
     private fun setupColorGrid(grid: GridLayout) {
-        val colors = listOf(
-            "#F44336", "#9C27B0", "#2196F3", "#4CAF50", "#FFEB3B", "#FF9800"
-        )
-
         colors.forEach { colorString ->
             val swatch = View(requireContext()).apply {
                 val swatchSize = resources.getDimensionPixelSize(R.dimen.color_swatch_size)
@@ -84,9 +115,7 @@ class CreateProfileDialogFragment : DialogFragment() {
                 }
                 layoutParams = params
                 background = createColorSwatch(colorString)
-                setOnClickListener {
-                    selectColor(this, colorString)
-                }
+                setOnClickListener { selectColor(this, colorString) }
             }
             colorSwatches.add(swatch)
             grid.addView(swatch)
@@ -95,22 +124,18 @@ class CreateProfileDialogFragment : DialogFragment() {
 
     private fun createColorSwatch(colorString: String): StateListDrawable {
         val color = colorString.toColorInt()
-
         val selectedStrokeWidth = resources.getDimensionPixelSize(R.dimen.selected_stroke_width)
         val defaultStrokeWidth = resources.getDimensionPixelSize(R.dimen.default_stroke_width)
-
         val selectedDrawable = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(color)
             setStroke(selectedStrokeWidth, Color.WHITE)
         }
-
         val defaultDrawable = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(color)
             setStroke(defaultStrokeWidth, Color.GRAY)
         }
-
         return StateListDrawable().apply {
             addState(intArrayOf(android.R.attr.state_selected), selectedDrawable)
             addState(intArrayOf(), defaultDrawable)
@@ -130,5 +155,20 @@ class CreateProfileDialogFragment : DialogFragment() {
 
     companion object {
         const val TAG = "CreateProfileDialogFragment"
+        private const val ARG_EDIT_MODE_ID = "edit_mode_id"
+        private const val ARG_EDIT_MODE_NICKNAME = "edit_mode_nickname"
+        private const val ARG_EDIT_MODE_COLOR = "edit_mode_color"
+
+        // New factory method for launching in edit mode
+        fun newInstanceForEdit(profile: Profile): CreateProfileDialogFragment {
+            val args = Bundle().apply {
+                putLong(ARG_EDIT_MODE_ID, profile.id)
+                putString(ARG_EDIT_MODE_NICKNAME, profile.nickname)
+                profile.color?.let { putString(ARG_EDIT_MODE_COLOR, it) }
+            }
+            return CreateProfileDialogFragment().apply {
+                arguments = args
+            }
+        }
     }
 }

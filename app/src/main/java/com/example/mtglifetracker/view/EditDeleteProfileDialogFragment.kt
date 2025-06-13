@@ -7,24 +7,29 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.example.mtglifetracker.R
+import com.example.mtglifetracker.viewmodel.ProfileViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
-// Renamed as requested
+@AndroidEntryPoint // Add Hilt annotation
 class EditDeleteProfileDialogFragment : DialogFragment() {
+
+    // Inject the ViewModel to fetch profile data
+    private val profileViewModel: ProfileViewModel by viewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val profileName = arguments?.getString(ARG_PROFILE_NAME) ?: "Profile"
+        val profileId = arguments?.getLong(ARG_PROFILE_ID) ?: -1L
         val options = arrayOf("Edit", "Delete")
 
-        // Create a custom adapter to set the text color of the items to white.
         val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, options) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                // Get the default list item view
                 val view = super.getView(position, convertView, parent)
-                // Find the TextView within the list item and set its color to white
                 val textView = view.findViewById<TextView>(android.R.id.text1)
                 textView.setTextColor(Color.WHITE)
                 return view
@@ -32,20 +37,29 @@ class EditDeleteProfileDialogFragment : DialogFragment() {
         }
 
         return AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-            .setTitle("Manage profile: $profileName")
-            // Use setAdapter instead of setItems to apply the custom text color
+            .setTitle("Manage $profileName")
             .setAdapter(adapter) { dialog, which ->
                 when (options[which]) {
                     "Edit" -> {
-                        Toast.makeText(requireContext(), "Edit clicked (not implemented)", Toast.LENGTH_SHORT).show()
+                        // Launch a coroutine to fetch the profile
+                        lifecycleScope.launch {
+                            val profile = profileViewModel.getProfile(profileId)
+                            if (profile != null) {
+                                // Launch the Create/Edit dialog in edit mode
+                                CreateProfileDialogFragment.newInstanceForEdit(profile)
+                                    .show(parentFragmentManager, CreateProfileDialogFragment.TAG)
+                            }
+                        }
                     }
                     "Delete" -> {
-                        Toast.makeText(requireContext(), "Delete clicked (not implemented)", Toast.LENGTH_SHORT).show()
+                        if (profileId != -1L) {
+                            DeleteConfirmationDialogFragment.newInstance(profileId, profileName)
+                                .show(parentFragmentManager, DeleteConfirmationDialogFragment.TAG)
+                        }
                     }
                 }
                 dialog.dismiss()
             }
-            // The negative button is removed as requested.
             .create()
     }
 

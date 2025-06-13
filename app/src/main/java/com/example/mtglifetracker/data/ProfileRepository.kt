@@ -17,4 +17,16 @@ class ProfileRepository @Inject constructor(private val profileDao: ProfileDao) 
     suspend fun doesNicknameExist(nickname: String): Boolean {
         return profileDao.getProfileByNickname(nickname) != null
     }
+
+    suspend fun deleteProfile(profileId: Long) {
+        profileDao.deleteById(profileId)
+    }
+
+    suspend fun updateProfile(profile: Profile) {
+        profileDao.update(profile)
+    }
+
+    suspend fun getProfile(profileId: Long): Profile? {
+        return profileDao.getById(profileId)
+    }
 }

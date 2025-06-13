@@ -27,4 +27,21 @@ class ProfileViewModel @Inject constructor(
     suspend fun doesNicknameExist(nickname: String): Boolean {
         return repository.doesNicknameExist(nickname)
     }
+
+    fun deleteProfile(profileId: Long) {
+        viewModelScope.launch {
+            repository.deleteProfile(profileId)
+        }
+    }
+
+    fun updateProfile(profile: Profile) {
+        viewModelScope.launch {
+            repository.updateProfile(profile)
+        }
+    }
+
+    suspend fun getProfile(profileId: Long): Profile? {
+        return repository.getProfile(profileId)
+    }
+
 }
