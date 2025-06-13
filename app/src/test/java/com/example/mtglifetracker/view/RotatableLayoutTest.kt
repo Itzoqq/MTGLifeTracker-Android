@@ -6,13 +6,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.View.MeasureSpec
 import android.widget.FrameLayout
-import androidx.test.core.app.ApplicationProvider
+import com.example.mtglifetracker.ThemedRobolectricTest
 import junit.framework.TestCase.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
@@ -22,15 +20,15 @@ import org.robolectric.annotation.Config
  * This class uses Robolectric to test the custom measurement and touch
  * transformation logic of the RotatableLayout.
  */
-@RunWith(RobolectricTestRunner::class)
+// No @RunWith here, it's inherited from ThemedRobolectricTest
 @Config(sdk = [34])
-class RotatableLayoutTest {
+class RotatableLayoutTest : ThemedRobolectricTest() { // Extends our base class
 
-    private lateinit var context: Context
     private lateinit var rotatableLayout: RotatableLayout
     private lateinit var touchEventRecordingView: TouchEventRecordingView
 
     // A simple view that records the last touch event it received.
+    // THIS WAS THE MISSING PIECE.
     private class TouchEventRecordingView(context: Context) : View(context) {
         var lastMotionEvent: MotionEvent? = null
         override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -41,11 +39,9 @@ class RotatableLayoutTest {
 
     @Before
     fun setUp() {
-        context = ApplicationProvider.getApplicationContext()
-        rotatableLayout = RotatableLayout(context)
-
-        // Replace the inflated children with our test view to capture touch events.
-        touchEventRecordingView = TouchEventRecordingView(context)
+        // themedContext is provided by the base class
+        rotatableLayout = RotatableLayout(themedContext)
+        touchEventRecordingView = TouchEventRecordingView(themedContext)
 
         val params = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -53,7 +49,6 @@ class RotatableLayoutTest {
         )
         rotatableLayout.addView(touchEventRecordingView, params)
 
-        // Define the layout's size for consistent testing.
         rotatableLayout.measure(
             MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY)
@@ -63,12 +58,14 @@ class RotatableLayoutTest {
 
     @Test
     fun initialization_shouldInflateLayoutAndFindViews() {
-        // We need a fresh instance since setUp() replaces children.
-        val layout = RotatableLayout(context)
+        // We need a fresh instance, using the themedContext
+        val layout = RotatableLayout(themedContext)
         assertNotNull("LifeCounterView should not be null", layout.lifeCounter)
         assertNotNull("DeltaCounter TextView should not be null", layout.deltaCounter)
         assertEquals("Default angle should be 0", 0, layout.angle)
     }
+
+    // ... All other tests remain the same, no changes needed below this line ...
 
     @Test
     fun onMeasure_shouldNotSwapDimensions_whenAngleIs0() {

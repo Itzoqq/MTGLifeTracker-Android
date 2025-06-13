@@ -1,13 +1,10 @@
 package com.example.mtglifetracker.view
 
-import android.content.Context
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.test.core.app.ApplicationProvider
+import com.example.mtglifetracker.ThemedRobolectricTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
@@ -16,19 +13,18 @@ import org.robolectric.annotation.Config
  * This class uses Robolectric to test the view creation and constraint logic
  * for each supported player count, ensuring the layout is constructed correctly.
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34]) // Use a supported SDK version for Robolectric
-class PlayerLayoutManagerTest {
+// No @RunWith here, it's inherited from ThemedRobolectricTest
+@Config(sdk = [34])
+class PlayerLayoutManagerTest : ThemedRobolectricTest() { // Extends our base class
 
-    private lateinit var context: Context
     private lateinit var container: ConstraintLayout
     private lateinit var playerLayoutManager: PlayerLayoutManager
 
     @Before
     fun setUp() {
-        context = ApplicationProvider.getApplicationContext()
-        container = ConstraintLayout(context)
-        playerLayoutManager = PlayerLayoutManager(container, context)
+        // themedContext is provided by the base class
+        container = ConstraintLayout(themedContext)
+        playerLayoutManager = PlayerLayoutManager(container, themedContext)
     }
 
     @Test
