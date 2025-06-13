@@ -27,12 +27,17 @@ class ManageProfilesDialogFragment : DialogFragment() {
 
         val recyclerView: RecyclerView = view.findViewById(R.id.rv_profiles)
         val emptyTextView: TextView = view.findViewById(R.id.tv_empty_profiles)
-        val profileAdapter = ProfileAdapter()
+
+        // Initialize the adapter and pass the click handler lambda
+        val profileAdapter = ProfileAdapter { profile ->
+            // When a profile is clicked, create and show the EditProfileDialogFragment
+            EditDeleteProfileDialogFragment.newInstance(profile.id, profile.nickname)
+                .show(parentFragmentManager, EditDeleteProfileDialogFragment.TAG)
+        }
 
         recyclerView.adapter = profileAdapter
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        // *** THE FIX: Changed viewLifecycleOwner.lifecycleScope to just lifecycleScope ***
         lifecycleScope.launch {
             profileViewModel.profiles.collect { profiles ->
                 profileAdapter.submitList(profiles)
