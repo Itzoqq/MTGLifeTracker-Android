@@ -26,15 +26,16 @@ class CreateProfileDialogFragment : DialogFragment() {
     private val profileViewModel: ProfileViewModel by viewModels()
     private var selectedColor: String? = null
     private val colorSwatches = mutableListOf<View>()
-
-    // Define the colors as a class property to access them later
     private val colors = listOf(
         "#F44336", "#9C27B0", "#2196F3", "#4CAF50", "#FFEB3B", "#FF9800"
     )
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val editingProfileId = arguments?.getLong(ARG_EDIT_MODE_ID, -1L)
-        val isEditMode = editingProfileId != -1L
+
+        // --- THIS IS THE FIX ---
+        // This check is now safer and correctly handles all cases.
+        val isEditMode = editingProfileId != null && editingProfileId != -1L
 
         val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
         val inflater = requireActivity().layoutInflater
@@ -43,6 +44,8 @@ class CreateProfileDialogFragment : DialogFragment() {
         val nicknameEditText: EditText = view.findViewById(R.id.et_nickname)
         val colorGrid: GridLayout = view.findViewById(R.id.grid_colors)
         setupColorGrid(colorGrid)
+
+        nicknameEditText.isEnabled = true
 
         builder.setView(view)
             .setTitle(if (isEditMode) "Edit Profile" else "Create Profile")
@@ -54,16 +57,14 @@ class CreateProfileDialogFragment : DialogFragment() {
             val color = arguments?.getString(ARG_EDIT_MODE_COLOR)
 
             nicknameEditText.setText(nickname)
-            nicknameEditText.isEnabled = false // Disable editing the nickname
+            nicknameEditText.isEnabled = false
 
-            // Pre-select the existing color
             color?.let { savedColor ->
                 val colorIndex = colors.indexOf(savedColor)
                 if (colorIndex != -1) {
                     val swatchToSelect = colorSwatches.getOrNull(colorIndex)
                     swatchToSelect?.let { selectColor(it, savedColor) }
                 } else {
-                    // if color is not in our list, we can't pre-select it
                     selectedColor = savedColor
                 }
             }
@@ -75,16 +76,14 @@ class CreateProfileDialogFragment : DialogFragment() {
             val saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             saveButton.setOnClickListener {
                 if (isEditMode) {
-                    // Logic for UPDATING an existing profile
                     val updatedProfile = Profile(
-                        id = editingProfileId!!,
-                        nickname = nicknameEditText.text.toString(), // Use existing nickname
+                        id = editingProfileId, // This is now safe
+                        nickname = nicknameEditText.text.toString(),
                         color = selectedColor
                     )
                     profileViewModel.updateProfile(updatedProfile)
                     dialog.dismiss()
                 } else {
-                    // Logic for CREATING a new profile
                     val nickname = nicknameEditText.text.toString().trim()
                     if (nickname.length < 3) {
                         Toast.makeText(requireContext(), "Nickname must be at least 3 characters", Toast.LENGTH_SHORT).show()
@@ -159,7 +158,6 @@ class CreateProfileDialogFragment : DialogFragment() {
         private const val ARG_EDIT_MODE_NICKNAME = "edit_mode_nickname"
         private const val ARG_EDIT_MODE_COLOR = "edit_mode_color"
 
-        // New factory method for launching in edit mode
         fun newInstanceForEdit(profile: Profile): CreateProfileDialogFragment {
             val args = Bundle().apply {
                 putLong(ARG_EDIT_MODE_ID, profile.id)
