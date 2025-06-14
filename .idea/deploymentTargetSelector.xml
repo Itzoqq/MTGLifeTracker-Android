@@ -8,7 +8,16 @@
       <SelectionState runConfigName="MTG_Life_Tracker">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="StartingLifeFlowTest">
+      <SelectionState runConfigName="ProfileDaoTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="fullProfileFlow_createEditDelete()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="ProfileFlowTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="editProfile_changeColor_isSuccessful()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

@@ -3,9 +3,10 @@ package com.example.mtglifetracker.view
 import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -13,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class DeleteConfirmationDialogFragment : DialogFragment() {
 
-    private val profileViewModel: ProfileViewModel by viewModels()
+    private val profileViewModel: ProfileViewModel by activityViewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val profileId = arguments?.getLong(ARG_PROFILE_ID) ?: -1
@@ -27,6 +28,7 @@ class DeleteConfirmationDialogFragment : DialogFragment() {
             }
             .setPositiveButton("DELETE") { _, _ ->
                 if (profileId != -1L) {
+                    Log.d("ProfileTest", "Delete button clicked for profile ID: $profileId")
                     profileViewModel.deleteProfile(profileId)
                 }
             }

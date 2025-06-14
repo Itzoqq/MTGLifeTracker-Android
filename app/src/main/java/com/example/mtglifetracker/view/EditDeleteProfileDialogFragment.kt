@@ -9,18 +9,17 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-@AndroidEntryPoint // Add Hilt annotation
+@AndroidEntryPoint
 class EditDeleteProfileDialogFragment : DialogFragment() {
 
-    // Inject the ViewModel to fetch profile data
-    private val profileViewModel: ProfileViewModel by viewModels()
+    private val profileViewModel: ProfileViewModel by activityViewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val profileName = arguments?.getString(ARG_PROFILE_NAME) ?: "Profile"
@@ -45,20 +44,25 @@ class EditDeleteProfileDialogFragment : DialogFragment() {
                         lifecycleScope.launch {
                             val profile = profileViewModel.getProfile(profileId)
                             if (profile != null) {
+                                // Dismiss this dialog after we have the profile
+                                dialog.dismiss()
                                 // Launch the Create/Edit dialog in edit mode
                                 CreateProfileDialogFragment.newInstanceForEdit(profile)
                                     .show(parentFragmentManager, CreateProfileDialogFragment.TAG)
+                            } else {
+                                dialog.dismiss()
                             }
                         }
                     }
                     "Delete" -> {
+                        // Dismiss this dialog first for delete
+                        dialog.dismiss()
                         if (profileId != -1L) {
                             DeleteConfirmationDialogFragment.newInstance(profileId, profileName)
                                 .show(parentFragmentManager, DeleteConfirmationDialogFragment.TAG)
                         }
                     }
                 }
-                dialog.dismiss()
             }
             .create()
     }

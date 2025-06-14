@@ -9,4 +9,5 @@
     <string name="add_new_profile">Add new profile</string>
     <string name="choose_a_profile">Choose a profile...</string>
     <string name="delete_profile">Delete profile</string>
+    <string name="nickname_required">Nickname (required)</string>
 </resources>

@@ -14,7 +14,7 @@
             android:id="@+id/tv_empty_profiles"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No profiles created yet."
+            android:text="@string/no_profiles_created_yet"
             android:textColor="@android:color/white"
             android:textSize="16sp"
             android:visibility="gone" />
@@ -32,7 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:contentDescription="Add new profile"
+        android:contentDescription="@string/add_new_profile"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/purple_500"
         app:tint="@android:color/white" />

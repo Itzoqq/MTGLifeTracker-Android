@@ -112,6 +112,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    implementation(libs.androidx.espresso.idling.resource)
     kaptAndroidTest(libs.hilt.android.compiler)
 }
 
