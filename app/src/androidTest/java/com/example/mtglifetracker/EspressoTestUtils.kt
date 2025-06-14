@@ -10,29 +10,14 @@ import androidx.test.espresso.action.GeneralClickAction
 import androidx.test.espresso.action.Press
 import androidx.test.espresso.action.Tap
 import androidx.test.espresso.matcher.BoundedMatcher
-import com.example.mtglifetracker.view.RotatableLayout
 import org.hamcrest.Description
 import android.view.ViewGroup
 import androidx.test.espresso.ViewAssertion
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
-
-/**
- * A collection of custom Espresso Matchers and ViewActions for UI testing.
- */
-
-// A reusable custom matcher to check the angle of a RotatableLayout.
-fun withAngle(expectedAngle: Int): Matcher<View> {
-    return object : BoundedMatcher<View, RotatableLayout>(RotatableLayout::class.java) {
-        override fun describeTo(description: Description) {
-            description.appendText("with angle: $expectedAngle")
-        }
-
-        override fun matchesSafely(item: RotatableLayout): Boolean {
-            return item.angle == expectedAngle
-        }
-    }
-}
+import android.os.SystemClock
+import androidx.test.espresso.UiController
+import androidx.test.espresso.matcher.ViewMatchers.isEnabled
 
 // A reusable custom matcher to check the text color of a TextView.
 fun withTextColor(expectedColorId: Int): Matcher<View> {
@@ -112,4 +97,38 @@ private fun countMatchingViews(view: View, matcher: Matcher<View>): Int {
         }
     }
     return count
+}
+
+fun forceClickInXPercent(pct: Int): ViewAction {
+    return object : ViewAction {
+        override fun getConstraints(): Matcher<View> {
+            // Looser constraint: The view only needs to be enabled.
+            return isEnabled()
+        }
+
+        override fun getDescription(): String {
+            return "force click at horizontal $pct percent"
+        }
+
+        override fun perform(uiController: UiController, view: View) {
+            // Get coordinates for the click
+            val coordinates = IntArray(2)
+            view.getLocationOnScreen(coordinates)
+            val x = coordinates[0] + (view.width * pct / 100f)
+            val y = coordinates[1] + (view.height / 2f)
+
+            // Create and inject the touch event
+            val downEvent = MotionEvent.obtain(SystemClock.uptimeMillis(), SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, x, y, 0)
+            val upEvent = MotionEvent.obtain(SystemClock.uptimeMillis(), SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x, y, 0)
+
+            try {
+                uiController.injectMotionEvent(downEvent)
+                uiController.injectMotionEvent(upEvent)
+                uiController.loopMainThreadUntilIdle()
+            } finally {
+                downEvent.recycle()
+                upEvent.recycle()
+            }
+        }
+    }
 }

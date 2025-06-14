@@ -10,6 +10,7 @@ import com.example.mtglifetracker.*
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.equalTo
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,16 +28,16 @@ class ResetGameFlowTest {
     @get:Rule(order = 2)
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
-    private val lifeCounterForPlayerAtAngleZero = allOf(
+    private val lifeCounterForPlayer2 = allOf(
         withId(R.id.lifeCounter),
-        isDescendantOfA(withAngle(0))
+        isDescendantOfA(withTagValue(equalTo("player_segment_1")))
     )
 
     @Test
     fun resetCurrentGame_shouldOnlyResetCurrentGameLifeTotals() {
         // Arrange
-        onView(lifeCounterForPlayerAtAngleZero).perform(clickInXPercent(25)) // Replaced with util
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("39")))
+        onView(lifeCounterForPlayer2).perform(clickInXPercent(25)) // Replaced with util
+        onView(lifeCounterForPlayer2).check(matches(withText("39")))
 
         // Act
         onView(withId(R.id.settingsIcon)).perform(click())
@@ -45,14 +46,14 @@ class ResetGameFlowTest {
         onView(withText("Reset")).perform(click())
 
         // Assert
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("40")))
+        onView(lifeCounterForPlayer2).check(matches(withText("40")))
     }
 
     @Test
     fun resetAllGames_shouldResetAllGameLifeTotals() {
         // Arrange
-        onView(lifeCounterForPlayerAtAngleZero).perform(clickInXPercent(25)) // Replaced with util
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("39")))
+        onView(lifeCounterForPlayer2).perform(clickInXPercent(25)) // Replaced with util
+        onView(lifeCounterForPlayer2).check(matches(withText("39")))
 
         // Act
         onView(withId(R.id.settingsIcon)).perform(click())
@@ -61,14 +62,14 @@ class ResetGameFlowTest {
         onView(withText("Reset")).perform(click())
 
         // Assert
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("40")))
+        onView(lifeCounterForPlayer2).check(matches(withText("40")))
     }
 
     @Test
     fun cancelReset_shouldNotChangeLifeTotals() {
         // Arrange
-        onView(lifeCounterForPlayerAtAngleZero).perform(clickInXPercent(25)) // Replaced with util
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("39")))
+        onView(lifeCounterForPlayer2).perform(clickInXPercent(25)) // Replaced with util
+        onView(lifeCounterForPlayer2).check(matches(withText("39")))
 
         // Act
         onView(withId(R.id.settingsIcon)).perform(click())
@@ -76,7 +77,7 @@ class ResetGameFlowTest {
         onView(withText("Cancel")).perform(click())
 
         // Assert
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("39")))
+        onView(lifeCounterForPlayer2).check(matches(withText("39")))
     }
 
     // The custom clickOnLeftHalf and withAngle helper methods have been removed.

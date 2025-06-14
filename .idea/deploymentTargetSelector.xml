@@ -8,16 +8,19 @@
       <SelectionState runConfigName="MTG_Life_Tracker">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ProfileDaoTest">
+      <SelectionState runConfigName="layout_shouldHaveWiderBias_for5PlayerGame()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="fullProfileFlow_createEditDelete()">
+      <SelectionState runConfigName="layout_shouldHaveWiderBias_for6PlayerGame()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ProfileFlowTest">
+      <SelectionState runConfigName="ResetGameFlowTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="editProfile_changeColor_isSuccessful()">
+      <SelectionState runConfigName="StartingLifeFlowTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="MainActivityUITest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

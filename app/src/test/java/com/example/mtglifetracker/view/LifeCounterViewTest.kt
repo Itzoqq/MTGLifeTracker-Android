@@ -14,6 +14,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import java.time.Duration
+import junit.framework.TestCase.assertEquals
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -107,5 +108,23 @@ class LifeCounterViewTest {
         verify(mockIncreaseListener, times(1)).invoke()
     }
 
-    // The createMotionEvent helper method has been removed.
+    @Test
+    fun touchEvent_whenOverlayIsVisible_shouldDismissOverlayAndNotChangeLife() {
+        // Arrange
+        val mockOverlay = View(ApplicationProvider.getApplicationContext())
+        mockOverlay.visibility = View.VISIBLE
+        lifeCounterView.addDismissableOverlay(mockOverlay)
+
+        // Act
+        lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_DOWN, 150f, 50f))
+        lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_UP, 150f, 50f))
+
+        // Assert
+        // Verify the overlay was hidden
+        assertEquals(View.GONE, mockOverlay.visibility)
+        // Verify that life change listeners were NOT called
+        verify(mockIncreaseListener, never()).invoke()
+        verify(mockDecreaseListener, never()).invoke()
+    }
+
 }

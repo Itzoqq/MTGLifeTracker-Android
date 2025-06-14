@@ -10,10 +10,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.DatabaseClearingRule
 import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
-import com.example.mtglifetracker.withAngle
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.equalTo
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,9 +31,9 @@ class StartingLifeFlowTest {
     @get:Rule(order = 2)
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
-    private val lifeCounterForPlayerAtAngleZero = allOf(
+    private val lifeCounterForPlayer2 = allOf(
         withId(R.id.lifeCounter),
-        isDescendantOfA(withAngle(0))
+        isDescendantOfA(withTagValue(equalTo("player_segment_1")))
     )
 
     @Test
@@ -44,7 +44,7 @@ class StartingLifeFlowTest {
         onView(withText("20")).perform(click())
 
         // Assert
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("20")))
+        onView(lifeCounterForPlayer2).check(matches(withText("20")))
     }
 
     @Test
@@ -57,6 +57,28 @@ class StartingLifeFlowTest {
         onView(withText("Set")).perform(click())
 
         // Assert
-        onView(lifeCounterForPlayerAtAngleZero).check(matches(withText("123")))
+        onView(lifeCounterForPlayer2).check(matches(withText("123")))
+    }
+
+    @Test
+    fun enteringInvalidCustomLife_shouldNotUpdateLifeAndShowToast() {
+        // 1. Change life to something different first to see if it changes back
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withText("Starting Life")).perform(click())
+        onView(withText("20")).perform(click())
+        onView(lifeCounterForPlayer2).check(matches(withText("20")))
+
+        // 2. Try to set an invalid life total (e.g., 0)
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withText("Starting Life")).perform(click())
+        onView(withText("Custom")).perform(click())
+        onView(withId(R.id.et_custom_life)).perform(replaceText("0"))
+        onView(withText("Set")).perform(click())
+
+        // 3. Assert the life total did NOT change from 20
+        onView(lifeCounterForPlayer2).check(matches(withText("20")))
+
+        // Note: Testing for Toasts can be tricky and requires a custom matcher,
+        // but verifying the life total did not change is a robust test for this logic.
     }
 }

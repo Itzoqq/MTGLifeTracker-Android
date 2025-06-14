@@ -13,7 +13,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -91,5 +93,16 @@ class ProfileViewModelTest {
         dispatcher.scheduler.runCurrent()
 
         verify(mockRepository).getProfile(profileId)
+    }
+
+    @Test
+    fun addProfile_withBlankNickname_doesNotCallRepository() = runTest {
+        // Act
+        viewModel.addProfile("   ", "#FFFFFF") // Blank nickname
+        dispatcher.scheduler.runCurrent()
+
+        // Assert
+        // Verify that the repository's addProfile method was NEVER called
+        verify(mockRepository, never()).addProfile(any())
     }
 }

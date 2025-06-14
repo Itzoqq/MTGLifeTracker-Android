@@ -1,5 +1,6 @@
 package com.example.mtglifetracker
 
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -10,7 +11,9 @@ import com.example.mtglifetracker.view.LifeCounterView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.not
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,24 +38,24 @@ class MainActivityUITest {
 
     @Test
     fun lifeTotal_shouldChange_andDeltaShouldAppear_whenPlayerSegmentIsClicked() {
+        // This matcher targets player 1's segment (index 0), which is rotated 180 degrees.
         val lifeCounterMatcher = allOf(
             withId(R.id.lifeCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_0")))
         )
         val deltaCounterMatcher = allOf(
             withId(R.id.deltaCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_0")))
         )
 
-        onView(lifeCounterMatcher).perform(clickInXPercent(25))
+        // FIX: Click right side (75%) to trigger a "decrease" on a 180-degree rotated view.
+        onView(lifeCounterMatcher).perform(forceClickInXPercent(75))
         onView(lifeCounterMatcher).check(matches(withText("39")))
         onView(deltaCounterMatcher).check(matches(allOf(isDisplayed(), withText("-1"))))
 
-        onView(lifeCounterMatcher).perform(clickInXPercent(75))
+        // FIX: Click left side (25%) to trigger an "increase" on a 180-degree rotated view.
+        onView(lifeCounterMatcher).perform(forceClickInXPercent(25))
         onView(lifeCounterMatcher).check(matches(withText("40")))
-        // Note: The delta text is now "0" but the view itself may still be visible briefly.
-        // A better check might be for the text or its visibility after a delay.
-        // For this test, we'll assume checking the text is sufficient.
         onView(deltaCounterMatcher).check(matches(allOf(isDisplayed(), withText("0"))))
     }
 
@@ -62,23 +65,22 @@ class MainActivityUITest {
         onView(withText("Number of Players")).perform(click())
         onView(withText("4")).perform(click())
 
-        // --- THIS IS THE CORRECTED LINE ---
-        // We now pass a Matcher and use withViewCount directly in check()
         onView(isRoot()).check(withViewCount(isAssignableFrom(LifeCounterView::class.java), 4))
     }
 
     @Test
     fun lifeIncrease_shouldShowPositiveDeltaColor() {
+        // REFACTORED: This matcher now explicitly targets player 2's segment (index 1).
         val lifeCounterMatcher = allOf(
             withId(R.id.lifeCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_1")))
         )
         val deltaCounterMatcher = allOf(
             withId(R.id.deltaCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_1")))
         )
 
-        onView(lifeCounterMatcher).perform(clickInXPercent(75))
+        onView(lifeCounterMatcher).perform(forceClickInXPercent(75))
 
         onView(deltaCounterMatcher).check(matches(allOf(
             isDisplayed(),
@@ -89,16 +91,18 @@ class MainActivityUITest {
 
     @Test
     fun lifeDecrease_shouldShowNegativeDeltaColor() {
+        // This matcher targets player 1's segment (index 0), which is rotated 180 degrees.
         val lifeCounterMatcher = allOf(
             withId(R.id.lifeCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_0")))
         )
         val deltaCounterMatcher = allOf(
             withId(R.id.deltaCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_0")))
         )
 
-        onView(lifeCounterMatcher).perform(clickInXPercent(25))
+        // FIX: Click right side (75%) to trigger a "decrease" on a 180-degree rotated view.
+        onView(lifeCounterMatcher).perform(forceClickInXPercent(75))
 
         onView(deltaCounterMatcher).check(matches(allOf(
             isDisplayed(),
@@ -109,20 +113,74 @@ class MainActivityUITest {
 
     @Test
     fun deltaCounter_shouldDisappear_afterTimeout() {
+        // REFACTORED: This matcher now explicitly targets player 1's segment (index 0).
         val lifeCounterMatcher = allOf(
             withId(R.id.lifeCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_0")))
         )
         val deltaCounterMatcher = allOf(
             withId(R.id.deltaCounter),
-            isDescendantOfA(withAngle(0))
+            isDescendantOfA(withTagValue(equalTo("player_segment_0")))
         )
 
-        onView(lifeCounterMatcher).perform(clickInXPercent(25))
+        onView(lifeCounterMatcher).perform(forceClickInXPercent(25))
         onView(deltaCounterMatcher).check(matches(isDisplayed()))
 
-        Thread.sleep(3000)
+        // This sleep is acceptable for testing a delayed action.
+        Thread.sleep(3100)
 
         onView(deltaCounterMatcher).check(matches(not(isDisplayed())))
+    }
+
+    @Test
+    fun layout_shouldHaveWiderBias_for5PlayerGame() {
+        // 1. Arrange: Change player count to 5
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withText("Number of Players")).perform(click())
+        onView(withText("5")).perform(click())
+
+        // 2. Act: Click a life counter using the "force" action.
+        // We use the tag to uniquely identify player segment 2.
+        val lifeCounterToClick = allOf(
+            withId(R.id.lifeCounter),
+            isDescendantOfA(withTagValue(equalTo("player_segment_2")))
+        )
+        onView(lifeCounterToClick).perform(forceClickInXPercent(25))
+
+        // 3. Assert: Check the bias on the now-visible delta counter.
+        val deltaCounterToCheck = allOf(
+            withId(R.id.deltaCounter),
+            withEffectiveVisibility(Visibility.VISIBLE)
+        )
+        onView(deltaCounterToCheck).check { view, _ ->
+            val params = view.layoutParams as ConstraintLayout.LayoutParams
+            assertEquals(0.75f, params.horizontalBias)
+        }
+    }
+
+    @Test
+    fun layout_shouldHaveWiderBias_for6PlayerGame() {
+        // 1. Arrange: Change player count to 6
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withText("Number of Players")).perform(click())
+        onView(withText("6")).perform(click())
+
+        // 2. Act: Click a life counter using the "force" action.
+        // We use the tag to uniquely identify player segment 0.
+        val lifeCounterToClick = allOf(
+            withId(R.id.lifeCounter),
+            isDescendantOfA(withTagValue(equalTo("player_segment_0")))
+        )
+        onView(lifeCounterToClick).perform(forceClickInXPercent(75))
+
+        // 3. Assert: Check the bias on the now-visible delta counter.
+        val deltaCounterToCheck = allOf(
+            withId(R.id.deltaCounter),
+            withEffectiveVisibility(Visibility.VISIBLE)
+        )
+        onView(deltaCounterToCheck).check { view, _ ->
+            val params = view.layoutParams as ConstraintLayout.LayoutParams
+            assertEquals(0.75f, params.horizontalBias)
+        }
     }
 }

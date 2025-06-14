@@ -1,6 +1,7 @@
 package com.example.mtglifetracker.view
 
 import android.content.Context
+import android.util.Log
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
@@ -31,8 +32,12 @@ class PlayerLayoutManager(
         container.removeAllViews()
         playerSegments.clear()
 
-        (1..playerCount).forEach { i ->
-            val segment = RotatableLayout(context).apply { id = View.generateViewId() }
+        (0 until playerCount).forEach { index ->
+            val segment = RotatableLayout(context).apply {
+                id = View.generateViewId()
+                // Add a unique tag for test identification
+                tag = "player_segment_$index"
+            }
             container.addView(segment)
             playerSegments.add(segment)
         }
@@ -49,6 +54,19 @@ class PlayerLayoutManager(
         }
 
         constraintSet.applyTo(container)
+
+        container.post {
+            Log.d("LayoutManagerTest", "--- Layout applied for $playerCount players ---")
+            playerSegments.forEachIndexed { index, segment ->
+                val rect = android.graphics.Rect()
+                segment.getGlobalVisibleRect(rect)
+                Log.d("LayoutManagerTest",
+                    "Segment $index (tag: ${segment.tag}): " +
+                            "width=${segment.width}, height=${segment.height}, " +
+                            "visibleRect=$rect"
+                )
+            }
+        }
     }
 
     private fun setupTwoPlayerLayout(constraintSet: ConstraintSet) {
