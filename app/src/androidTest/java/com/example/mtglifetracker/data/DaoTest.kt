@@ -21,7 +21,7 @@ import java.io.IOException
  * This class uses an in-memory database to ensure tests are fast and hermetic.
  */
 @RunWith(AndroidJUnit4::class)
-class DaosTest {
+class DaoTest {
 
     private lateinit var db: AppDatabase
     private lateinit var playerDao: PlayerDao
