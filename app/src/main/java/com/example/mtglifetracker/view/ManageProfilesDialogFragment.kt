@@ -71,12 +71,13 @@ class ManageProfilesDialogFragment : DialogFragment() {
 
                 // Tell Espresso the app is now busy
                 SingletonIdlingResource.increment()
-
-                profileAdapter.submitList(profiles.toList()) {
-                    // This callback runs after the list has been diffed and submitted.
-                    updateVisibility(profiles.isEmpty())
-
-                    // Tell Espresso the app is now idle
+                try {
+                    profileAdapter.submitList(profiles.toList()) {
+                        // This callback runs after the list has been diffed and submitted.
+                        updateVisibility(profiles.isEmpty())
+                    }
+                } finally {
+                    // This will now ALWAYS be called, even if submitList fails.
                     SingletonIdlingResource.decrement()
                 }
             }

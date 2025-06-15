@@ -94,7 +94,6 @@ dependencies {
     // --- Dependencies for local Unit Tests (for ViewModel, etc.) ---
     testImplementation(libs.junit)
     testImplementation(libs.core.ktx)
-    debugImplementation(libs.androidx.fragment.testing)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.inline)
@@ -112,6 +111,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.fragment.testing)
     implementation(libs.androidx.espresso.idling.resource)
     kaptAndroidTest(libs.hilt.android.compiler)
 }

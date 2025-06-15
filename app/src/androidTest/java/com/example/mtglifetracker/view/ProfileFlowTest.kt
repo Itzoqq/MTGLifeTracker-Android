@@ -51,6 +51,8 @@ class ProfileFlowTest {
 
     @Test
     fun fullProfileFlow_createEditDelete() {
+        onView(withId(R.id.settingsIcon)).check(matches(isDisplayed()))
+
         // 1. Open settings -> Manage Profiles
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Manage Profiles")).perform(click())
@@ -95,6 +97,8 @@ class ProfileFlowTest {
 
     @Test
     fun createProfile_shortNickname_showsError() {
+        onView(withId(R.id.settingsIcon)).check(matches(isDisplayed()))
+
         // Open manage profiles
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Manage Profiles")).perform(click())
@@ -116,6 +120,8 @@ class ProfileFlowTest {
 
     @Test
     fun createProfile_duplicateNickname_showsError() {
+        onView(withId(R.id.settingsIcon)).check(matches(isDisplayed()))
+
         // Create first profile
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Manage Profiles")).perform(click())
@@ -140,6 +146,8 @@ class ProfileFlowTest {
 
     @Test
     fun createProfile_emptyNickname_showsError() {
+        onView(withId(R.id.settingsIcon)).check(matches(isDisplayed()))
+
         // 1. Open manage profiles dialog
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Manage Profiles")).perform(click())
@@ -157,6 +165,8 @@ class ProfileFlowTest {
 
     @Test
     fun deleteProfile_cancelConfirmation_profileRemains() {
+        onView(withId(R.id.settingsIcon)).check(matches(isDisplayed()))
+
         // 1. Create a profile to work with
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Manage Profiles")).perform(click())
@@ -183,6 +193,8 @@ class ProfileFlowTest {
 
     @Test
     fun editProfile_changeColor_isSuccessful() {
+        onView(withId(R.id.settingsIcon)).check(matches(isDisplayed()))
+
         // 1. Create a profile with no color
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Manage Profiles")).perform(click())
