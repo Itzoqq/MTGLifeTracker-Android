@@ -24,4 +24,10 @@ interface PlayerDao {
 
     @Query("DELETE FROM players")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM players")
+    fun getAllPlayers(): Flow<List<Player>>
+
+    @Update
+    suspend fun updatePlayers(players: List<Player>)
 }

@@ -62,9 +62,11 @@ object AppModule {
     fun provideGameRepository(
         playerDao: PlayerDao,
         settingsDao: GameSettingsDao,
+        profileDao: ProfileDao, // Add this parameter
         externalScope: CoroutineScope
     ): GameRepository {
-        return GameRepository(playerDao, settingsDao, externalScope)
+        // Pass the new parameter to the constructor
+        return GameRepository(playerDao, settingsDao, profileDao, externalScope)
     }
 
     @Provides

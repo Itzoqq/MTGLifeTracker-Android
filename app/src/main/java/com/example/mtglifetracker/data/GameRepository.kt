@@ -20,6 +20,7 @@ import javax.inject.Singleton
 class GameRepository constructor(
     private val playerDao: PlayerDao,
     private val settingsDao: GameSettingsDao,
+    private val profileDao: ProfileDao,
     externalScope: CoroutineScope
 ) {
 
@@ -27,6 +28,7 @@ class GameRepository constructor(
     val gameState = _gameState.asStateFlow()
 
     init {
+        // Keep your existing init block that observes settings and players
         externalScope.launch {
             initializeDatabase()
             settingsDao.getSettings()
@@ -38,13 +40,51 @@ class GameRepository constructor(
                     _gameState.update { currentState ->
                         val settings = settingsDao.getSettings().first()
                         val newPlayerCount = settings?.playerCount ?: currentState.playerCount
-                        // Simply update the player list and count from the source of truth (DB)
                         currentState.copy(
                             playerCount = newPlayerCount,
                             players = players
                         )
                     }
                 }
+        }
+
+        // 2. Add this new launch block to automatically sync profile changes
+        externalScope.launch {
+            profileDao.getAll().collect { allProfiles ->
+                val allPlayersInDb = playerDao.getAllPlayers().first()
+                val playersToUpdate = mutableListOf<Player>()
+
+                // Find players linked to a profile that is now out of sync
+                allPlayersInDb.filter { it.profileId != null }.forEach { player ->
+                    val matchingProfile = allProfiles.find { it.id == player.profileId }
+                    if (matchingProfile != null) {
+                        // Profile still exists, check if player data is stale
+                        if (player.name != matchingProfile.nickname || player.color != matchingProfile.color) {
+                            playersToUpdate.add(
+                                player.copy(
+                                    name = matchingProfile.nickname,
+                                    color = matchingProfile.color
+                                )
+                            )
+                        }
+                    } else {
+                        // The associated profile was deleted, so unload it from the player
+                        playersToUpdate.add(
+                            player.copy(
+                                name = "Player ${player.playerIndex + 1}",
+                                profileId = null,
+                                color = null
+                            )
+                        )
+                    }
+                }
+
+                if (playersToUpdate.isNotEmpty()) {
+                    // Update all stale player records in the database.
+                    // This will automatically trigger the main gameState flow to refresh the UI.
+                    playerDao.updatePlayers(playersToUpdate)
+                }
+            }
         }
     }
 
