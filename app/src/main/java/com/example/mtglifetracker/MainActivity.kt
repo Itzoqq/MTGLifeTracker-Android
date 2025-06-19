@@ -7,11 +7,13 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mtglifetracker.databinding.ActivityMainBinding
+import com.example.mtglifetracker.util.isColorDark
 import com.example.mtglifetracker.view.LifeCounterView
 import com.example.mtglifetracker.view.PlayerLayoutManager
 import com.example.mtglifetracker.view.ProfilePopupAdapter
@@ -23,8 +25,6 @@ import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import androidx.core.graphics.toColorInt
-import com.example.mtglifetracker.util.isColorDark
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private val profileViewModel: ProfileViewModel by viewModels()
 
     private lateinit var playerLayoutManager: PlayerLayoutManager
+    private var isFirstLoad = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,50 +60,62 @@ class MainActivity : AppCompatActivity() {
         if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
             playerLayoutManager.createPlayerLayouts(gameState.playerCount)
             binding.mainContainer.addView(binding.settingsIcon)
+            isFirstLoad = true
         }
 
+        // --- Final, Robust Reset Detection Logic ---
+        val onScreenLifes = playerLayoutManager.playerSegments.mapNotNull { segment ->
+            // Ensure the segment is actually part of the layout before accessing its view
+            if (segment.parent != null) segment.lifeCounter.life else null
+        }
+        val newLifes = gameState.players.map { it.life }
+        var changedPlayerCount = 0
+        if (onScreenLifes.size == newLifes.size) {
+            for (i in newLifes.indices) {
+                if (newLifes[i] != onScreenLifes[i]) {
+                    changedPlayerCount++
+                }
+            }
+        }
+        // A "mass update" is any event that changes more than one player's life simultaneously.
+        val isMassUpdate = changedPlayerCount > 1
+        // --- End of Detection Logic ---
+
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
-            // Make sure any open popups are dismissed when the player touches the life counter
             segment.lifeCounter.addDismissableOverlay(segment.profilePopupContainer)
             setDynamicLifeTapListener(segment.lifeCounter, index)
 
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
 
-                // Set Player Name
                 segment.playerName.text = player.name
+                segment.playerName.setOnClickListener { toggleProfilePopup(segment, index) }
 
-                // Set Click Listener for Name
-                segment.playerName.setOnClickListener {
-                    toggleProfilePopup(segment, index)
+                // Use the no-delta method for the initial load OR for a mass update event.
+                if (isFirstLoad || isMassUpdate) {
+                    segment.lifeCounter.setLifeAnimate(player.life)
+                } else {
+                    segment.lifeCounter.life = player.life
                 }
 
-                // Set Life Total
-                segment.lifeCounter.text = player.life.toString()
-
-                // Set Background and Text Color
                 try {
                     if (player.color != null) {
                         val backgroundColor = player.color.toColorInt()
                         segment.setBackgroundColor(backgroundColor)
-                        // Set text color for high contrast
                         if (isColorDark(backgroundColor)) {
                             segment.playerName.setTextColor(Color.WHITE)
                         } else {
                             segment.playerName.setTextColor(Color.BLACK)
                         }
                     } else {
-                        // Set default background and text color
                         segment.setBackgroundColor(ContextCompat.getColor(this, R.color.default_segment_background))
                         segment.playerName.setTextColor(Color.WHITE)
                     }
                 } catch (_: Exception) {
-                    // Fallback to default colors in case of an error
                     segment.setBackgroundColor(ContextCompat.getColor(this, R.color.default_segment_background))
                     segment.playerName.setTextColor(Color.WHITE)
                 }
 
-                // Control Unload Button Visibility
                 if (player.profileId != null) {
                     segment.unloadProfileButton.visibility = View.VISIBLE
                     segment.unloadProfileButton.setOnClickListener {
@@ -113,10 +126,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        if (gameState.players.isNotEmpty()) {
+            isFirstLoad = false
+        }
     }
 
     private fun toggleProfilePopup(segment: RotatableLayout, playerIndex: Int) {
-        // If the popup is already visible, hide it and do nothing else.
         if (segment.profilePopupContainer.isVisible) {
             segment.profilePopupContainer.visibility = View.GONE
             return
@@ -124,7 +140,6 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val allProfiles = profileViewModel.profiles.first()
-
             val currentPlayerProfileId = gameViewModel.gameState.value.players.getOrNull(playerIndex)?.profileId
             val usedProfileIdsByOthers = gameViewModel.gameState.value.players
                 .mapNotNull { it.profileId }
@@ -141,14 +156,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             val sortedProfiles = availableProfiles.sortedBy { it.nickname }
-
             val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
                 gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
                 segment.profilePopupContainer.visibility = View.GONE
             }
             segment.profilesRecyclerView.adapter = adapter
 
-            // --- Dynamic Sizing Logic for Popup ---
             val recyclerParams = segment.profilesRecyclerView.layoutParams
             val isSideways = segment.angle == 90 || segment.angle == -90
 

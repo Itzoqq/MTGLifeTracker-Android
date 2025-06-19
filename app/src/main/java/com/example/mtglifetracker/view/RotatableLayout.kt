@@ -5,8 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.widget.ImageView
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.graphics.withSave
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,7 +21,7 @@ class RotatableLayout @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     val lifeCounter: LifeCounterView
-    val deltaCounter: TextView
+    // The 'deltaCounter' TextView reference is now removed.
     val playerName: TextView
     val profilePopupContainer: MaterialCardView
     val profilesRecyclerView: RecyclerView
@@ -48,7 +48,7 @@ class RotatableLayout @JvmOverloads constructor(
         inflate(context, R.layout.layout_player_segment, this)
 
         lifeCounter = findViewById(R.id.lifeCounter)
-        deltaCounter = findViewById(R.id.deltaCounter)
+        // The initialization for 'deltaCounter' is also removed.
         playerName = findViewById(R.id.tv_player_name)
         profilePopupContainer = findViewById(R.id.profile_popup_container)
         profilesRecyclerView = findViewById(R.id.profiles_recycler_view)

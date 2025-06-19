@@ -7,12 +7,13 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline_horizontal_top"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.25" />
+    <com.example.mtglifetracker.view.LifeCounterView
+        android:id="@+id/lifeCounter"
+        style="@style/LifeCounterTextViewBase"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tv_player_name"
@@ -21,10 +22,11 @@
         android:padding="8dp"
         android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/guideline_horizontal_top"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.15"
+        app:layout_constraintBottom_toBottomOf="parent"
         tools:text="Player 1" />
 
     <ImageView
@@ -42,14 +44,6 @@
         app:layout_constraintTop_toTopOf="@id/tv_player_name"
         app:tint="@android:color/white"
         tools:visibility="visible" />
-
-    <com.example.mtglifetracker.view.LifeCounterView
-        android:id="@+id/lifeCounter"
-        style="@style/LifeCounterTextViewBase"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline_horizontal_top" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/profile_popup_container"
@@ -69,22 +63,5 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-        android:id="@+id/deltaCounter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/lifeCounter"
-        app:layout_constraintEnd_toEndOf="@id/lifeCounter"
-        app:layout_constraintStart_toStartOf="@id/lifeCounter"
-        app:layout_constraintTop_toTopOf="@id/lifeCounter"
-        android:translationX="55dp"
-        android:translationY="-45dp"
-        tools:text="+3"
-        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

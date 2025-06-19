@@ -38,24 +38,41 @@ class GameRepository constructor(
                     _gameState.update { currentState ->
                         val settings = settingsDao.getSettings().first()
                         val newPlayerCount = settings?.playerCount ?: currentState.playerCount
-                        val playerCountChanged = currentState.playerCount != newPlayerCount
-                        val deltasNeedInit = currentState.playerDeltas.size != players.size
-
-                        if (playerCountChanged || deltasNeedInit) {
-                            currentState.copy(
-                                playerCount = newPlayerCount,
-                                players = players,
-                                playerDeltas = List(newPlayerCount) { 0 },
-                                activeDeltaPlayers = emptySet()
-                            )
-                        } else {
-                            currentState.copy(players = players)
-                        }
+                        // Simply update the player list and count from the source of truth (DB)
+                        currentState.copy(
+                            playerCount = newPlayerCount,
+                            players = players
+                        )
                     }
                 }
         }
     }
 
+    private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
+        val currentState = _gameState.value
+        val playerToUpdate = currentState.players.getOrNull(playerIndex) ?: return
+
+        val updatedPlayer = playerToUpdate.copy(life = playerToUpdate.life + lifeChange)
+
+        // Update the state flow immediately for a responsive UI
+        val updatedPlayers = currentState.players.toMutableList().apply {
+            this[playerIndex] = updatedPlayer
+        }
+        _gameState.update { it.copy(players = updatedPlayers) }
+
+        // Persist the change to the database, which will trigger the collect block above
+        playerDao.updatePlayer(updatedPlayer)
+    }
+
+    suspend fun increaseLife(playerIndex: Int) {
+        updatePlayerState(playerIndex, 1)
+    }
+
+    suspend fun decreaseLife(playerIndex: Int) {
+        updatePlayerState(playerIndex, -1)
+    }
+
+    // Unchanged methods
     private suspend fun initializeDatabase() {
         if (settingsDao.getSettings().first() == null) {
             val defaultSettings = GameSettings(playerCount = 2, startingLife = 40)
@@ -104,68 +121,6 @@ class GameRepository constructor(
         }
     }
 
-    suspend fun increaseLife(playerIndex: Int) {
-        updatePlayerState(playerIndex, 1)
-    }
-
-    suspend fun decreaseLife(playerIndex: Int) {
-        updatePlayerState(playerIndex, -1)
-    }
-
-    private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
-        var playerToUpdate: Player? = null
-
-        _gameState.update { currentState ->
-            val player = currentState.players.getOrNull(playerIndex)
-            if (player == null) {
-                return@update currentState
-            }
-
-            val updatedPlayer = player.copy(life = player.life + lifeChange)
-            playerToUpdate = updatedPlayer
-
-            val updatedPlayers = currentState.players.toMutableList().apply {
-                this[playerIndex] = updatedPlayer
-            }
-
-            val currentDelta = currentState.playerDeltas.getOrElse(playerIndex) { 0 }
-            val updatedDeltas = currentState.playerDeltas.toMutableList().apply {
-                this[playerIndex] = currentDelta + lifeChange
-            }
-            val updatedActivePlayers = currentState.activeDeltaPlayers + playerIndex
-
-            currentState.copy(
-                players = updatedPlayers,
-                playerDeltas = updatedDeltas,
-                activeDeltaPlayers = updatedActivePlayers
-            )
-        }
-
-        playerToUpdate?.let {
-            playerDao.updatePlayer(it)
-        }
-    }
-
-    fun resetDeltaForPlayer(playerIndex: Int) {
-        if (playerIndex >= _gameState.value.playerDeltas.size) return
-
-        val currentState = _gameState.value
-        val updatedDeltas = currentState.playerDeltas.toMutableList()
-        val updatedActivePlayers = currentState.activeDeltaPlayers.toMutableSet()
-
-        if (!updatedActivePlayers.contains(playerIndex)) return
-
-        updatedDeltas[playerIndex] = 0
-        updatedActivePlayers.remove(playerIndex)
-
-        _gameState.update {
-            it.copy(
-                playerDeltas = updatedDeltas,
-                activeDeltaPlayers = updatedActivePlayers
-            )
-        }
-    }
-
     suspend fun updatePlayerProfile(playerIndex: Int, profile: Profile) {
         val currentState = _gameState.value
         val playerToUpdate = currentState.players.getOrNull(playerIndex)
@@ -174,7 +129,7 @@ class GameRepository constructor(
             val updatedPlayer = playerToUpdate.copy(
                 name = profile.nickname,
                 profileId = profile.id,
-                color = profile.color // <-- Save the color
+                color = profile.color
             )
             playerDao.updatePlayer(updatedPlayer)
         }
@@ -186,7 +141,6 @@ class GameRepository constructor(
 
         if (playerToUpdate != null) {
             val defaultName = "Player ${playerIndex + 1}"
-            // This line already clears the color, along with the name and profileId
             val updatedPlayer = playerToUpdate.copy(name = defaultName, profileId = null, color = null)
             playerDao.updatePlayer(updatedPlayer)
         }
