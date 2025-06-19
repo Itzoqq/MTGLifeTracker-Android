@@ -3,4 +3,6 @@
     <dimen name="color_swatch_size">40dp</dimen>
     <dimen name="selected_stroke_width">3dp</dimen>
     <dimen name="default_stroke_width">1dp</dimen>
+
+    <dimen name="profile_popup_width">180dp</dimen>
 </resources>

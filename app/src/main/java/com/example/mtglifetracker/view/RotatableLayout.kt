@@ -5,28 +5,27 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.View
-import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.graphics.withSave
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
+import com.google.android.material.card.MaterialCardView
 
-/**
- * A robust FrameLayout that correctly handles measurement, drawing, and touch events for a rotated view.
- * It acts as a compound view, inflating its own content and exposing its children as properties.
- */
 class RotatableLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
-    // Public properties to expose the inner views to the MainActivity.
     val lifeCounter: LifeCounterView
     val deltaCounter: TextView
-    val playerSettingsIcon: ImageView
-    val playerSettingsPopup: View
+    val playerName: TextView
+    val profilePopupContainer: MaterialCardView
+    val profilesRecyclerView: RecyclerView
+    val unloadProfileButton: ImageView
 
     internal var angle: Int = 0
 
@@ -46,14 +45,15 @@ class RotatableLayout @JvmOverloads constructor(
         rotation = 0f
         setWillNotDraw(false)
 
-        // Inflate the player segment layout and attach it as a child of this FrameLayout.
         inflate(context, R.layout.layout_player_segment, this)
 
-        // Find the views within the inflated layout and assign them to the public properties.
         lifeCounter = findViewById(R.id.lifeCounter)
         deltaCounter = findViewById(R.id.deltaCounter)
-        playerSettingsIcon = findViewById(R.id.player_settings_icon)
-        playerSettingsPopup = findViewById(R.id.player_settings_popup)
+        playerName = findViewById(R.id.tv_player_name)
+        profilePopupContainer = findViewById(R.id.profile_popup_container)
+        profilesRecyclerView = findViewById(R.id.profiles_recycler_view)
+        unloadProfileButton = findViewById(R.id.unload_profile_button)
+        profilesRecyclerView.layoutManager = LinearLayoutManager(context)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

@@ -10,4 +10,6 @@
 
     <color name="delta_positive">#4CAF50</color>
     <color name="delta_negative">#F44336</color>
+
+    <color name="default_segment_background">#2E2E2E</color>
 </resources>

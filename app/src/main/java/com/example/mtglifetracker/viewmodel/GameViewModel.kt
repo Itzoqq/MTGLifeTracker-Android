@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap // Import ConcurrentHashMap
 import javax.inject.Inject
+import com.example.mtglifetracker.model.Profile
 
 
 data class GameState(
@@ -85,6 +86,18 @@ class GameViewModel @Inject constructor(private val repository: GameRepository) 
 
             // 3. Reset the delta for the player.
             repository.resetDeltaForPlayer(playerIndex)
+        }
+    }
+
+    fun setPlayerProfile(playerIndex: Int, profile: Profile) {
+        viewModelScope.launch {
+            repository.updatePlayerProfile(playerIndex, profile)
+        }
+    }
+
+    fun unloadProfile(playerIndex: Int) {
+        viewModelScope.launch {
+            repository.unloadPlayerProfile(playerIndex)
         }
     }
 }

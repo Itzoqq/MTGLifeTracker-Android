@@ -2,6 +2,7 @@ package com.example.mtglifetracker.data
 
 import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
+import com.example.mtglifetracker.model.Profile
 import com.example.mtglifetracker.viewmodel.GameState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -115,28 +116,24 @@ class GameRepository constructor(
         var playerToUpdate: Player? = null
 
         _gameState.update { currentState ->
-            // Get the player from the most current state
             val player = currentState.players.getOrNull(playerIndex)
             if (player == null) {
-                return@update currentState // Abort if player not found
+                return@update currentState
             }
 
-            // Calculate the new player state
             val updatedPlayer = player.copy(life = player.life + lifeChange)
-            playerToUpdate = updatedPlayer // Store for database update
+            playerToUpdate = updatedPlayer
 
             val updatedPlayers = currentState.players.toMutableList().apply {
-                this[playerIndex] = updatedPlayer // Use the non-null updatedPlayer
+                this[playerIndex] = updatedPlayer
             }
 
-            // Calculate the new delta state
             val currentDelta = currentState.playerDeltas.getOrElse(playerIndex) { 0 }
             val updatedDeltas = currentState.playerDeltas.toMutableList().apply {
                 this[playerIndex] = currentDelta + lifeChange
             }
             val updatedActivePlayers = currentState.activeDeltaPlayers + playerIndex
 
-            // Return the new state with all changes applied at once
             currentState.copy(
                 players = updatedPlayers,
                 playerDeltas = updatedDeltas,
@@ -144,7 +141,6 @@ class GameRepository constructor(
             )
         }
 
-        // Now that the state is updated, persist the change to the database
         playerToUpdate?.let {
             playerDao.updatePlayer(it)
         }
@@ -167,6 +163,32 @@ class GameRepository constructor(
                 playerDeltas = updatedDeltas,
                 activeDeltaPlayers = updatedActivePlayers
             )
+        }
+    }
+
+    suspend fun updatePlayerProfile(playerIndex: Int, profile: Profile) {
+        val currentState = _gameState.value
+        val playerToUpdate = currentState.players.getOrNull(playerIndex)
+
+        if (playerToUpdate != null) {
+            val updatedPlayer = playerToUpdate.copy(
+                name = profile.nickname,
+                profileId = profile.id,
+                color = profile.color // <-- Save the color
+            )
+            playerDao.updatePlayer(updatedPlayer)
+        }
+    }
+
+    suspend fun unloadPlayerProfile(playerIndex: Int) {
+        val currentState = _gameState.value
+        val playerToUpdate = currentState.players.getOrNull(playerIndex)
+
+        if (playerToUpdate != null) {
+            val defaultName = "Player ${playerIndex + 1}"
+            // This line already clears the color, along with the name and profileId
+            val updatedPlayer = playerToUpdate.copy(name = defaultName, profileId = null, color = null)
+            playerDao.updatePlayer(updatedPlayer)
         }
     }
 }

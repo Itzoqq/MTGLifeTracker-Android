@@ -8,7 +8,8 @@ import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.model.Profile
 
-@Database(entities = [Player::class, GameSettings::class, Profile::class], version = 4, exportSchema = false)
+// Change version from 5 to 6
+@Database(entities = [Player::class, GameSettings::class, Profile::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun playerDao(): PlayerDao
@@ -26,8 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "mtg_database"
                 )
-                    // The schema has changed, so we need a migration.
-                    // This will clear the database on upgrade.
+                    // This will clear the database on upgrade. This is fine for development.
                     .fallbackToDestructiveMigration(false)
                     .build()
                 INSTANCE = instance
