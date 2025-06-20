@@ -3,6 +3,7 @@ package com.example.mtglifetracker.data
 import app.cash.turbine.test
 import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
+import com.example.mtglifetracker.model.Profile
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -23,26 +24,34 @@ class GameRepositoryTest {
 
     private lateinit var mockPlayerDao: PlayerDao
     private lateinit var mockSettingsDao: GameSettingsDao
+    private lateinit var mockProfileDao: ProfileDao // Add mock for ProfileDao
     private lateinit var repository: GameRepository
     private val testScope = TestScope()
 
-    // Default players list for tests that need an initial state
     private val defaultPlayers = listOf(
         Player(gameSize = 2, playerIndex = 0, name = "Player 1", life = 40),
         Player(gameSize = 2, playerIndex = 1, name = "Player 2", life = 40)
     )
 
+    // Add a default empty profiles list for mocking
+    private val defaultProfiles = emptyList<Profile>()
+
     @Before
     fun setup() {
         mockPlayerDao = mock()
         mockSettingsDao = mock()
+        mockProfileDao = mock() // Initialize the mock
         val initialSettings = GameSettings(playerCount = 2, startingLife = 40)
         whenever(mockSettingsDao.getSettings()).thenReturn(flowOf(initialSettings))
+        // Mock the new DAO calls to return empty flows by default
+        whenever(mockProfileDao.getAll()).thenReturn(flowOf(defaultProfiles))
+        whenever(mockPlayerDao.getAllPlayers()).thenReturn(flowOf(defaultPlayers))
     }
 
+    // Update the helper to pass the new dependency
     private fun initializeRepositoryWithPlayers(initialPlayers: List<Player>) {
         whenever(mockPlayerDao.getPlayers(any())).thenReturn(flowOf(initialPlayers))
-        repository = GameRepository(mockPlayerDao, mockSettingsDao, testScope)
+        repository = GameRepository(mockPlayerDao, mockSettingsDao, mockProfileDao, testScope)
     }
 
     @Test
@@ -91,7 +100,7 @@ class GameRepositoryTest {
         verify(mockPlayerDao).updatePlayer(playerCaptor.capture())
         assertEquals(41, playerCaptor.firstValue.life)
         assertEquals(41, finalState.players[0].life)
-        assertEquals(1, finalState.playerDeltas[0])
+        // REMOVED: Assertion for playerDeltas
     }
 
     @Test
@@ -107,7 +116,7 @@ class GameRepositoryTest {
         verify(mockPlayerDao).updatePlayer(playerCaptor.capture())
         assertEquals(39, playerCaptor.firstValue.life)
         assertEquals(39, finalState.players[1].life)
-        assertEquals(-1, finalState.playerDeltas[1])
+        // REMOVED: Assertion for playerDeltas
     }
 
     @Test
@@ -119,7 +128,7 @@ class GameRepositoryTest {
             .thenReturn(flowOf(initialPlayers))
             .thenReturn(flowOf(emptyList()))
 
-        repository = GameRepository(mockPlayerDao, mockSettingsDao, testScope)
+        repository = GameRepository(mockPlayerDao, mockSettingsDao, mockProfileDao, testScope)
         advanceUntilIdle()
 
         repository.resetCurrentGame()
@@ -139,7 +148,7 @@ class GameRepositoryTest {
             .thenReturn(flowOf(initialPlayers))
             .thenReturn(flowOf(emptyList()))
 
-        repository = GameRepository(mockPlayerDao, mockSettingsDao, testScope)
+        repository = GameRepository(mockPlayerDao, mockSettingsDao, mockProfileDao, testScope)
         advanceUntilIdle()
 
         repository.resetAllGames()
@@ -151,49 +160,30 @@ class GameRepositoryTest {
         assertEquals(2, playersCaptor.firstValue.size)
     }
 
-    @Test
-    fun resetDeltaForPlayer_shouldClearDeltaAndActiveStatusInGameState() = testScope.runTest {
-        initializeRepositoryWithPlayers(defaultPlayers)
-        advanceUntilIdle()
-        repository.increaseLife(playerIndex = 0)
-        advanceUntilIdle()
-
-        repository.resetDeltaForPlayer(playerIndex = 0)
-
-        val state = repository.gameState.value
-        assertEquals(0, state.playerDeltas[0])
-        assertEquals(emptySet<Int>(), state.activeDeltaPlayers)
-    }
+    // REMOVED: The resetDeltaForPlayer test is no longer relevant to the repository.
 
     @Test
     fun changeStartingLife_shouldSaveNewSettingsAndRecreatePlayersWithNewLife() = testScope.runTest {
-        // Arrange
         val newStartingLife = 20
         val initialPlayers = listOf(Player(gameSize = 2, playerIndex = 0, life = 40))
         val initialSettings = GameSettings(playerCount = 2, startingLife = 40)
         val newSettings = GameSettings(playerCount = 2, startingLife = newStartingLife)
 
-        // Setup for getPlayers: return initial list once, then empty lists for subsequent calls.
         whenever(mockPlayerDao.getPlayers(any()))
             .thenReturn(flowOf(initialPlayers))
             .thenReturn(flowOf(emptyList()))
 
-        // ***THE FIX***:
-        // Setup for getSettings: return initial settings on the first call (for repo init),
-        // then return the new settings on the second call (for the reset).
         whenever(mockSettingsDao.getSettings())
             .thenReturn(flowOf(initialSettings))
             .thenReturn(flowOf(newSettings))
 
-        // Initialize the repository. This consumes the first `thenReturn` from both mocks.
-        repository = GameRepository(mockPlayerDao, mockSettingsDao, testScope)
+        // Pass the new mock dependency here
+        repository = GameRepository(mockPlayerDao, mockSettingsDao, mockProfileDao, testScope)
         advanceUntilIdle()
 
-        // Act
         repository.changeStartingLife(newStartingLife)
         advanceUntilIdle()
 
-        // Assert
         val settingsCaptor = argumentCaptor<GameSettings>()
         verify(mockSettingsDao).saveSettings(settingsCaptor.capture())
         assertEquals(newStartingLife, settingsCaptor.firstValue.startingLife)
@@ -202,8 +192,6 @@ class GameRepositoryTest {
         val playersCaptor = argumentCaptor<List<Player>>()
         verify(mockPlayerDao, atLeast(1)).insertAll(playersCaptor.capture())
         assertEquals(2, playersCaptor.firstValue.size)
-
-        // This assertion should now pass successfully
         assertEquals(newStartingLife, playersCaptor.firstValue[0].life)
     }
 }

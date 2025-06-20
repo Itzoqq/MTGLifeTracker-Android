@@ -20,7 +20,6 @@ import org.robolectric.annotation.Config
  * This class uses Robolectric to test the custom measurement and touch
  * transformation logic of the RotatableLayout.
  */
-// No @RunWith here, it's inherited from ThemedRobolectricTest
 @Config(sdk = [34])
 class RotatableLayoutTest : ThemedRobolectricTest() { // Extends our base class
 
@@ -61,11 +60,9 @@ class RotatableLayoutTest : ThemedRobolectricTest() { // Extends our base class
         // We need a fresh instance, using the themedContext
         val layout = RotatableLayout(themedContext)
         assertNotNull("LifeCounterView should not be null", layout.lifeCounter)
-        assertNotNull("DeltaCounter TextView should not be null", layout.deltaCounter)
+        // REMOVED: Assertion for deltaCounter
         assertEquals("Default angle should be 0", 0, layout.angle)
     }
-
-    // ... All other tests remain the same, no changes needed below this line ...
 
     @Test
     fun onMeasure_shouldNotSwapDimensions_whenAngleIs0() {

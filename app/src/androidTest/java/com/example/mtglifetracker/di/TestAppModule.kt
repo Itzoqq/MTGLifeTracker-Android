@@ -13,8 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
-// This annotation tells Hilt to uninstall the AppModule
-// and install this one in its place for all tests.
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
@@ -22,16 +20,14 @@ import javax.inject.Singleton
 )
 object TestAppModule {
 
-    // --- Database Provider ---
     @Provides
     @Singleton
     fun provideInMemoryDb(@ApplicationContext context: Context): AppDatabase {
         return Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-            .allowMainThreadQueries() // For testing only
+            .allowMainThreadQueries()
             .build()
     }
 
-    // --- DAO Providers ---
     @Provides
     @Singleton
     fun providePlayerDao(db: AppDatabase): PlayerDao = db.playerDao()
@@ -44,22 +40,22 @@ object TestAppModule {
     @Singleton
     fun provideProfileDao(db: AppDatabase): ProfileDao = db.profileDao()
 
-    // --- Coroutine Scope Provider ---
     @Provides
     @Singleton
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
 
-    // --- Repository Providers ---
     @Provides
     @Singleton
     fun provideGameRepository(
         playerDao: PlayerDao,
         settingsDao: GameSettingsDao,
+        profileDao: ProfileDao, // Add ProfileDao here
         scope: CoroutineScope
     ): GameRepository {
-        return GameRepository(playerDao, settingsDao, scope)
+        // Pass it to the constructor
+        return GameRepository(playerDao, settingsDao, profileDao, scope)
     }
 
     @Provides
