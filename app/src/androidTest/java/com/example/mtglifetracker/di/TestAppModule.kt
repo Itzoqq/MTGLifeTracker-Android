@@ -20,8 +20,8 @@ import javax.inject.Singleton
 )
 object TestAppModule {
 
+    // REMOVED @Singleton FROM THIS FUNCTION
     @Provides
-    @Singleton
     fun provideInMemoryDb(@ApplicationContext context: Context): AppDatabase {
         return Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()

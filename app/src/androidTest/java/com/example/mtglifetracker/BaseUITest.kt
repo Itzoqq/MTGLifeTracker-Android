@@ -35,10 +35,6 @@ abstract class BaseUITest {
     @get:Rule(order = 1)
     val disableAnimationsRule = DisableAnimationsRule()
 
-    // (Order 2) Rule to clear the database before each test, ensuring a fresh start.
-    @get:Rule(order = 2)
-    val clearDatabaseRule = DatabaseClearingRule()
-
     // (Order 3) Rule to launch the MainActivity before each test.
     @get:Rule(order = 3)
     val activityRule = ActivityScenarioRule(MainActivity::class.java)

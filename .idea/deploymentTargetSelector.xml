@@ -11,13 +11,10 @@
       <SelectionState runConfigName="ProfileFlowTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="layout_shouldHaveWiderBias_for6PlayerGame()">
+      <SelectionState runConfigName="resetAllGames_shouldResetAllGameLifeTotals()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="layout_shouldHaveWiderBias_for5PlayerGame()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="MainActivityUITest">
+      <SelectionState runConfigName="ResetGameFlowTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

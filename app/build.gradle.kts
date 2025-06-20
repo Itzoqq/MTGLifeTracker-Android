@@ -2,9 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp")
-    id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
-    id("jacoco") // Apply the JaCoCo plugin
+    id("jacoco")
 }
 
 // Configure the JaCoCo version at the top level
@@ -64,7 +63,6 @@ android {
     }
 }
 
-// FIX: Add this block to resolve the dependency version conflict.
 configurations.all {
     resolutionStrategy {
         force(libs.androidx.test.monitor)
@@ -89,7 +87,8 @@ dependencies {
 
     // Hilt Dependency Injection
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    // CHANGED: Switched from kapt to ksp
+    ksp(libs.hilt.android.compiler)
 
     // --- Dependencies for local Unit Tests (for ViewModel, etc.) ---
     testImplementation(libs.junit)
@@ -114,16 +113,14 @@ dependencies {
     androidTestImplementation(libs.androidx.fragment.testing)
     implementation(libs.androidx.espresso.idling.resource)
 
-    kaptAndroidTest(libs.hilt.android.compiler)
+    kspAndroidTest(libs.hilt.android.compiler)
 }
 
-kapt {
-    correctErrorTypes = true
-    arguments {
-        arg("dagger.fastInit", "enabled")
-        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-    }
+ksp {
+    arg("dagger.fastInit", "enabled")
+    arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
 }
+
 
 tasks.register("runAllTests") {
     group = "verification"
