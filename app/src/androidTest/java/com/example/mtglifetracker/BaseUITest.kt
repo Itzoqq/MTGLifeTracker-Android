@@ -3,6 +3,7 @@ package com.example.mtglifetracker
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.rules.ActivityScenarioRule
+import com.example.mtglifetracker.data.AppDatabase
 import com.example.mtglifetracker.data.GameRepository
 import dagger.hilt.android.testing.HiltAndroidRule
 import kotlinx.coroutines.runBlocking
@@ -46,6 +47,9 @@ abstract class BaseUITest {
     @Inject
     lateinit var repository: GameRepository
 
+    @Inject
+    lateinit var db: AppDatabase
+
     /**
      * This method is run before each test. It injects dependencies via Hilt
      * and registers the global idling resource.
@@ -80,5 +84,7 @@ abstract class BaseUITest {
         } catch (_: Exception) {
             // Ignore exceptions, as the activity might already be closed.
         }
+
+        db.close()
     }
 }
