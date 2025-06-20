@@ -1,9 +1,7 @@
 [versions]
-# UPDATED: Changed to a recent stable AGP version
 agp = "8.10.1"
 coreKtxVersion = "1.6.1"
 coreTesting = "2.2.0"
-daggerCompiler = "2.56.2"
 fragmentKtx = "1.8.8"
 kotlin = "2.1.21"
 coreKtx = "1.16.0"
