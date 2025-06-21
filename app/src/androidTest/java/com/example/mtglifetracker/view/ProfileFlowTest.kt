@@ -1,8 +1,10 @@
 package com.example.mtglifetracker.view
 
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.BaseUITest
@@ -135,7 +137,15 @@ class ProfileFlowTest : BaseUITest() {
         onView(withText("EditMyColor")).perform(longClick())
         onView(withText("Edit")).perform(click())
         onView(withText("Edit Profile")).check(matches(isDisplayed()))
-        onView(allOf(isDescendantOfA(withId(R.id.grid_colors)), withParentIndex(0))).perform(click())
+
+        // --- THIS IS THE FIX ---
+        // Replace the old way of finding the color swatch
+        // with the new RecyclerView action.
+        onView(withId(R.id.rv_colors)).perform(
+            RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click())
+        )
+        // --- END OF FIX ---
+
         onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
 
         // 3. Assert: Color dot is now visible

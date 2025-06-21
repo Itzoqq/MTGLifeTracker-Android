@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="hintTextColor">@color/hint_text_color_dark_theme</item>
+        <item name="boxStrokeColor">@color/hint_text_color_dark_theme</item>
+    </style>
+
     <style name="CustomAlertDialog" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
         <item name="android:background">#2E2E2E</item>
-        <item name="android:textColor">#FFFFFF</item> <item name="android:textColorPrimary">#FFFFFF</item> <item name="android:textColorSecondary">#FFFFFF</item> <item name="colorPrimary">@color/purple_500</item> <item name="colorAccent">@color/purple_500</item> <item name="android:windowBackground">#2E2E2E</item>
-        <item name="android:colorBackground">#2E2E2E</item> <item name="colorOnSurface">#FFFFFF</item> <item name="colorOnBackground">#FFFFFF</item> <item name="android:textColorAlertDialogListItem">#FFFFFF</item> <item name="colorSurface">#2E2E2E</item> <item name="android:colorForeground">#FFFFFF</item> <item name="android:textAppearanceListItem">@style/WhiteListItemText</item> <item name="android:textAppearanceListItemSmall">@style/WhiteListItemText</item> </style>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#FFFFFF</item>
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorAccent">@color/purple_500</item>
+        <item name="android:windowBackground">#2E2E2E</item>
+        <item name="android:colorBackground">#2E2E2E</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnBackground">#FFFFFF</item>
+        <item name="android:textColorAlertDialogListItem">#FFFFFF</item>
+        <item name="colorSurface">#2E2E2E</item>
+        <item name="android:colorForeground">#FFFFFF</item>
+        <item name="android:textAppearanceListItem">@style/WhiteListItemText</item>
+        <item name="android:textAppearanceListItemSmall">@style/WhiteListItemText</item>
+    </style>
 
     <style name="WhiteListItemText" parent="TextAppearance.MaterialComponents.Subtitle1"> <item name="android:textColor">#FFFFFF</item> </style>
 

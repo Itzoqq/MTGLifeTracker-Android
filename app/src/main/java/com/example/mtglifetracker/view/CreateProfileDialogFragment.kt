@@ -1,19 +1,15 @@
 package com.example.mtglifetracker.view
 
 import android.app.Dialog
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.StateListDrawable
 import android.os.Bundle
-import android.view.View
 import android.widget.EditText
-import android.widget.GridLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.graphics.toColorInt
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.model.Profile
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
@@ -25,16 +21,13 @@ class CreateProfileDialogFragment : DialogFragment() {
 
     private val profileViewModel: ProfileViewModel by activityViewModels()
     private var selectedColor: String? = null
-    private val colorSwatches = mutableListOf<View>()
     private val colors = listOf(
         "#F44336", "#9C27B0", "#2196F3", "#4CAF50", "#FFEB3B", "#FF9800"
     )
+    private lateinit var colorAdapter: ColorAdapter
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val editingProfileId = arguments?.getLong(ARG_EDIT_MODE_ID, -1L)
-
-        // --- THIS IS THE FIX ---
-        // This check is now safer and correctly handles all cases.
         val isEditMode = editingProfileId != null && editingProfileId != -1L
 
         val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
@@ -42,8 +35,9 @@ class CreateProfileDialogFragment : DialogFragment() {
         val view = inflater.inflate(R.layout.dialog_create_profile, null)
 
         val nicknameEditText: EditText = view.findViewById(R.id.et_nickname)
-        val colorGrid: GridLayout = view.findViewById(R.id.grid_colors)
-        setupColorGrid(colorGrid)
+        val colorRecyclerView: RecyclerView = view.findViewById(R.id.rv_colors)
+
+        setupRecyclerView(colorRecyclerView)
 
         nicknameEditText.isEnabled = true
 
@@ -57,17 +51,10 @@ class CreateProfileDialogFragment : DialogFragment() {
             val color = arguments?.getString(ARG_EDIT_MODE_COLOR)
 
             nicknameEditText.setText(nickname)
-            nicknameEditText.isEnabled = false
+            nicknameEditText.isEnabled = false // Keep nickname non-editable in edit mode
 
-            color?.let { savedColor ->
-                val colorIndex = colors.indexOf(savedColor)
-                if (colorIndex != -1) {
-                    val swatchToSelect = colorSwatches.getOrNull(colorIndex)
-                    swatchToSelect?.let { selectColor(it, savedColor) }
-                } else {
-                    selectedColor = savedColor
-                }
-            }
+            selectedColor = color
+            colorAdapter.setSelectedColor(selectedColor)
         }
 
         val dialog = builder.create()
@@ -77,7 +64,7 @@ class CreateProfileDialogFragment : DialogFragment() {
             saveButton.setOnClickListener {
                 if (isEditMode) {
                     val updatedProfile = Profile(
-                        id = editingProfileId, // This is now safe
+                        id = editingProfileId,
                         nickname = nicknameEditText.text.toString(),
                         color = selectedColor
                     )
@@ -103,53 +90,12 @@ class CreateProfileDialogFragment : DialogFragment() {
         return dialog
     }
 
-    private fun setupColorGrid(grid: GridLayout) {
-        colors.forEach { colorString ->
-            val swatch = View(requireContext()).apply {
-                val swatchSize = resources.getDimensionPixelSize(R.dimen.color_swatch_size)
-                val params = GridLayout.LayoutParams().apply {
-                    width = swatchSize
-                    height = swatchSize
-                    setMargins(8, 8, 8, 8)
-                }
-                layoutParams = params
-                background = createColorSwatch(colorString)
-                setOnClickListener { selectColor(this, colorString) }
-            }
-            colorSwatches.add(swatch)
-            grid.addView(swatch)
+    private fun setupRecyclerView(recyclerView: RecyclerView) {
+        colorAdapter = ColorAdapter(colors) { color ->
+            selectedColor = color
         }
-    }
-
-    private fun createColorSwatch(colorString: String): StateListDrawable {
-        val color = colorString.toColorInt()
-        val selectedStrokeWidth = resources.getDimensionPixelSize(R.dimen.selected_stroke_width)
-        val defaultStrokeWidth = resources.getDimensionPixelSize(R.dimen.default_stroke_width)
-        val selectedDrawable = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(color)
-            setStroke(selectedStrokeWidth, Color.WHITE)
-        }
-        val defaultDrawable = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(color)
-            setStroke(defaultStrokeWidth, Color.GRAY)
-        }
-        return StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_selected), selectedDrawable)
-            addState(intArrayOf(), defaultDrawable)
-        }
-    }
-
-    private fun selectColor(selectedView: View, colorString: String) {
-        if (selectedColor == colorString) {
-            selectedView.isSelected = false
-            selectedColor = null
-        } else {
-            colorSwatches.forEach { it.isSelected = false }
-            selectedView.isSelected = true
-            selectedColor = colorString
-        }
+        recyclerView.adapter = colorAdapter
+        recyclerView.layoutManager = GridLayoutManager(context, 6) // Display 6 colors per row
     }
 
     companion object {

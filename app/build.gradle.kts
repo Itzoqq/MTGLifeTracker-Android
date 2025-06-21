@@ -113,6 +113,8 @@ dependencies {
     androidTestImplementation(libs.androidx.fragment.testing)
     implementation(libs.androidx.espresso.idling.resource)
 
+    androidTestImplementation(libs.androidx.espresso.contrib)
+
     kspAndroidTest(libs.hilt.android.compiler)
 }
 
