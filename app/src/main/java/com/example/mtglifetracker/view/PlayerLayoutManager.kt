@@ -21,18 +21,29 @@ class PlayerLayoutManager(
 ) {
 
     val playerSegments = mutableListOf<RotatableLayout>()
+    private val dividers = mutableListOf<View>()
 
     /**
-     * Clears the container and creates a new layout based on the specified player count.
-     * It sets up the player segments and the necessary dividers with proper constraints.
+     * Updates the layout to match the specified player count.
+     * Instead of recreating all views, it intelligently adds or removes player segments
+     * and rebuilds the necessary dividers and constraints. This is more performant
+     * than `removeAllViews()` and recreating the layout from scratch.
      *
-     * @param playerCount The number of players to create layouts for.
+     * @param playerCount The number of players to display.
      */
     fun createPlayerLayouts(playerCount: Int) {
-        container.removeAllViews()
-        playerSegments.clear()
+        val currentCount = playerSegments.size
+        if (playerCount == currentCount) {
+            return // No change needed
+        }
 
-        (0 until playerCount).forEach { index ->
+        // First, remove all existing dividers. They will be recreated based on the new layout.
+        dividers.forEach { container.removeView(it) }
+        dividers.clear()
+
+        // Add or remove player segments to match the new count.
+        while (playerSegments.size < playerCount) {
+            val index = playerSegments.size
             val segment = RotatableLayout(context).apply {
                 id = View.generateViewId()
                 // Add a unique tag for test identification
@@ -40,6 +51,10 @@ class PlayerLayoutManager(
             }
             container.addView(segment)
             playerSegments.add(segment)
+        }
+        while (playerSegments.size > playerCount) {
+            val segmentToRemove = playerSegments.removeAt(playerSegments.lastIndex)
+            container.removeView(segmentToRemove)
         }
 
         val constraintSet = ConstraintSet()
@@ -287,6 +302,7 @@ class PlayerLayoutManager(
             setBackgroundColor(ContextCompat.getColor(context, android.R.color.white))
         }
         container.addView(view)
+        dividers.add(view)
 
         if (orientation == ConstraintLayout.LayoutParams.HORIZONTAL) {
             constraintSet.constrainHeight(viewId, 2)
