@@ -70,15 +70,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         // --- Final, Robust Reset Detection Logic ---
-        val onScreenLifes = playerLayoutManager.playerSegments.mapNotNull { segment ->
+        val onScreenLives = playerLayoutManager.playerSegments.mapNotNull { segment ->
             // Ensure the segment is actually part of the layout before accessing its view
             if (segment.parent != null) segment.lifeCounter.life else null
         }
-        val newLifes = gameState.players.map { it.life }
+        val newLives = gameState.players.map { it.life }
         var changedPlayerCount = 0
-        if (onScreenLifes.size == newLifes.size) {
-            for (i in newLifes.indices) {
-                if (newLifes[i] != onScreenLifes[i]) {
+        if (onScreenLives.size == newLives.size) {
+            for (i in newLives.indices) {
+                if (newLives[i] != onScreenLives[i]) {
                     changedPlayerCount++
                 }
             }
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         // --- End of Detection Logic ---
 
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
-            segment.lifeCounter.addDismissableOverlay(segment.profilePopupContainer)
+            segment.lifeCounter.addDismissibleOverlay(segment.profilePopupContainer)
             setDynamicLifeTapListener(segment.lifeCounter, index)
 
             if (index < gameState.players.size) {

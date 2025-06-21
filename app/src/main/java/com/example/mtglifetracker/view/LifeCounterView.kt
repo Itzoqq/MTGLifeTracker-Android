@@ -54,12 +54,18 @@ class LifeCounterView @JvmOverloads constructor(
         get() = text.toString().toIntOrNull() ?: 0
         set(value) {
             val singleStepDelta = value - life
-            if (singleStepDelta != 0 || isDeltaVisible) {
+
+            // Only update the delta and reset the timer if the life value has actually changed.
+            if (singleStepDelta != 0) {
                 accumulatedDelta += singleStepDelta
                 displayDelta(accumulatedDelta)
+
+                // Remove any pending tasks to hide the delta and post a new one.
                 viewHandler.removeCallbacks(endDeltaSequenceRunnable)
                 viewHandler.postDelayed(endDeltaSequenceRunnable, 3000)
             }
+
+            // Always update the text to display the correct life total.
             text = value.toString()
         }
 
@@ -105,7 +111,7 @@ class LifeCounterView @JvmOverloads constructor(
 
     private var isHeldDown = false
     private var isIncreasing = false
-    private val dismissableOverlays = mutableListOf<View>()
+    private val dismissibleOverlays = mutableListOf<View>()
 
     private val initialDelay = 400L
     private val startInterval = 150L
@@ -113,9 +119,9 @@ class LifeCounterView @JvmOverloads constructor(
     private val accelerationRate = 10L
     private var currentInterval = startInterval
 
-    fun addDismissableOverlay(view: View) {
-        if (!dismissableOverlays.contains(view)) {
-            dismissableOverlays.add(view)
+    fun addDismissibleOverlay(view: View) {
+        if (!dismissibleOverlays.contains(view)) {
+            dismissibleOverlays.add(view)
         }
     }
 
@@ -134,8 +140,8 @@ class LifeCounterView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN) {
-            if (dismissableOverlays.any { it.isVisible }) {
-                dismissableOverlays.forEach { it.visibility = GONE }
+            if (dismissibleOverlays.any { it.isVisible }) {
+                dismissibleOverlays.forEach { it.visibility = GONE }
                 return true
             }
         }
