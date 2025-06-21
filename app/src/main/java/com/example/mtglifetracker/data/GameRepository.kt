@@ -8,12 +8,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.filterNotNull
 
 @Suppress("RedundantConstructorKeyword")
 @Singleton
@@ -29,13 +30,12 @@ class GameRepository constructor(
     val gameState = _gameState.asStateFlow()
 
     init {
-        // Keep your existing init block that observes settings and players
+        // This collector for UI state remains the same and is perfectly fine.
         externalScope.launch {
             initializeDatabase()
             settingsDao.getSettings()
-                .filterNotNull() // Add this line to ignore the initial null value
+                .filterNotNull()
                 .flatMapLatest { settings ->
-                    // Because of filterNotNull(), 'settings' is now guaranteed to be non-null here
                     playerDao.getPlayers(settings.playerCount)
                 }
                 .collect { players ->
@@ -50,17 +50,15 @@ class GameRepository constructor(
                 }
         }
 
-        // 2. Add this new launch block to automatically sync profile changes
+        // FIX: This launch block is now refactored to use `combine`.
+        // This is more declarative, avoids nested collectors, and is much easier to test.
         externalScope.launch {
-            profileDao.getAll().collect { allProfiles ->
-                val allPlayersInDb = playerDao.getAllPlayers().first()
+            combine(profileDao.getAll(), playerDao.getAllPlayers()) { allProfiles, allPlayersInDb ->
                 val playersToUpdate = mutableListOf<Player>()
 
-                // Find players linked to a profile that is now out of sync
                 allPlayersInDb.filter { it.profileId != null }.forEach { player ->
                     val matchingProfile = allProfiles.find { it.id == player.profileId }
                     if (matchingProfile != null) {
-                        // Profile still exists, check if player data is stale
                         if (player.name != matchingProfile.nickname || player.color != matchingProfile.color) {
                             playersToUpdate.add(
                                 player.copy(
@@ -70,7 +68,6 @@ class GameRepository constructor(
                             )
                         }
                     } else {
-                        // The associated profile was deleted, so unload it from the player
                         playersToUpdate.add(
                             player.copy(
                                 name = "Player ${player.playerIndex + 1}",
@@ -80,10 +77,10 @@ class GameRepository constructor(
                         )
                     }
                 }
-
+                playersToUpdate // The combine transform returns the list of players to update
+            }.collect { playersToUpdate ->
                 if (playersToUpdate.isNotEmpty()) {
-                    // Update all stale player records in the database.
-                    // This will automatically trigger the main gameState flow to refresh the UI.
+                    // This collector now only acts on the result.
                     playerDao.updatePlayers(playersToUpdate)
                 }
             }
@@ -96,13 +93,11 @@ class GameRepository constructor(
 
         val updatedPlayer = playerToUpdate.copy(life = playerToUpdate.life + lifeChange)
 
-        // Update the state flow immediately for a responsive UI
         val updatedPlayers = currentState.players.toMutableList().apply {
             this[playerIndex] = updatedPlayer
         }
         _gameState.update { it.copy(players = updatedPlayers) }
 
-        // Persist the change to the database, which will trigger the collect block above
         playerDao.updatePlayer(updatedPlayer)
     }
 
@@ -114,7 +109,6 @@ class GameRepository constructor(
         updatePlayerState(playerIndex, -1)
     }
 
-    // Unchanged methods
     private suspend fun initializeDatabase() {
         if (settingsDao.getSettings().first() == null) {
             val defaultSettings = GameSettings(playerCount = 2, startingLife = 40)
@@ -146,7 +140,7 @@ class GameRepository constructor(
     suspend fun changeStartingLife(newStartingLife: Int) {
         val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
         settingsDao.saveSettings(currentSettings.copy(startingLife = newStartingLife))
-        resetAllGames() // Reset games to apply new life total
+        resetAllGames()
     }
 
     suspend fun resetCurrentGame() {
