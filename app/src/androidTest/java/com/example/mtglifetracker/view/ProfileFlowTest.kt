@@ -18,20 +18,26 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 class ProfileFlowTest : BaseUITest() {
 
+    private fun openManageProfilesDialog() {
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withId(R.id.rv_settings_options))
+            .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
+                withText("Manage Profiles"), click()
+            ))
+    }
+
     @Test
     fun fullProfileFlow_createEditDelete() {
-        // 1. Open settings -> Manage Profiles
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Manage Profiles")).perform(click())
+        openManageProfilesDialog()
 
         // 2. Check initial empty state
         onView(withId(R.id.tv_empty_profiles)).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
 
         // 3. Create a new profile
         onView(withId(R.id.fab_add_profile)).perform(click())
-        onView(withText("Create Profile")).check(matches(isDisplayed())) // Assert dialog is open
+        onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
         onView(withId(R.id.et_nickname)).perform(replaceText("Test Profile"))
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withText("Save")).perform(click())
 
         // 4. Verify profile creation
         onView(withText("Test Profile")).check(matches(isDisplayed()))
@@ -39,14 +45,14 @@ class ProfileFlowTest : BaseUITest() {
         // 5. Test Edit Flow
         onView(withText("Test Profile")).perform(longClick())
         onView(withText("Edit")).perform(click())
-        onView(withText("Edit Profile")).check(matches(isDisplayed())) // Assert dialog is open
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withText(R.string.title_edit_profile)).check(matches(isDisplayed()))
+        onView(withText("Save")).perform(click())
 
         // 6. Test Delete Flow
         onView(withText("Test Profile")).perform(longClick())
         onView(withText("Delete")).perform(click())
         onView(withText("Are you sure you want to delete 'Test Profile'?")).check(matches(isDisplayed()))
-        onView(withId(android.R.id.button1)).perform(click()) // Click "DELETE"
+        onView(withText("DELETE")).perform(click())
 
         // 7. Verify final empty state
         onView(withId(R.id.tv_empty_profiles)).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
@@ -54,16 +60,14 @@ class ProfileFlowTest : BaseUITest() {
 
     @Test
     fun createProfile_shortNickname_showsError() {
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Manage Profiles")).perform(click())
+        openManageProfilesDialog()
         onView(withId(R.id.fab_add_profile)).perform(click())
 
-        onView(withText("Create Profile")).check(matches(isDisplayed())) // Assert dialog is open
-        onView(withId(R.id.et_nickname)).perform(replaceText("AB")) // Too short
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
+        onView(withId(R.id.et_nickname)).perform(replaceText("AB"))
+        onView(withText("Save")).perform(click())
 
-        // Assert: Dialog should still be open
-        onView(withText("Create Profile")).check(matches(isDisplayed()))
+        onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
     }
 
     @Test

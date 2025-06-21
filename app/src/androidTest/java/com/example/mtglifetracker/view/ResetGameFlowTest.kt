@@ -1,8 +1,11 @@
 package com.example.mtglifetracker.view
 
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.BaseUITest
@@ -23,59 +26,52 @@ class ResetGameFlowTest : BaseUITest() {
         isDescendantOfA(withTagValue(equalTo("player_segment_1")))
     )
 
+    private fun openResetDialog() {
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withId(R.id.rv_settings_options))
+            .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
+                withText("Reset Game"), click()
+            ))
+    }
+
     @Test
     fun resetCurrentGame_shouldOnlyResetCurrentGameLifeTotals() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
-
-        // Arrange: Change life total
         onView(lifeCounterForPlayer2).perform(clickInXPercent(25))
         onView(lifeCounterForPlayer2).check(matches(withText("39")))
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Reset Game")).perform(click())
+        openResetDialog()
         onView(withId(R.id.rb_reset_current)).perform(click())
         onView(withText("Reset")).perform(click())
 
-        // Assert
+        pressBack()
+
         onView(lifeCounterForPlayer2).check(matches(withText("40")))
     }
 
     @Test
     fun resetAllGames_shouldResetAllGameLifeTotals() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
-
-        // Arrange: Change life total
         onView(lifeCounterForPlayer2).perform(clickInXPercent(25))
         onView(lifeCounterForPlayer2).check(matches(withText("39")))
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Reset Game")).perform(click())
+        openResetDialog()
         onView(withId(R.id.rb_reset_all)).perform(click())
         onView(withText("Reset")).perform(click())
 
-        // Assert
+        pressBack()
+
         onView(lifeCounterForPlayer2).check(matches(withText("40")))
     }
 
     @Test
     fun cancelReset_shouldNotChangeLifeTotals() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
-
-        // Arrange: Change life total
         onView(lifeCounterForPlayer2).perform(clickInXPercent(25))
         onView(lifeCounterForPlayer2).check(matches(withText("39")))
 
-        // Act: Open reset dialog and cancel
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Reset Game")).perform(click())
+        openResetDialog()
         onView(withText("Cancel")).perform(click())
 
-        // Assert: Life total is unchanged
+        pressBack()
+
         onView(lifeCounterForPlayer2).check(matches(withText("39")))
     }
 }

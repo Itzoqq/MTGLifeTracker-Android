@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
@@ -15,9 +17,6 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class EditDeleteProfileDialogFragment : DialogFragment() {
-
-    // The ViewModel is no longer needed here as this dialog's only job
-    // is to pass a result back.
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val profileName = arguments?.getString(ARG_PROFILE_NAME) ?: "Profile"
@@ -33,22 +32,23 @@ class EditDeleteProfileDialogFragment : DialogFragment() {
             }
         }
 
+        val inflater = requireActivity().layoutInflater
+        val customTitleView = inflater.inflate(R.layout.dialog_custom_title, FrameLayout(requireContext()), false)
+        customTitleView.findViewById<TextView>(R.id.tv_dialog_title).text = getString(R.string.title_manage_specific_profile, profileName)
+        customTitleView.findViewById<ImageView>(R.id.iv_back_arrow).setOnClickListener { dismiss() }
+
         return AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-            .setTitle("Manage $profileName")
+            .setCustomTitle(customTitleView)
             .setAdapter(adapter) { dialog, which ->
                 when (options[which]) {
                     "Edit" -> {
-                        // Set the result for the parent fragment to handle. This is the fix.
                         parentFragmentManager.setFragmentResult(
                             "editProfileRequest",
                             bundleOf("profileId" to profileId)
                         )
-                        // Dismiss this dialog. The parent will handle the rest.
                         dialog.dismiss()
                     }
                     "Delete" -> {
-                        // The delete flow remains the same, as it already shows a separate,
-                        // nested confirmation dialog.
                         dialog.dismiss()
                         if (profileId != -1L) {
                             DeleteConfirmationDialogFragment.newInstance(profileId, profileName)

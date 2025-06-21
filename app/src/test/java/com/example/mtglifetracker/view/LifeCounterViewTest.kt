@@ -113,7 +113,7 @@ class LifeCounterViewTest {
         // Arrange
         val mockOverlay = View(ApplicationProvider.getApplicationContext())
         mockOverlay.visibility = View.VISIBLE
-        lifeCounterView.addDismissableOverlay(mockOverlay)
+        lifeCounterView.addDismissibleOverlay(mockOverlay)
 
         // Act
         lifeCounterView.dispatchTouchEvent(createMotionEvent(MotionEvent.ACTION_DOWN, 150f, 50f))

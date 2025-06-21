@@ -3,6 +3,9 @@ package com.example.mtglifetracker.view
 import android.app.Dialog
 import android.os.Bundle
 import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -32,8 +35,9 @@ class CreateProfileDialogFragment : DialogFragment() {
 
         val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
         val inflater = requireActivity().layoutInflater
-        val view = inflater.inflate(R.layout.dialog_create_profile, null)
 
+        // Inflate view with a temporary parent to resolve layout params
+        val view = inflater.inflate(R.layout.dialog_create_profile, FrameLayout(requireContext()), false)
         val nicknameEditText: EditText = view.findViewById(R.id.et_nickname)
         val colorRecyclerView: RecyclerView = view.findViewById(R.id.rv_colors)
 
@@ -41,8 +45,14 @@ class CreateProfileDialogFragment : DialogFragment() {
 
         nicknameEditText.isEnabled = true
 
-        builder.setView(view)
-            .setTitle(if (isEditMode) "Edit Profile" else "Create Profile")
+        // Inflate and set up the custom title
+        val customTitleView = inflater.inflate(R.layout.dialog_custom_title, FrameLayout(requireContext()), false)
+        val titleTextView = customTitleView.findViewById<TextView>(R.id.tv_dialog_title)
+        titleTextView.text = if (isEditMode) getString(R.string.title_edit_profile) else getString(R.string.title_create_profile)
+        customTitleView.findViewById<ImageView>(R.id.iv_back_arrow).setOnClickListener { dismiss() }
+
+        builder.setCustomTitle(customTitleView)
+            .setView(view)
             .setPositiveButton("Save", null)
             .setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
 
@@ -51,14 +61,13 @@ class CreateProfileDialogFragment : DialogFragment() {
             val color = arguments?.getString(ARG_EDIT_MODE_COLOR)
 
             nicknameEditText.setText(nickname)
-            nicknameEditText.isEnabled = false // Keep nickname non-editable in edit mode
+            nicknameEditText.isEnabled = false
 
             selectedColor = color
             colorAdapter.setSelectedColor(selectedColor)
         }
 
         val dialog = builder.create()
-
         dialog.setOnShowListener {
             val saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             saveButton.setOnClickListener {
@@ -95,7 +104,7 @@ class CreateProfileDialogFragment : DialogFragment() {
             selectedColor = color
         }
         recyclerView.adapter = colorAdapter
-        recyclerView.layoutManager = GridLayoutManager(context, 6) // Display 6 colors per row
+        recyclerView.layoutManager = GridLayoutManager(context, 6)
     }
 
     companion object {

@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -18,7 +20,7 @@ class StartingLifeDialogFragment : DialogFragment() {
     private val gameViewModel: GameViewModel by activityViewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val lifeOptions = arrayOf("20", "30", "40", "Custom") // Added "30"
+        val lifeOptions = arrayOf("20", "30", "40", "Custom")
 
         val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, lifeOptions) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -28,8 +30,18 @@ class StartingLifeDialogFragment : DialogFragment() {
             }
         }
 
+        // Inflate the custom title view, providing a temporary parent to resolve warnings
+        val inflater = requireActivity().layoutInflater
+        val customTitleView = inflater.inflate(R.layout.dialog_custom_title, FrameLayout(requireContext()), false)
+
+        // Set the title from string resources and set the back arrow's click listener
+        customTitleView.findViewById<TextView>(R.id.tv_dialog_title).text = getString(R.string.title_starting_life)
+        customTitleView.findViewById<ImageView>(R.id.iv_back_arrow).setOnClickListener {
+            dismiss()
+        }
+
         return AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-            .setTitle("Starting Life")
+            .setCustomTitle(customTitleView)
             .setAdapter(adapter) { _, which ->
                 when (lifeOptions[which]) {
                     "20" -> gameViewModel.changeStartingLife(20)

@@ -1,9 +1,12 @@
 package com.example.mtglifetracker.view
 
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.BaseUITest
@@ -23,54 +26,62 @@ class StartingLifeFlowTest : BaseUITest() {
         isDescendantOfA(withTagValue(equalTo("player_segment_1")))
     )
 
+    private fun openStartingLifeDialog() {
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withId(R.id.rv_settings_options))
+            .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
+                withText("Starting Life"), click()
+            ))
+    }
+
     @Test
     fun selectingPresetStartingLife_shouldUpdateLifeOnScreen() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
         onView(lifeCounterForPlayer2).check(matches(withText("40")))
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Starting Life")).perform(click())
+        openStartingLifeDialog()
         onView(withText("20")).perform(click())
 
-        // Assert
+        pressBack()
+
         onView(lifeCounterForPlayer2).check(matches(withText("20")))
     }
 
     @Test
     fun selectingCustomStartingLife_shouldUpdateLifeOnScreen() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
         onView(lifeCounterForPlayer2).check(matches(withText("40")))
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Starting Life")).perform(click())
+        openStartingLifeDialog()
         onView(withText("Custom")).perform(click())
         onView(withId(R.id.et_custom_life)).perform(replaceText("123"))
         onView(withText("Set")).perform(click())
 
-        // Assert
+        pressBack()
+
         onView(lifeCounterForPlayer2).check(matches(withText("123")))
     }
 
     @Test
     fun enteringInvalidCustomLife_shouldNotUpdateLife() {
-        // Arrange: Set life to a known value first
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Starting Life")).perform(click())
+        // Arrange
+        openStartingLifeDialog()
         onView(withText("20")).perform(click())
+        pressBack()
         onView(lifeCounterForPlayer2).check(matches(withText("20")))
 
-        // Act: Try to set an invalid life total (0)
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Starting Life")).perform(click())
+        // Act
+        openStartingLifeDialog()
         onView(withText("Custom")).perform(click())
         onView(withId(R.id.et_custom_life)).perform(replaceText("0"))
         onView(withText("Set")).perform(click())
 
-        // Assert: Life total should NOT have changed from 20
+        // Assert: Dialog should still be open
+        onView(withText(R.string.title_custom_starting_life)).check(matches(isDisplayed()))
+
+        // Now, close the custom dialog and the settings dialog
+        pressBack()
+        pressBack()
+
+        // Assert: Life total is unchanged
         onView(lifeCounterForPlayer2).check(matches(withText("20")))
     }
 }

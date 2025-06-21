@@ -1,14 +1,12 @@
 package com.example.mtglifetracker.view
 
 import android.app.Dialog
-import android.graphics.Color
 import android.os.Bundle
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.TextView
+import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -16,35 +14,32 @@ import dagger.hilt.android.AndroidEntryPoint
 class SettingsDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
+        val inflater = requireActivity().layoutInflater
+
+        // Inflate the custom view that contains our RecyclerView
+        val view = inflater.inflate(R.layout.dialog_settings_menu, FrameLayout(requireContext()), false)
+        val recyclerView: RecyclerView = view.findViewById(R.id.rv_settings_options)
+
         val settingsOptions = arrayOf("Number of Players", "Starting Life", "Manage Profiles", "Reset Game")
 
-        val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, settingsOptions) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getView(position, convertView, parent)
-                (view.findViewById<TextView>(android.R.id.text1)).setTextColor(Color.WHITE)
-                return view
+        // The adapter's click listener launches the sub-dialogs WITHOUT dismissing this one.
+        val adapter = SettingsAdapter(settingsOptions) { position ->
+            when (position) {
+                0 -> PlayerCountDialogFragment().show(parentFragmentManager, PlayerCountDialogFragment.TAG)
+                1 -> StartingLifeDialogFragment().show(parentFragmentManager, StartingLifeDialogFragment.TAG)
+                2 -> ManageProfilesDialogFragment().show(parentFragmentManager, ManageProfilesDialogFragment.TAG)
+                3 -> ResetConfirmationDialogFragment().show(parentFragmentManager, ResetConfirmationDialogFragment.TAG)
             }
         }
 
-        return AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.adapter = adapter
+
+        // Use a standard title and set our custom view as the content
+        return builder
             .setTitle("Settings")
-            .setAdapter(adapter) { dialog, which ->
-                when (which) {
-                    0 -> {
-                        PlayerCountDialogFragment().show(parentFragmentManager, PlayerCountDialogFragment.TAG)
-                    }
-                    1 -> {
-                        StartingLifeDialogFragment().show(parentFragmentManager, StartingLifeDialogFragment.TAG)
-                    }
-                    2 -> {
-                        ManageProfilesDialogFragment().show(parentFragmentManager, ManageProfilesDialogFragment.TAG)
-                    }
-                    3 -> {
-                        ResetConfirmationDialogFragment().show(parentFragmentManager, ResetConfirmationDialogFragment.TAG)
-                    }
-                }
-                dialog.dismiss()
-            }
+            .setView(view)
             .create()
     }
 

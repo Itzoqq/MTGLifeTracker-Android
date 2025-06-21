@@ -11,4 +11,16 @@
     <string name="delete_profile">Delete profile</string>
     <string name="nickname_required">Nickname (required)</string>
     <string name="choose_a_color_optional">Choose a color (optional)</string>
+    <string name="dialog_title">Dialog Title</string>
+    <string name="back">Back</string>
+
+    <string name="title_player_count">Number of Players</string>
+    <string name="title_starting_life">Starting Life</string>
+    <string name="title_confirm_reset">Confirm Reset</string>
+    <string name="title_custom_starting_life">Custom Starting Life</string>
+    <string name="title_manage_profiles">Manage Profiles</string>
+    <string name="title_create_profile">Create Profile</string>
+    <string name="title_edit_profile">Edit Profile</string>
+    <string name="title_manage_specific_profile">Manage %1$s</string>
+    <string name="title_delete_profile">Delete Profile</string>
 </resources>
