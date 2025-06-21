@@ -84,4 +84,18 @@ class StartingLifeFlowTest : BaseUITest() {
         // Assert: Life total is unchanged
         onView(lifeCounterForPlayer2).check(matches(withText("20")))
     }
+
+    @Test
+    fun enteringEmptyCustomLife_shouldNotDismissDialog() {
+        // Arrange: Navigate to the custom life dialog.
+        openStartingLifeDialog()
+        onView(withText("Custom")).perform(click())
+
+        // Act: Ensure the input is empty and click "Set".
+        onView(withId(R.id.et_custom_life)).perform(replaceText(""))
+        onView(withText("Set")).perform(click())
+
+        // Assert: The dialog should remain open because the empty input is not valid.
+        onView(withText(R.string.title_custom_starting_life)).check(matches(isDisplayed()))
+    }
 }

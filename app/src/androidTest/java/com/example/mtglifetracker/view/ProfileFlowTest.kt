@@ -11,6 +11,7 @@ import com.example.mtglifetracker.BaseUITest
 import com.example.mtglifetracker.R
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.CoreMatchers.allOf
+import org.hamcrest.CoreMatchers.not
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -179,5 +180,27 @@ class ProfileFlowTest : BaseUITest() {
         onView(withText("EditMyColor")).check(matches(isDisplayed()))
         onView(allOf(withId(R.id.view_profile_color), hasSibling(withText("EditMyColor"))))
             .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
+    }
+
+    @Test
+    fun editProfile_mode_populates_data_and_disables_nickname() {
+        // Arrange: Create a profile first so we have something to edit.
+        val profileNickname = "TestProfile"
+        openManageProfilesDialog()
+        onView(withId(R.id.fab_add_profile)).perform(click())
+        onView(withId(R.id.et_nickname)).perform(replaceText(profileNickname))
+        onView(withText("Save")).perform(click())
+
+        // Act: Open the profile for editing.
+        onView(withText(profileNickname)).perform(longClick())
+        onView(withText("Edit")).perform(click())
+
+        // Assert:
+        // Check that the dialog title is correct for edit mode.
+        onView(withText(R.string.title_edit_profile)).check(matches(isDisplayed()))
+        // Check that the nickname is correctly pre-filled.
+        onView(withId(R.id.et_nickname)).check(matches(withText(profileNickname)))
+        // Crucially, check that the nickname field is NOT enabled.
+        onView(withId(R.id.et_nickname)).check(matches(not(isEnabled())))
     }
 }
