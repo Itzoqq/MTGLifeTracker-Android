@@ -51,19 +51,15 @@ abstract class BaseUITest {
         IdlingRegistry.getInstance().register(SingletonIdlingResource.countingIdlingResource)
     }
 
+
     @After
     open fun tearDown() {
         IdlingRegistry.getInstance().unregister(SingletonIdlingResource.countingIdlingResource)
 
-        // --- THIS IS THE FIX ---
-        // 1. Use Room's built-in, thread-safe method to clear all tables.
-        //    This is safer than calling your own repository methods here.
+        // This clears all data between tests, which is correct.
         runBlocking {
             db.clearAllTables()
         }
-        // 2. Now that the database is cleared and no operations are pending,
-        //    close the connection to prevent the leak warning.
-        // --- END OF FIX ---
 
         try {
             Espresso.pressBackUnconditionally()
