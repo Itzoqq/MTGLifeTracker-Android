@@ -57,12 +57,7 @@ class RotatableLayout @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (isRotated90Degrees()) {
-            super.onMeasure(heightMeasureSpec, widthMeasureSpec)
-            setMeasuredDimension(measuredHeight, measuredWidth)
-        } else {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
     override fun dispatchDraw(canvas: Canvas) {
@@ -104,9 +99,5 @@ class RotatableLayout @JvmOverloads constructor(
         event.transform(matrix)
         val handled = super.dispatchTouchEvent(event)
         return handled
-    }
-
-    private fun isRotated90Degrees(): Boolean {
-        return angle % 180 != 0
     }
 }

@@ -16,8 +16,6 @@ object SingletonIdlingResource {
     }
 
     fun decrement() {
-        if (!countingIdlingResource.isIdleNow) {
-            countingIdlingResource.decrement()
-        }
+        countingIdlingResource.decrement()
     }
 }

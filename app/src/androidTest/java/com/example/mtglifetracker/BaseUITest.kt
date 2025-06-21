@@ -1,6 +1,5 @@
 package com.example.mtglifetracker
 
-import androidx.test.espresso.Espresso
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.example.mtglifetracker.data.AppDatabase
@@ -61,10 +60,6 @@ abstract class BaseUITest {
             db.clearAllTables()
         }
 
-        try {
-            Espresso.pressBackUnconditionally()
-        } catch (_: Exception) {
-            // Ignore exceptions
-        }
+        activityRule.scenario.close()
     }
 }

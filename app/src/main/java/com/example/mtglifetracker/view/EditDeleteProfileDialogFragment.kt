@@ -8,18 +8,16 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
 import com.example.mtglifetracker.R
-import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class EditDeleteProfileDialogFragment : DialogFragment() {
 
-    private val profileViewModel: ProfileViewModel by activityViewModels()
+    // The ViewModel is no longer needed here as this dialog's only job
+    // is to pass a result back.
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val profileName = arguments?.getString(ARG_PROFILE_NAME) ?: "Profile"
@@ -40,22 +38,17 @@ class EditDeleteProfileDialogFragment : DialogFragment() {
             .setAdapter(adapter) { dialog, which ->
                 when (options[which]) {
                     "Edit" -> {
-                        // Launch a coroutine to fetch the profile
-                        lifecycleScope.launch {
-                            val profile = profileViewModel.getProfile(profileId)
-                            if (profile != null) {
-                                // Dismiss this dialog after we have the profile
-                                dialog.dismiss()
-                                // Launch the Create/Edit dialog in edit mode
-                                CreateProfileDialogFragment.newInstanceForEdit(profile)
-                                    .show(parentFragmentManager, CreateProfileDialogFragment.TAG)
-                            } else {
-                                dialog.dismiss()
-                            }
-                        }
+                        // Set the result for the parent fragment to handle. This is the fix.
+                        parentFragmentManager.setFragmentResult(
+                            "editProfileRequest",
+                            bundleOf("profileId" to profileId)
+                        )
+                        // Dismiss this dialog. The parent will handle the rest.
+                        dialog.dismiss()
                     }
                     "Delete" -> {
-                        // Dismiss this dialog first for delete
+                        // The delete flow remains the same, as it already shows a separate,
+                        // nested confirmation dialog.
                         dialog.dismiss()
                         if (profileId != -1L) {
                             DeleteConfirmationDialogFragment.newInstance(profileId, profileName)

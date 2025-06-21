@@ -47,6 +47,23 @@ class ManageProfilesDialogFragment : DialogFragment() {
         recyclerView.adapter = profileAdapter
         recyclerView.layoutManager = LinearLayoutManager(context)
 
+        // Set up the listener for the result from EditDeleteProfileDialogFragment.
+        // This is the core of the fix.
+        parentFragmentManager.setFragmentResultListener("editProfileRequest", this) { _, bundle ->
+            val profileId = bundle.getLong("profileId", -1L)
+            if (profileId != -1L) {
+                // Launch a coroutine to fetch the full profile object before showing the next dialog.
+                lifecycleScope.launch {
+                    val profile = profileViewModel.getProfile(profileId)
+                    profile?.let {
+                        // Now it's safe to show the edit dialog.
+                        CreateProfileDialogFragment.newInstanceForEdit(it)
+                            .show(parentFragmentManager, CreateProfileDialogFragment.TAG)
+                    }
+                }
+            }
+        }
+
         view.findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab_add_profile)
             .setOnClickListener {
                 CreateProfileDialogFragment().show(parentFragmentManager, CreateProfileDialogFragment.TAG)
