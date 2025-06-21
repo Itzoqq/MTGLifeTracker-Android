@@ -63,7 +63,6 @@ abstract class BaseUITest {
         }
         // 2. Now that the database is cleared and no operations are pending,
         //    close the connection to prevent the leak warning.
-        db.close()
         // --- END OF FIX ---
 
         try {

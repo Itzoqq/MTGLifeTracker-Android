@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.filterNotNull
 
 @Suppress("RedundantConstructorKeyword")
 @Singleton
@@ -32,9 +33,10 @@ class GameRepository constructor(
         externalScope.launch {
             initializeDatabase()
             settingsDao.getSettings()
+                .filterNotNull() // Add this line to ignore the initial null value
                 .flatMapLatest { settings ->
-                    val playerCount = settings!!.playerCount
-                    playerDao.getPlayers(playerCount)
+                    // Because of filterNotNull(), 'settings' is now guaranteed to be non-null here
+                    playerDao.getPlayers(settings.playerCount)
                 }
                 .collect { players ->
                     _gameState.update { currentState ->
