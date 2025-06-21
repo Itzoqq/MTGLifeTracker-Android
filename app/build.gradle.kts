@@ -85,6 +85,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    implementation(libs.dagger)
+    ksp(libs.dagger.compiler)
+
     // Hilt Dependency Injection
     implementation(libs.hilt.android)
     // CHANGED: Switched from kapt to ksp

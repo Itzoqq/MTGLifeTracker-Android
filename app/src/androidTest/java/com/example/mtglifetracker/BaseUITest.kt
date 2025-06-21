@@ -4,7 +4,6 @@ import androidx.test.espresso.Espresso
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.example.mtglifetracker.data.AppDatabase
-import com.example.mtglifetracker.data.GameRepository
 import dagger.hilt.android.testing.HiltAndroidRule
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -43,48 +42,34 @@ abstract class BaseUITest {
     @get:Rule(order = 3)
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
-    // MODIFICATION: Inject the repository to handle database cleanup.
-    @Inject
-    lateinit var repository: GameRepository
-
     @Inject
     lateinit var db: AppDatabase
 
-    /**
-     * This method is run before each test. It injects dependencies via Hilt
-     * and registers the global idling resource.
-     */
     @Before
     open fun setUp() {
-        // MODIFICATION: This call is essential to populate the @Inject fields like the repository.
         hiltRule.inject()
         IdlingRegistry.getInstance().register(SingletonIdlingResource.countingIdlingResource)
     }
 
-    /**
-     * This method is run after each test. It performs critical cleanup actions:
-     * 1. Unregisters the idling resource.
-     * 2. Clears all tables in the Hilt-managed database to ensure test isolation.
-     * 3. Performs a back press to reset the UI state for the next test.
-     */
     @After
     open fun tearDown() {
         IdlingRegistry.getInstance().unregister(SingletonIdlingResource.countingIdlingResource)
 
-        // MODIFICATION: Use runBlocking to call the suspend function from this non-coroutine context.
-        // This clears the single, Hilt-managed database instance, ensuring test isolation.
+        // --- THIS IS THE FIX ---
+        // 1. Use Room's built-in, thread-safe method to clear all tables.
+        //    This is safer than calling your own repository methods here.
         runBlocking {
-            repository.resetAllGames()
+            db.clearAllTables()
         }
+        // 2. Now that the database is cleared and no operations are pending,
+        //    close the connection to prevent the leak warning.
+        db.close()
+        // --- END OF FIX ---
 
-        // As a final cleanup step, unconditionally press the back button. This helps
-        // close any lingering dialogs that a failed test might have left open.
         try {
             Espresso.pressBackUnconditionally()
         } catch (_: Exception) {
-            // Ignore exceptions, as the activity might already be closed.
+            // Ignore exceptions
         }
-
-        db.close()
     }
 }

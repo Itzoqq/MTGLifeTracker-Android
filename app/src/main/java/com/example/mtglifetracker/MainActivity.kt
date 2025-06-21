@@ -23,8 +23,10 @@ import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -143,15 +145,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val allProfiles = profileViewModel.profiles.first()
-            val currentPlayerProfileId = gameViewModel.gameState.value.players.getOrNull(playerIndex)?.profileId
-            val usedProfileIdsByOthers = gameViewModel.gameState.value.players
-                .mapNotNull { it.profileId }
-                .toSet()
-                .minus(currentPlayerProfileId)
+            val (sortedProfiles, availableProfiles) = withContext(Dispatchers.Default) {
+                // This block now runs on a background thread
+                val allProfiles = profileViewModel.profiles.first()
+                val currentPlayerProfileId = gameViewModel.gameState.value.players.getOrNull(playerIndex)?.profileId
+                val usedProfileIdsByOthers = gameViewModel.gameState.value.players
+                    .mapNotNull { it.profileId }
+                    .toSet()
+                    .minus(currentPlayerProfileId)
 
-            val availableProfiles = allProfiles.filter { profile ->
-                !usedProfileIdsByOthers.contains(profile.id)
+                val available = allProfiles.filter { profile ->
+                    !usedProfileIdsByOthers.contains(profile.id)
+                }
+                // Return a pair of the sorted list and the original available list
+                Pair(available.sortedBy { it.nickname }, available)
             }
 
             if (availableProfiles.isEmpty()) {
@@ -159,7 +166,6 @@ class MainActivity : AppCompatActivity() {
                 return@launch
             }
 
-            val sortedProfiles = availableProfiles.sortedBy { it.nickname }
             val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
                 gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
                 segment.profilePopupContainer.visibility = View.GONE
