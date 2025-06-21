@@ -81,18 +81,31 @@ class CreateProfileDialogFragment : DialogFragment() {
                     dialog.dismiss()
                 } else {
                     val nickname = nicknameEditText.text.toString().trim()
-                    if (nickname.length < 3) {
-                        Toast.makeText(requireContext(), "Nickname must be at least 3 characters", Toast.LENGTH_SHORT).show()
-                    } else {
-                        lifecycleScope.launch {
-                            if (profileViewModel.doesNicknameExist(nickname)) {
-                                Toast.makeText(requireContext(), "Nickname already exists.", Toast.LENGTH_SHORT).show()
-                            } else {
-                                profileViewModel.addProfile(nickname, selectedColor)
-                                dialog.dismiss()
+                    // --- NEW AND UPDATED VALIDATION LOGIC ---
+                    val isAlphaNumeric = nickname.matches("^[a-zA-Z0-9]*$".toRegex())
+
+                    when {
+                        nickname.length < 3 -> {
+                            Toast.makeText(requireContext(), "Nickname must be at least 3 characters", Toast.LENGTH_SHORT).show()
+                        }
+                        nickname.length > 14 -> {
+                            Toast.makeText(requireContext(), "Nickname must be no more than 14 characters", Toast.LENGTH_SHORT).show()
+                        }
+                        !isAlphaNumeric -> {
+                            Toast.makeText(requireContext(), "Nickname can only contain letters and numbers", Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {
+                            lifecycleScope.launch {
+                                if (profileViewModel.doesNicknameExist(nickname)) {
+                                    Toast.makeText(requireContext(), "Nickname already exists.", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    profileViewModel.addProfile(nickname, selectedColor)
+                                    dialog.dismiss()
+                                }
                             }
                         }
                     }
+                    // --- END OF VALIDATION LOGIC ---
                 }
             }
         }

@@ -36,22 +36,22 @@ class ProfileFlowTest : BaseUITest() {
         // 3. Create a new profile
         onView(withId(R.id.fab_add_profile)).perform(click())
         onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
-        onView(withId(R.id.et_nickname)).perform(replaceText("Test Profile"))
+        onView(withId(R.id.et_nickname)).perform(replaceText("TestProfile"))
         onView(withText("Save")).perform(click())
 
         // 4. Verify profile creation
-        onView(withText("Test Profile")).check(matches(isDisplayed()))
+        onView(withText("TestProfile")).check(matches(isDisplayed()))
 
         // 5. Test Edit Flow
-        onView(withText("Test Profile")).perform(longClick())
+        onView(withText("TestProfile")).perform(longClick())
         onView(withText("Edit")).perform(click())
         onView(withText(R.string.title_edit_profile)).check(matches(isDisplayed()))
         onView(withText("Save")).perform(click())
 
         // 6. Test Delete Flow
-        onView(withText("Test Profile")).perform(longClick())
+        onView(withText("TestProfile")).perform(longClick())
         onView(withText("Delete")).perform(click())
-        onView(withText("Are you sure you want to delete 'Test Profile'?")).check(matches(isDisplayed()))
+        onView(withText("Are you sure you want to delete 'TestProfile'?")).check(matches(isDisplayed()))
         onView(withText("DELETE")).perform(click())
 
         // 7. Verify final empty state
@@ -70,21 +70,51 @@ class ProfileFlowTest : BaseUITest() {
         onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
     }
 
+    // --- NEW TEST ---
+    @Test
+    fun createProfile_tooLongNickname_showsError() {
+        openManageProfilesDialog()
+        onView(withId(R.id.fab_add_profile)).perform(click())
+
+        onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
+        // Attempt to enter a 15-character nickname
+        onView(withId(R.id.et_nickname)).perform(replaceText("ThisIs15CharsOk"))
+        onView(withText("Save")).perform(click())
+
+        // Assert Dialog is still displayed because the text is too long.
+        // Even though the view has maxLength, this tests the logic just in case.
+        onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
+    }
+
+    // --- NEW TEST ---
+    @Test
+    fun createProfile_nonAlphanumericNickname_showsError() {
+        openManageProfilesDialog()
+        onView(withId(R.id.fab_add_profile)).perform(click())
+
+        onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
+        onView(withId(R.id.et_nickname)).perform(replaceText("No!Symbols@"))
+        onView(withText("Save")).perform(click())
+
+        // Assert Dialog is still displayed
+        onView(withText(R.string.title_create_profile)).check(matches(isDisplayed()))
+    }
+
+
     @Test
     fun createProfile_duplicateNickname_showsError() {
         // Arrange: Create first profile
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Manage Profiles")).perform(click())
+        openManageProfilesDialog()
         onView(withId(R.id.fab_add_profile)).perform(click())
         onView(withText("Create Profile")).check(matches(isDisplayed()))
-        onView(withId(R.id.et_nickname)).perform(replaceText("Test Profile"))
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withId(R.id.et_nickname)).perform(replaceText("TestProfile"))
+        onView(withText("Save")).perform(click())
 
         // Act: Try to create duplicate
         onView(withId(R.id.fab_add_profile)).perform(click())
         onView(withText("Create Profile")).check(matches(isDisplayed()))
-        onView(withId(R.id.et_nickname)).perform(replaceText("Test Profile"))
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withId(R.id.et_nickname)).perform(replaceText("TestProfile"))
+        onView(withText("Save")).perform(click())
 
         // Assert: Dialog should still be open
         onView(withText("Create Profile")).check(matches(isDisplayed()))
@@ -92,12 +122,11 @@ class ProfileFlowTest : BaseUITest() {
 
     @Test
     fun createProfile_emptyNickname_showsError() {
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Manage Profiles")).perform(click())
+        openManageProfilesDialog()
         onView(withId(R.id.fab_add_profile)).perform(click())
 
         onView(withText("Create Profile")).check(matches(isDisplayed()))
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withText("Save")).perform(click())
 
         // Assert Dialog is still displayed
         onView(withText("Create Profile")).check(matches(isDisplayed()))
@@ -106,19 +135,18 @@ class ProfileFlowTest : BaseUITest() {
     @Test
     fun deleteProfile_cancelConfirmation_profileRemains() {
         // 1. Arrange: Create a profile
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Manage Profiles")).perform(click())
+        openManageProfilesDialog()
         onView(withId(R.id.fab_add_profile)).perform(click())
         onView(withText("Create Profile")).check(matches(isDisplayed()))
         onView(withId(R.id.et_nickname)).perform(replaceText("DoNotDeleteMe"))
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withText("Save")).perform(click())
         onView(withText("DoNotDeleteMe")).check(matches(isDisplayed()))
 
         // 2. Act: Start delete process but cancel it
         onView(withText("DoNotDeleteMe")).perform(longClick())
         onView(withText("Delete")).perform(click())
         onView(withText("Are you sure you want to delete 'DoNotDeleteMe'?")).check(matches(isDisplayed()))
-        onView(withId(android.R.id.button2)).perform(click()) // Click "Cancel"
+        onView(withText("Cancel")).perform(click())
 
         // 3. Assert: Profile still exists
         onView(withText("Manage Profiles")).check(matches(isDisplayed()))
@@ -128,12 +156,11 @@ class ProfileFlowTest : BaseUITest() {
     @Test
     fun editProfile_changeColor_isSuccessful() {
         // 1. Arrange: Create a profile
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Manage Profiles")).perform(click())
+        openManageProfilesDialog()
         onView(withId(R.id.fab_add_profile)).perform(click())
         onView(withText("Create Profile")).check(matches(isDisplayed()))
         onView(withId(R.id.et_nickname)).perform(replaceText("EditMyColor"))
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withText("Save")).perform(click())
         onView(allOf(withId(R.id.view_profile_color), hasSibling(withText("EditMyColor"))))
             .check(matches(withEffectiveVisibility(Visibility.INVISIBLE)))
 
@@ -142,15 +169,11 @@ class ProfileFlowTest : BaseUITest() {
         onView(withText("Edit")).perform(click())
         onView(withText("Edit Profile")).check(matches(isDisplayed()))
 
-        // --- THIS IS THE FIX ---
-        // Replace the old way of finding the color swatch
-        // with the new RecyclerView action.
         onView(withId(R.id.rv_colors)).perform(
             RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click())
         )
-        // --- END OF FIX ---
 
-        onView(withId(android.R.id.button1)).perform(click()) // Click "Save"
+        onView(withText("Save")).perform(click())
 
         // 3. Assert: Color dot is now visible
         onView(withText("EditMyColor")).check(matches(isDisplayed()))
