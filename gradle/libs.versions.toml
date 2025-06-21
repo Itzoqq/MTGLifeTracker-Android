@@ -24,7 +24,8 @@ fragmentTesting = "1.8.8"
 androidxMonitor = "1.7.2"
 jacoco = "0.8.12"
 hiltAndroid = "2.56.2"
-dagger = "2.50"
+dagger = "2.56.2"
+ksp = "2.1.21-2.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -64,3 +65,4 @@ androidx-test-monitor = { group = "androidx.test", name = "monitor", version.ref
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
