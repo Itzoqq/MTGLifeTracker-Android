@@ -1,6 +1,7 @@
 package com.example.mtglifetracker.view
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -13,6 +14,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.SingletonIdlingResource
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
@@ -26,6 +28,11 @@ class ManageProfilesDialogFragment : DialogFragment() {
     private lateinit var profileAdapter: ProfileAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var emptyTextView: TextView
+
+    override fun onCancel(dialog: DialogInterface) {
+        super.onCancel(dialog)
+        (activity as? MainActivity)?.dismissAllDialogs()
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)

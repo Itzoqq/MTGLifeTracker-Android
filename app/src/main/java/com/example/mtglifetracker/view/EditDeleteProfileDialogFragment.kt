@@ -1,6 +1,7 @@
 package com.example.mtglifetracker.view
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -12,11 +13,17 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
+import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class EditDeleteProfileDialogFragment : DialogFragment() {
+
+    override fun onCancel(dialog: DialogInterface) {
+        super.onCancel(dialog)
+        (activity as? MainActivity)?.dismissAllDialogs()
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val profileName = arguments?.getString(ARG_PROFILE_NAME) ?: "Profile"

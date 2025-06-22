@@ -70,7 +70,7 @@ class ResetGameFlowTest : BaseUITest() {
         openResetDialog()
         onView(withText("Cancel")).perform(click())
 
-        pressBack()
+        // FIX: No pressBack() needed here, as clicking cancel already dismissed all dialogs.
 
         onView(lifeCounterForPlayer2).check(matches(withText("39")))
     }

@@ -1,6 +1,7 @@
 package com.example.mtglifetracker.view
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -10,6 +11,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,6 +20,11 @@ import dagger.hilt.android.AndroidEntryPoint
 class DeleteConfirmationDialogFragment : DialogFragment() {
 
     private val profileViewModel: ProfileViewModel by activityViewModels()
+
+    override fun onCancel(dialog: DialogInterface) {
+        super.onCancel(dialog)
+        (activity as? MainActivity)?.dismissAllDialogs()
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val profileId = arguments?.getLong(ARG_PROFILE_ID) ?: -1

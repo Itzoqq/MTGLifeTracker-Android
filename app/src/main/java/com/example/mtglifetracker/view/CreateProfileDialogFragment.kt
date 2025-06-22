@@ -1,6 +1,7 @@
 package com.example.mtglifetracker.view
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -13,6 +14,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.model.Profile
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
@@ -28,6 +30,11 @@ class CreateProfileDialogFragment : DialogFragment() {
         "#F44336", "#9C27B0", "#2196F3", "#4CAF50", "#FFEB3B", "#FF9800"
     )
     private lateinit var colorAdapter: ColorAdapter
+
+    override fun onCancel(dialog: DialogInterface) {
+        super.onCancel(dialog)
+        (activity as? MainActivity)?.dismissAllDialogs()
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val editingProfileId = arguments?.getLong(ARG_EDIT_MODE_ID, -1L)

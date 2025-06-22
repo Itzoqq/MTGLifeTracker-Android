@@ -77,8 +77,7 @@ class StartingLifeFlowTest : BaseUITest() {
         // Assert: Dialog should still be open
         onView(withText(R.string.title_custom_starting_life)).check(matches(isDisplayed()))
 
-        // Now, close the custom dialog and the settings dialog
-        pressBack()
+        // FIX: Close the dialogs. One pressBack now dismisses all of them.
         pressBack()
 
         // Assert: Life total is unchanged

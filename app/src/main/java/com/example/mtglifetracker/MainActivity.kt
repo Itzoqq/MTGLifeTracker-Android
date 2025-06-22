@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -58,6 +59,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun dismissAllDialogs() {
+        // Create a copy of the list to iterate over, to avoid modification issues
+        val fragmentsToDismiss = supportFragmentManager.fragments.filterIsInstance<DialogFragment>()
+        fragmentsToDismiss.forEach { it.dismiss() }
+    }
+
 
     private fun updateUiForNewState(gameState: GameState) {
         if (playerLayoutManager.playerSegments.size != gameState.playerCount) {

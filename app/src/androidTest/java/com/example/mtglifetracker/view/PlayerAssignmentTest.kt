@@ -35,7 +35,8 @@ class PlayerAssignmentTest : BaseUITest() {
         onView(withId(R.id.et_nickname)).perform(replaceText(nickname))
         onView(withText("Save")).perform(click())
 
-        pressBack()
+        // FIX: After saving, we are in the "Manage Profiles" dialog.
+        // One pressBack now triggers onCancel, which dismisses all dialogs.
         pressBack()
     }
 

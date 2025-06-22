@@ -150,6 +150,8 @@ class ProfileFlowTest : BaseUITest() {
         onView(withText("Cancel")).perform(click())
 
         // 3. Assert: Profile still exists
+        // FIX: Re-open the dialog since canceling now dismisses everything
+        openManageProfilesDialog()
         onView(withText("Manage Profiles")).check(matches(isDisplayed()))
         onView(withText("DoNotDeleteMe")).check(matches(isDisplayed()))
     }
