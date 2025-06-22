@@ -9,11 +9,9 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.MainActivity
@@ -30,6 +28,8 @@ class ManageProfilesDialogFragment : DialogFragment() {
     private lateinit var profileAdapter: ProfileAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var emptyTextView: TextView
+    // --- CHANGE THE TYPE OF THE MEMBER VARIABLE ---
+    private var dividerItemDecoration: DividerItemDecorationExceptLast? = null
 
     override fun onCancel(dialog: DialogInterface) {
         super.onCancel(dialog)
@@ -40,7 +40,6 @@ class ManageProfilesDialogFragment : DialogFragment() {
         val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
         val inflater = requireActivity().layoutInflater
 
-        // Inflate view with a temporary parent to resolve layout params
         val view = inflater.inflate(R.layout.dialog_manage_profiles, FrameLayout(requireContext()), false)
 
         recyclerView = view.findViewById(R.id.rv_profiles)
@@ -59,11 +58,9 @@ class ManageProfilesDialogFragment : DialogFragment() {
         recyclerView.adapter = profileAdapter
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        val divider = DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
-        ContextCompat.getDrawable(requireContext(), R.drawable.custom_divider)?.let {
-            divider.setDrawable(it)
-        }
-        recyclerView.addItemDecoration(divider)
+        // --- CHANGE THE INSTANTIATION TO USE THE NEW CLASS ---
+        // Create an instance of our new custom decoration.
+        dividerItemDecoration = DividerItemDecorationExceptLast(requireContext(), R.drawable.custom_divider)
 
         parentFragmentManager.setFragmentResultListener("editProfileRequest", this) { _, bundle ->
             val profileId = bundle.getLong("profileId", -1L)
@@ -83,7 +80,6 @@ class ManageProfilesDialogFragment : DialogFragment() {
                 CreateProfileDialogFragment().show(parentFragmentManager, CreateProfileDialogFragment.TAG)
             }
 
-        // Inflate and set up the custom title
         val customTitleView = inflater.inflate(R.layout.dialog_custom_title, FrameLayout(requireContext()), false)
         customTitleView.findViewById<TextView>(R.id.tv_dialog_title).text = getString(R.string.title_manage_profiles)
         customTitleView.findViewById<ImageView>(R.id.iv_back_arrow).setOnClickListener { dismiss() }
@@ -106,6 +102,13 @@ class ManageProfilesDialogFragment : DialogFragment() {
                 SingletonIdlingResource.increment()
                 try {
                     val sortedProfiles = profiles.sortedBy { it.nickname }
+
+                    // This logic remains the same, as it correctly handles the 0 and 1 item cases.
+                    dividerItemDecoration?.let { recyclerView.removeItemDecoration(it) }
+                    if (sortedProfiles.size > 1) {
+                        dividerItemDecoration?.let { recyclerView.addItemDecoration(it) }
+                    }
+
                     profileAdapter.submitList(sortedProfiles) {
                         updateVisibility(sortedProfiles.isEmpty())
                     }

@@ -13,9 +13,9 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.util.isColorDark
+import com.example.mtglifetracker.view.DividerItemDecorationExceptLast
 import com.example.mtglifetracker.view.LifeCounterView
 import com.example.mtglifetracker.view.PlayerLayoutManager
 import com.example.mtglifetracker.view.ProfilePopupAdapter
@@ -168,6 +168,7 @@ class MainActivity : AppCompatActivity() {
                     val available = allProfiles.filter { profile ->
                         !usedProfileIdsByOthers.contains(profile.id)
                     }
+                    // This sorting is from a previous step, keeping it.
                     Pair(available.sortedBy { it.nickname }, available)
                 }
 
@@ -198,18 +199,18 @@ class MainActivity : AppCompatActivity() {
                 }
                 segment.profilesRecyclerView.adapter = adapter
 
-                // --- REVERT TO DEFAULT DIVIDER ---
+                // --- START OF MODIFIED CODE ---
+                // Remove any existing decoration first to be safe.
                 if (segment.profilesRecyclerView.itemDecorationCount > 0) {
                     segment.profilesRecyclerView.removeItemDecorationAt(0)
                 }
-                // Use the standard DividerItemDecoration
-                val divider = DividerItemDecoration(this@MainActivity, DividerItemDecoration.VERTICAL)
-                // Set its drawable to our custom subtle line
-                ContextCompat.getDrawable(this@MainActivity, R.drawable.custom_divider)?.let {
-                    divider.setDrawable(it)
+
+                // Conditionally add our new custom divider.
+                if (availableProfiles.size > 1) {
+                    val divider = DividerItemDecorationExceptLast(this@MainActivity, R.drawable.custom_divider)
+                    segment.profilesRecyclerView.addItemDecoration(divider)
                 }
-                segment.profilesRecyclerView.addItemDecoration(divider)
-                // --- END DIVIDER LOGIC ---
+                // --- END OF MODIFIED CODE ---
 
 
                 val popupParams = segment.profilePopupContainer.layoutParams
