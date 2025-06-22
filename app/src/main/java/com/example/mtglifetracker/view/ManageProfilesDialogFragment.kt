@@ -9,9 +9,11 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.MainActivity
@@ -57,6 +59,12 @@ class ManageProfilesDialogFragment : DialogFragment() {
         recyclerView.adapter = profileAdapter
         recyclerView.layoutManager = LinearLayoutManager(context)
 
+        val divider = DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
+        ContextCompat.getDrawable(requireContext(), R.drawable.custom_divider)?.let {
+            divider.setDrawable(it)
+        }
+        recyclerView.addItemDecoration(divider)
+
         parentFragmentManager.setFragmentResultListener("editProfileRequest", this) { _, bundle ->
             val profileId = bundle.getLong("profileId", -1L)
             if (profileId != -1L) {
@@ -97,8 +105,9 @@ class ManageProfilesDialogFragment : DialogFragment() {
                 Log.d("ProfileTest", "ManageProfilesDialog - Profile list updated. Count: ${profiles.size}")
                 SingletonIdlingResource.increment()
                 try {
-                    profileAdapter.submitList(profiles.toList()) {
-                        updateVisibility(profiles.isEmpty())
+                    val sortedProfiles = profiles.sortedBy { it.nickname }
+                    profileAdapter.submitList(sortedProfiles) {
+                        updateVisibility(sortedProfiles.isEmpty())
                     }
                 } finally {
                     SingletonIdlingResource.decrement()
