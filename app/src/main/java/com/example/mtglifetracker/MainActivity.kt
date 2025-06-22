@@ -138,7 +138,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // itzoqq/mtglifetracker-android/MTGLifeTracker-Android-16e996fdd3c22096a2d4fcfa1a439d172cba95d4/app/src/main/java/com/example/mtglifetracker/MainActivity.kt
     private fun toggleProfilePopup(segment: RotatableLayout, playerIndex: Int) {
         if (segment.profilePopupContainer.isVisible) {
             segment.profilePopupContainer.visibility = View.GONE
@@ -165,39 +164,62 @@ class MainActivity : AppCompatActivity() {
 
                 if (availableProfiles.isEmpty()) {
                     Toast.makeText(this@MainActivity, "No other profiles available", Toast.LENGTH_SHORT).show()
-                    // IMPORTANT: We must decrement here too before returning
                     SingletonIdlingResource.decrement()
                     return@launch
                 }
 
+                // --- START OF NEW VALIDATION LOGIC ---
                 val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
-                    gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
+                    // Get the absolute latest game state at the moment of click
+                    val currentState = gameViewModel.gameState.value
+                    val currentPlayerProfileId = currentState.players.getOrNull(playerIndex)?.profileId
+                    // Get all profile IDs currently in use by OTHER players
+                    val usedProfileIdsByOthers = currentState.players
+                        .mapNotNull { it.profileId }
+                        .toSet()
+                        .minus(currentPlayerProfileId)
+
+                    // Check if the selected profile has been taken by another player
+                    if (usedProfileIdsByOthers.contains(selectedProfile.id)) {
+                        // CONFLICT: Profile is already in use. Show a message.
+                        Toast.makeText(
+                            this@MainActivity,
+                            "'${selectedProfile.nickname}' is already in use.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        // NO CONFLICT: Proceed to set the profile.
+                        gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
+                    }
+
+                    // In either case (success or conflict), close the popup.
+                    // This forces the user to re-open for a fresh list if there was a conflict.
                     segment.profilePopupContainer.visibility = View.GONE
                 }
+                // --- END OF NEW VALIDATION LOGIC ---
+
                 segment.profilesRecyclerView.adapter = adapter
 
-                // --- START OF FINAL LOGIC ---
+                // The rest of the function remains the same...
+                if (segment.profilesRecyclerView.itemDecorationCount > 0) {
+                    segment.profilesRecyclerView.removeItemDecorationAt(0)
+                }
+                ContextCompat.getDrawable(this@MainActivity, R.drawable.custom_divider)?.let {
+                    // Assuming you have the FullWidthDividerItemDecoration class from the previous step
+                    // segment.profilesRecyclerView.addItemDecoration(FullWidthDividerItemDecoration(this@MainActivity, it))
+                }
 
                 val popupParams = segment.profilePopupContainer.layoutParams
-
-                // Step 1: Set a fixed, generous width using our updated dimension.
                 popupParams.width = resources.getDimensionPixelSize(R.dimen.profile_popup_width)
-
-                // Step 2: Calculate height based on item count, capped at 5 items.
                 val itemHeightDp = 50
                 val itemHeightPx = (itemHeightDp * resources.displayMetrics.density).toInt()
                 val heightForAllItems = availableProfiles.size * itemHeightPx
                 val maxHeightForFiveItems = 5 * itemHeightPx
                 popupParams.height = minOf(heightForAllItems, maxHeightForFiveItems)
-
-                // Step 3: Apply the updated layout params.
                 segment.profilePopupContainer.layoutParams = popupParams
-
-                // --- END OF FINAL LOGIC ---
 
                 segment.profilePopupContainer.visibility = View.VISIBLE
             } finally {
-                // Tell Espresso to stop waiting
                 if (!SingletonIdlingResource.countingIdlingResource.isIdleNow) {
                     SingletonIdlingResource.decrement()
                 }

@@ -4,5 +4,5 @@
     <dimen name="selected_stroke_width">3dp</dimen>
     <dimen name="default_stroke_width">1dp</dimen>
 
-    <dimen name="profile_popup_width">180dp</dimen>
+    <dimen name="profile_popup_width">220dp</dimen>
 </resources>
