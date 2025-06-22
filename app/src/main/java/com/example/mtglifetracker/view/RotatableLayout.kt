@@ -57,7 +57,16 @@ class RotatableLayout @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        if (isRotated90degrees()) {
+            super.onMeasure(heightMeasureSpec, widthMeasureSpec)
+            setMeasuredDimension(measuredHeight, measuredWidth)
+        } else {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        }
+    }
+
+    private fun isRotated90degrees(): Boolean {
+        return angle % 180 != 0
     }
 
     override fun dispatchDraw(canvas: Canvas) {

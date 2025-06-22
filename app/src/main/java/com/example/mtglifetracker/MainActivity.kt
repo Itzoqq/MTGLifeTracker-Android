@@ -70,11 +70,8 @@ class MainActivity : AppCompatActivity() {
     private fun updateUiForNewState(gameState: GameState) {
         if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
             playerLayoutManager.createPlayerLayouts(gameState.playerCount)
-            // --- THIS IS THE FIX ---
-            // The settingsIcon is no longer removed from the container, so we must not re-add it.
-            // Instead, we bring it to the front to ensure it's drawn on top of the player segments.
+            // This ensures the settings icon is drawn on top and forces a layout recalculation
             binding.settingsIcon.bringToFront()
-            // --- END OF FIX ---
             isFirstLoad = true
         }
 
