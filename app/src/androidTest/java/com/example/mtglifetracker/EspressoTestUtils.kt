@@ -3,16 +3,16 @@ package com.example.mtglifetracker
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
+import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
+import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.action.GeneralClickAction
 import androidx.test.espresso.action.Press
 import androidx.test.espresso.action.Tap
-import android.view.ViewGroup
-import androidx.test.espresso.ViewAssertion
+import androidx.test.espresso.matcher.ViewMatchers.isEnabled
 import junit.framework.AssertionFailedError
 import org.hamcrest.Matcher
-import androidx.test.espresso.UiController
-import androidx.test.espresso.matcher.ViewMatchers.isEnabled
 
 // A reusable ViewAction to click on a view at a specific horizontal percentage.
 fun clickInXPercent(pct: Int): ViewAction {

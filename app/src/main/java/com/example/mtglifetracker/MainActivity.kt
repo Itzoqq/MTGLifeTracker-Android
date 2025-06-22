@@ -12,6 +12,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.util.isColorDark
 import com.example.mtglifetracker.view.LifeCounterView
@@ -168,54 +169,51 @@ class MainActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // --- START OF NEW VALIDATION LOGIC ---
                 val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
-                    // Get the absolute latest game state at the moment of click
                     val currentState = gameViewModel.gameState.value
                     val currentPlayerProfileId = currentState.players.getOrNull(playerIndex)?.profileId
-                    // Get all profile IDs currently in use by OTHER players
                     val usedProfileIdsByOthers = currentState.players
                         .mapNotNull { it.profileId }
                         .toSet()
                         .minus(currentPlayerProfileId)
 
-                    // Check if the selected profile has been taken by another player
                     if (usedProfileIdsByOthers.contains(selectedProfile.id)) {
-                        // CONFLICT: Profile is already in use. Show a message.
                         Toast.makeText(
                             this@MainActivity,
                             "'${selectedProfile.nickname}' is already in use.",
                             Toast.LENGTH_SHORT
                         ).show()
                     } else {
-                        // NO CONFLICT: Proceed to set the profile.
                         gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
                     }
-
-                    // In either case (success or conflict), close the popup.
-                    // This forces the user to re-open for a fresh list if there was a conflict.
                     segment.profilePopupContainer.visibility = View.GONE
                 }
-                // --- END OF NEW VALIDATION LOGIC ---
-
                 segment.profilesRecyclerView.adapter = adapter
 
-                // The rest of the function remains the same...
+                // --- REVERT TO DEFAULT DIVIDER ---
                 if (segment.profilesRecyclerView.itemDecorationCount > 0) {
                     segment.profilesRecyclerView.removeItemDecorationAt(0)
                 }
+                // Use the standard DividerItemDecoration
+                val divider = DividerItemDecoration(this@MainActivity, DividerItemDecoration.VERTICAL)
+                // Set its drawable to our custom subtle line
                 ContextCompat.getDrawable(this@MainActivity, R.drawable.custom_divider)?.let {
-                    // Assuming you have the FullWidthDividerItemDecoration class from the previous step
-                    // segment.profilesRecyclerView.addItemDecoration(FullWidthDividerItemDecoration(this@MainActivity, it))
+                    divider.setDrawable(it)
                 }
+                segment.profilesRecyclerView.addItemDecoration(divider)
+                // --- END DIVIDER LOGIC ---
+
 
                 val popupParams = segment.profilePopupContainer.layoutParams
                 popupParams.width = resources.getDimensionPixelSize(R.dimen.profile_popup_width)
-                val itemHeightDp = 50
+
+                val itemHeightDp = 58
                 val itemHeightPx = (itemHeightDp * resources.displayMetrics.density).toInt()
+
                 val heightForAllItems = availableProfiles.size * itemHeightPx
                 val maxHeightForFiveItems = 5 * itemHeightPx
                 popupParams.height = minOf(heightForAllItems, maxHeightForFiveItems)
+
                 segment.profilePopupContainer.layoutParams = popupParams
 
                 segment.profilePopupContainer.visibility = View.VISIBLE
@@ -234,6 +232,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupStaticListeners() {
         binding.settingsIcon.setOnClickListener {
+            // --- NEW LOGIC TO CLOSE OPEN POPUPS ---
+            // Iterate through all player segments and hide any visible profile popups.
+            playerLayoutManager.playerSegments.forEach { segment ->
+                if (segment.profilePopupContainer.isVisible) {
+                    segment.profilePopupContainer.visibility = View.GONE
+                }
+            }
+            // --- END OF NEW LOGIC ---
+
+            // Now, show the settings dialog as before.
             SettingsDialogFragment().show(supportFragmentManager, SettingsDialogFragment.TAG)
         }
     }
