@@ -144,47 +144,62 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // Tell Espresso to start waiting
+        SingletonIdlingResource.increment()
         lifecycleScope.launch {
-            val (sortedProfiles, availableProfiles) = withContext(Dispatchers.Default) {
-                // This block now runs on a background thread
-                val allProfiles = profileViewModel.profiles.first()
-                val currentPlayerProfileId = gameViewModel.gameState.value.players.getOrNull(playerIndex)?.profileId
-                val usedProfileIdsByOthers = gameViewModel.gameState.value.players
-                    .mapNotNull { it.profileId }
-                    .toSet()
-                    .minus(currentPlayerProfileId)
+            try { // Use a try/finally block to guarantee Espresso is notified
+                val (sortedProfiles, availableProfiles) = withContext(Dispatchers.Default) {
+                    val allProfiles = profileViewModel.profiles.first()
+                    val currentPlayerProfileId = gameViewModel.gameState.value.players.getOrNull(playerIndex)?.profileId
+                    val usedProfileIdsByOthers = gameViewModel.gameState.value.players
+                        .mapNotNull { it.profileId }
+                        .toSet()
+                        .minus(currentPlayerProfileId)
 
-                val available = allProfiles.filter { profile ->
-                    !usedProfileIdsByOthers.contains(profile.id)
+                    val available = allProfiles.filter { profile ->
+                        !usedProfileIdsByOthers.contains(profile.id)
+                    }
+                    Pair(available.sortedBy { it.nickname }, available)
                 }
-                // Return a pair of the sorted list and the original available list
-                Pair(available.sortedBy { it.nickname }, available)
+
+                if (availableProfiles.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "No other profiles available", Toast.LENGTH_SHORT).show()
+                    // IMPORTANT: We must decrement here too before returning
+                    SingletonIdlingResource.decrement()
+                    return@launch
+                }
+
+                val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
+                    gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
+                    segment.profilePopupContainer.visibility = View.GONE
+                }
+                segment.profilesRecyclerView.adapter = adapter
+
+                val recyclerParams = segment.profilesRecyclerView.layoutParams
+                val isSideways = segment.angle == 90 || segment.angle == -90
+
+                if (isSideways) {
+                    recyclerParams.width = (segment.height * 0.9).toInt()
+                    recyclerParams.height = (segment.width * 0.85).toInt()
+                } else {
+                    recyclerParams.width = resources.getDimensionPixelSize(R.dimen.profile_popup_width)
+                    recyclerParams.height = (segment.height * 0.8).toInt()
+                }
+                segment.profilesRecyclerView.layoutParams = recyclerParams
+
+                segment.profilePopupContainer.visibility = View.VISIBLE
+            } finally {
+                // Tell Espresso to stop waiting
+                // Note: If the if-statement above returns, this might be called a second time.
+                // CountingIdlingResource handles this gracefully.
+                if (SingletonIdlingResource.countingIdlingResource.isIdleNow) {
+                    // To prevent issues in case of early return, check if it's already idle.
+                    // This check might not be strictly necessary with the decrement in the empty case,
+                    // but adds robustness. A simpler way is to just call decrement regardless.
+                } else {
+                    SingletonIdlingResource.decrement()
+                }
             }
-
-            if (availableProfiles.isEmpty()) {
-                Toast.makeText(this@MainActivity, "No other profiles available", Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-
-            val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
-                gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
-                segment.profilePopupContainer.visibility = View.GONE
-            }
-            segment.profilesRecyclerView.adapter = adapter
-
-            val recyclerParams = segment.profilesRecyclerView.layoutParams
-            val isSideways = segment.angle == 90 || segment.angle == -90
-
-            if (isSideways) {
-                recyclerParams.width = (segment.height * 0.9).toInt()
-                recyclerParams.height = (segment.width * 0.85).toInt()
-            } else {
-                recyclerParams.width = resources.getDimensionPixelSize(R.dimen.profile_popup_width)
-                recyclerParams.height = (segment.height * 0.8).toInt()
-            }
-            segment.profilesRecyclerView.layoutParams = recyclerParams
-
-            segment.profilePopupContainer.visibility = View.VISIBLE
         }
     }
 
