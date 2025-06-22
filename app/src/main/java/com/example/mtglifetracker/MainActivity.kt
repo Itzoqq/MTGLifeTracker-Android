@@ -138,6 +138,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // itzoqq/mtglifetracker-android/MTGLifeTracker-Android-16e996fdd3c22096a2d4fcfa1a439d172cba95d4/app/src/main/java/com/example/mtglifetracker/MainActivity.kt
     private fun toggleProfilePopup(segment: RotatableLayout, playerIndex: Int) {
         if (segment.profilePopupContainer.isVisible) {
             segment.profilePopupContainer.visibility = View.GONE
@@ -175,28 +176,29 @@ class MainActivity : AppCompatActivity() {
                 }
                 segment.profilesRecyclerView.adapter = adapter
 
-                val recyclerParams = segment.profilesRecyclerView.layoutParams
-                val isSideways = segment.angle == 90 || segment.angle == -90
+                // --- START OF FINAL LOGIC ---
 
-                if (isSideways) {
-                    recyclerParams.width = (segment.height * 0.9).toInt()
-                    recyclerParams.height = (segment.width * 0.85).toInt()
-                } else {
-                    recyclerParams.width = resources.getDimensionPixelSize(R.dimen.profile_popup_width)
-                    recyclerParams.height = (segment.height * 0.8).toInt()
-                }
-                segment.profilesRecyclerView.layoutParams = recyclerParams
+                val popupParams = segment.profilePopupContainer.layoutParams
+
+                // Step 1: Set a fixed, generous width using our updated dimension.
+                popupParams.width = resources.getDimensionPixelSize(R.dimen.profile_popup_width)
+
+                // Step 2: Calculate height based on item count, capped at 5 items.
+                val itemHeightDp = 50
+                val itemHeightPx = (itemHeightDp * resources.displayMetrics.density).toInt()
+                val heightForAllItems = availableProfiles.size * itemHeightPx
+                val maxHeightForFiveItems = 5 * itemHeightPx
+                popupParams.height = minOf(heightForAllItems, maxHeightForFiveItems)
+
+                // Step 3: Apply the updated layout params.
+                segment.profilePopupContainer.layoutParams = popupParams
+
+                // --- END OF FINAL LOGIC ---
 
                 segment.profilePopupContainer.visibility = View.VISIBLE
             } finally {
                 // Tell Espresso to stop waiting
-                // Note: If the if-statement above returns, this might be called a second time.
-                // CountingIdlingResource handles this gracefully.
-                if (SingletonIdlingResource.countingIdlingResource.isIdleNow) {
-                    // To prevent issues in case of early return, check if it's already idle.
-                    // This check might not be strictly necessary with the decrement in the empty case,
-                    // but adds robustness. A simpler way is to just call decrement regardless.
-                } else {
+                if (!SingletonIdlingResource.countingIdlingResource.isIdleNow) {
                     SingletonIdlingResource.decrement()
                 }
             }
