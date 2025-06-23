@@ -7,13 +7,13 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.viewmodel.GameViewModel
+import com.google.android.material.snackbar.Snackbar
 
 class CustomLifeDialogFragment : DialogFragment() {
 
@@ -54,7 +54,7 @@ class CustomLifeDialogFragment : DialogFragment() {
                         gameViewModel.changeStartingLife(life)
                         dismiss() // Dismiss only if input is valid
                     } else {
-                        Toast.makeText(requireContext(), "Life must be between 1 and 999", Toast.LENGTH_SHORT).show()
+                        Snackbar.make(view, "Life must be between 1 and 999", Snackbar.LENGTH_SHORT).show()
                     }
                 }
             }

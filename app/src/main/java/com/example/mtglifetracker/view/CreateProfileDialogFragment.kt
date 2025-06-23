@@ -7,7 +7,6 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -18,6 +17,7 @@ import com.example.mtglifetracker.MainActivity
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.model.Profile
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -93,18 +93,18 @@ class CreateProfileDialogFragment : DialogFragment() {
 
                     when {
                         nickname.length < 3 -> {
-                            Toast.makeText(requireContext(), "Nickname must be at least 3 characters", Toast.LENGTH_SHORT).show()
+                            Snackbar.make(view, "Nickname must be at least 3 characters", Snackbar.LENGTH_SHORT).show()
                         }
                         nickname.length > 14 -> {
-                            Toast.makeText(requireContext(), "Nickname must be no more than 14 characters", Toast.LENGTH_SHORT).show()
+                            Snackbar.make(view, "Nickname must be no more than 14 characters", Snackbar.LENGTH_SHORT).show()
                         }
                         !isAlphaNumeric -> {
-                            Toast.makeText(requireContext(), "Nickname can only contain letters and numbers", Toast.LENGTH_SHORT).show()
+                            Snackbar.make(view, "Nickname can only contain letters and numbers", Snackbar.LENGTH_SHORT).show()
                         }
                         else -> {
                             lifecycleScope.launch {
                                 if (profileViewModel.doesNicknameExist(nickname)) {
-                                    Toast.makeText(requireContext(), "Nickname already exists.", Toast.LENGTH_SHORT).show()
+                                    Snackbar.make(view, "Nickname already exists.", Snackbar.LENGTH_SHORT).show()
                                 } else {
                                     profileViewModel.addProfile(nickname, selectedColor)
                                     dialog.dismiss()
