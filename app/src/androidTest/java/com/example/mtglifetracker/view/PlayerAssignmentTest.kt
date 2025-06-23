@@ -442,4 +442,54 @@ class PlayerAssignmentTest : BaseUITest() {
         val unloadButtonMatcher = allOf(withId(R.id.unload_profile_button), isDescendantOfA(segment0Matcher))
         onView(unloadButtonMatcher).check(matches(not(isDisplayed())))
     }
+
+    @Test
+    fun selectingStaleProfile_whenAlreadyAssignedByOtherPlayer_showsSnackbar() {
+        // --- ARRANGE ---
+        // 1. Create a single profile that both players will try to select.
+        val profileName = "TestProfile"
+        createTestProfile(profileName)
+
+        // 2. Define matchers for both players.
+        val segment0Matcher = withTagValue(equalTo("player_segment_0"))
+        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0Matcher))
+        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0Matcher))
+
+        val segment1Matcher = withTagValue(equalTo("player_segment_1"))
+        val segment1PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment1Matcher))
+        val segment1PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment1Matcher))
+
+        // 3. Open the profile popup for BOTH players. Player 1's popup will become "stale".
+        onView(segment0PlayerName).perform(directlyPerformClick())
+        onView(segment1PlayerName).perform(directlyPerformClick())
+
+        // 4. Verify the profile is initially visible in both popups.
+        waitForView(allOf(withText(profileName), isDescendantOfA(segment0PopupRecycler)))
+        waitForView(allOf(withText(profileName), isDescendantOfA(segment1PopupRecycler)))
+
+        // --- ACT ---
+        // 5. Player 2 selects the profile first.
+        onView(segment1PopupRecycler)
+            .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
+                hasDescendant(withText(profileName)), directlyPerformClick()
+            ))
+
+        // 6. Verify Player 2's segment updates correctly.
+        waitForView(allOf(segment1PlayerName, withText(profileName)))
+        onView(segment1PlayerName).check(matches(withText(profileName)))
+
+        // 7. Now, Player 1 (with the stale popup) tries to select the same profile.
+        onView(segment0PopupRecycler)
+            .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
+                hasDescendant(withText(profileName)), directlyPerformClick()
+            ))
+
+        // --- ASSERT ---
+        // 8. A Snackbar should appear, telling Player 1 the profile is already in use.
+        onView(withText("'$profileName' is already in use."))
+            .check(matches(isDisplayed()))
+
+        // 9. Crucially, Player 1's name should NOT have changed.
+        onView(segment0PlayerName).check(matches(withText("Player 1")))
+    }
 }

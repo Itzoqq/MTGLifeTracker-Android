@@ -3,7 +3,6 @@ package com.example.mtglifetracker
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -185,10 +184,10 @@ class MainActivity : AppCompatActivity() {
                         .minus(currentPlayerProfileId)
 
                     if (usedProfileIdsByOthers.contains(selectedProfile.id)) {
-                        Toast.makeText(
-                            this@MainActivity,
+                        Snackbar.make(
+                            binding.mainContainer,
                             "'${selectedProfile.nickname}' is already in use.",
-                            Toast.LENGTH_SHORT
+                            Snackbar.LENGTH_SHORT
                         ).show()
                     } else {
                         gameViewModel.setPlayerProfile(playerIndex, selectedProfile)
