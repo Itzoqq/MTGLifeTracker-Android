@@ -29,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.android.material.snackbar.Snackbar
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -170,7 +171,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (availableProfiles.isEmpty()) {
-                    Toast.makeText(this@MainActivity, "No other profiles available", Toast.LENGTH_SHORT).show()
+                    Snackbar.make(binding.mainContainer, "No other profiles available", Snackbar.LENGTH_SHORT).show()
                     SingletonIdlingResource.decrement()
                     return@launch
                 }
