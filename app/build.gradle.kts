@@ -103,6 +103,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.room.testing)
 
     // --- Dependencies for Android Instrumentation (UI) Tests ---
     androidTestImplementation(libs.core.ktx)
@@ -122,6 +123,7 @@ dependencies {
 }
 
 ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
     arg("dagger.fastInit", "enabled")
     arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
 }

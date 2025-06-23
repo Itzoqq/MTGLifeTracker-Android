@@ -7,7 +7,7 @@ import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.model.Profile
 
 // Change version from 5 to 6
-@Database(entities = [Player::class, GameSettings::class, Profile::class], version = 6, exportSchema = false)
+@Database(entities = [Player::class, GameSettings::class, Profile::class], version = 6, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun playerDao(): PlayerDao
