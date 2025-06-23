@@ -208,7 +208,6 @@ class PlayerAssignmentTest : BaseUITest() {
         // 5. Open the profile selection popup for the SECOND player.
         onView(segment1playerName).perform(directlyPerformClick())
 
-
         // --- ASSERT ---
         // 6. Check the contents of the second player's popup.
         //    "PlayerTwo" should be visible and available to select.
@@ -273,7 +272,6 @@ class PlayerAssignmentTest : BaseUITest() {
         // 2. Verify the profile was assigned correctly.
         waitForView(allOf(segment0PlayerName, withText(profileName)))
         onView(segment0PlayerName).check(matches(withText(profileName)))
-
 
         // --- ACT ---
         // 3. Navigate to the Manage Profiles dialog.
@@ -392,12 +390,52 @@ class PlayerAssignmentTest : BaseUITest() {
         onView(withText("Reset")).perform(click())
         pressBack()
 
-
         // --- ASSERT ---
         // 4. Wait for the player name to revert to its default state after the reset.
         waitForView(allOf(segment0PlayerName, withText("Player 1")))
 
         // 5. Verify the entire player segment has been reverted to its default state.
+        onView(segment0PlayerName).check(matches(withText("Player 1")))
+        onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
+
+        val unloadButtonMatcher = allOf(withId(R.id.unload_profile_button), isDescendantOfA(segment0Matcher))
+        onView(unloadButtonMatcher).check(matches(not(isDisplayed())))
+    }
+
+    @Test
+    fun changingStartingLife_clearsProfileAssignments() {
+        // --- ARRANGE ---
+        // 1. Create a profile and assign it to Player 1.
+        val profileName = "TestProfile"
+        createTestProfile(profileName, "#4CAF50") // A green color
+
+        val segment0Matcher = withTagValue(equalTo("player_segment_0"))
+        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0Matcher))
+        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0Matcher))
+
+        onView(segment0PlayerName).perform(directlyPerformClick())
+        waitForView(segment0PopupRecycler)
+        onView(segment0PopupRecycler)
+            .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
+                hasDescendant(withText(profileName)), directlyPerformClick()
+            ))
+
+        // 2. Verify the assignment was successful.
+        waitForView(allOf(segment0PlayerName, withText(profileName)))
+        onView(segment0PlayerName).check(matches(withText(profileName)))
+
+        // --- ACT ---
+        // 3. Navigate to the Starting Life dialog and change the life total.
+        onView(withId(R.id.settingsIcon)).perform(click())
+        onView(withText("Starting Life")).perform(click())
+        onView(withText("20")).perform(click()) // Change to 20 life
+        pressBack()
+
+        // --- ASSERT ---
+        // 4. Wait for the player name to revert to its default state after the reset.
+        waitForView(allOf(segment0PlayerName, withText("Player 1")))
+
+        // 5. Verify the player segment has fully reverted to its default state.
         onView(segment0PlayerName).check(matches(withText("Player 1")))
         onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
 
