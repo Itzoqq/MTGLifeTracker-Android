@@ -25,6 +25,12 @@ android {
         testInstrumentationRunner = "com.example.mtglifetracker.HiltTestRunner"
     }
 
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDir(file("schemas"))
+        }
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -116,7 +122,7 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.fragment.testing)
     implementation(libs.androidx.espresso.idling.resource)
-
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.espresso.contrib)
 
     kspAndroidTest(libs.hilt.android.compiler)

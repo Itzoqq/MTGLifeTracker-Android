@@ -29,7 +29,8 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "mtg_database"
-        ).fallbackToDestructiveMigration(false)
+        ).addMigrations(AppDatabase.MIGRATION_5_6) // Add this line
+            .fallbackToDestructiveMigration(false)
             .build()
     }
 

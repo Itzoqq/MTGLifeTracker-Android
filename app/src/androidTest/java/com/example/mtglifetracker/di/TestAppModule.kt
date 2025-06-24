@@ -24,6 +24,7 @@ object TestAppModule {
     @Singleton
     fun provideInMemoryDb(@ApplicationContext context: Context): AppDatabase {
         return Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+            .addMigrations(AppDatabase.MIGRATION_5_6) // Add this line
             .allowMainThreadQueries()
             .build()
     }
