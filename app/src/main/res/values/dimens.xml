@@ -8,4 +8,8 @@
     <dimen name="life_counter_text_size_large">90sp</dimen>
     <dimen name="life_counter_text_size_medium">65sp</dimen>
     <dimen name="life_counter_text_size_small">55sp</dimen>
+
+    <dimen name="nickname_text_size_large">22sp</dimen>
+    <dimen name="nickname_text_size_medium">20sp</dimen>
+    <dimen name="nickname_text_size_small">18sp</dimen>
 </resources>

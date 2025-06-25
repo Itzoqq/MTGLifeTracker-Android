@@ -57,27 +57,34 @@ class PlayerLayoutManager(
 
         constraintSet.applyTo(container)
 
-        // --- NEW AND IMPROVED SIZING LOGIC ---
         val resources = context.resources
-        val largeSize = resources.getDimension(R.dimen.life_counter_text_size_large)
-        val mediumSize = resources.getDimension(R.dimen.life_counter_text_size_medium)
-        val smallSize = resources.getDimension(R.dimen.life_counter_text_size_small)
+        // Life Counter Sizes
+        val lifeLarge = resources.getDimension(R.dimen.life_counter_text_size_large)
+        val lifeMedium = resources.getDimension(R.dimen.life_counter_text_size_medium)
+        val lifeSmall = resources.getDimension(R.dimen.life_counter_text_size_small)
+
+        // Nickname Sizes
+        val nameLarge = resources.getDimension(R.dimen.nickname_text_size_large)
+        val nameMedium = resources.getDimension(R.dimen.nickname_text_size_medium)
+        val nameSmall = resources.getDimension(R.dimen.nickname_text_size_small)
 
         playerSegments.forEachIndexed { index, segment ->
-            val textSizeInPixels = when (playerCount) {
-                2 -> largeSize
-                3 -> if (index == 0) largeSize else mediumSize // Top segment is large, bottom two are medium
-                4 -> mediumSize
+            val (lifeSize, nameSize) = when (playerCount) {
+                2 -> lifeLarge to nameLarge
+                3 -> if (index == 0) lifeLarge to nameLarge else lifeMedium to nameMedium
+                4 -> lifeMedium to nameMedium
                 5 -> when (index) {
-                    0, 1 -> mediumSize // Left two segments are medium
-                    else -> smallSize   // Right three segments are small
+                    0, 1 -> lifeMedium to nameMedium
+                    else -> lifeSmall to nameSmall
                 }
-                6 -> mediumSize // Or smallSize, depending on preference for 6 players
-                else -> mediumSize // Default case
+                6 -> lifeMedium to nameMedium // Or small, based on preference
+                else -> lifeMedium to nameMedium
             }
-            segment.lifeCounter.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSizeInPixels)
+
+            // Apply the sizes
+            segment.lifeCounter.setTextSize(TypedValue.COMPLEX_UNIT_PX, lifeSize)
+            segment.playerName.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSize)
         }
-        // --- END OF NEW LOGIC ---
 
         container.post {
             Log.d("LayoutManagerTest", "--- Layout applied for $playerCount players ---")
