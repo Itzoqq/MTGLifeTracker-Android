@@ -2,18 +2,16 @@ package com.example.mtglifetracker.view
 
 import android.content.Context
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
+import com.example.mtglifetracker.R
 
 /**
  * Manages the creation and arrangement of player layouts within a ConstraintLayout.
- * This class encapsulates the logic for dynamically building the UI for different
- * player counts, keeping the MainActivity clean and focused on state management.
- *
- * @param container The ConstraintLayout that will hold the player segments and dividers.
- * @param context The context used to create views and access resources.
+ * ...
  */
 class PlayerLayoutManager(
     private val container: ConstraintLayout,
@@ -23,30 +21,19 @@ class PlayerLayoutManager(
     val playerSegments = mutableListOf<RotatableLayout>()
     private val dividers = mutableListOf<View>()
 
-    /**
-     * Updates the layout to match the specified player count.
-     * Instead of recreating all views, it intelligently adds or removes player segments
-     * and rebuilds the necessary dividers and constraints. This is more performant
-     * than `removeAllViews()` and recreating the layout from scratch.
-     *
-     * @param playerCount The number of players to display.
-     */
     fun createPlayerLayouts(playerCount: Int) {
         val currentCount = playerSegments.size
         if (playerCount == currentCount) {
-            return // No change needed
+            return
         }
 
-        // First, remove all existing dividers. They will be recreated based on the new layout.
         dividers.forEach { container.removeView(it) }
         dividers.clear()
 
-        // Add or remove player segments to match the new count.
         while (playerSegments.size < playerCount) {
             val index = playerSegments.size
             val segment = RotatableLayout(context).apply {
                 id = View.generateViewId()
-                // Add a unique tag for test identification
                 tag = "player_segment_$index"
             }
             container.addView(segment)
@@ -69,6 +56,28 @@ class PlayerLayoutManager(
         }
 
         constraintSet.applyTo(container)
+
+        // --- NEW AND IMPROVED SIZING LOGIC ---
+        val resources = context.resources
+        val largeSize = resources.getDimension(R.dimen.life_counter_text_size_large)
+        val mediumSize = resources.getDimension(R.dimen.life_counter_text_size_medium)
+        val smallSize = resources.getDimension(R.dimen.life_counter_text_size_small)
+
+        playerSegments.forEachIndexed { index, segment ->
+            val textSizeInPixels = when (playerCount) {
+                2 -> largeSize
+                3 -> if (index == 0) largeSize else mediumSize // Top segment is large, bottom two are medium
+                4 -> mediumSize
+                5 -> when (index) {
+                    0, 1 -> mediumSize // Left two segments are medium
+                    else -> smallSize   // Right three segments are small
+                }
+                6 -> mediumSize // Or smallSize, depending on preference for 6 players
+                else -> mediumSize // Default case
+            }
+            segment.lifeCounter.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSizeInPixels)
+        }
+        // --- END OF NEW LOGIC ---
 
         container.post {
             Log.d("LayoutManagerTest", "--- Layout applied for $playerCount players ---")

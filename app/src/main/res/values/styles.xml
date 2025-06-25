@@ -35,18 +35,18 @@
         <item name="android:padding">16dp</item>
         <item name="android:text">@string/EDH_initial_life_total</item>
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:textSize">80sp</item>
+        <item name="android:textSize">65sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:gravity">center</item>
     </style>
 
     <style name="LifeCounterTextViewBase.Medium">
-        <item name="android:textSize">70sp</item>
+        <item name="android:textSize">60sp</item>
         <item name="android:padding">12dp</item>
     </style>
 
     <style name="LifeCounterTextViewBase.Small">
-        <item name="android:textSize">60sp</item>
+        <item name="android:textSize">50sp</item>
         <item name="android:padding">8dp</item>
     </style>
 
