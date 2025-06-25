@@ -150,10 +150,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Tell Espresso to start waiting
         SingletonIdlingResource.increment()
         lifecycleScope.launch {
-            try { // Use a try/finally block to guarantee Espresso is notified
+            try {
                 val (sortedProfiles, availableProfiles) = withContext(Dispatchers.Default) {
                     val allProfiles = profileViewModel.profiles.first()
                     val currentPlayerProfileId = gameViewModel.gameState.value.players.getOrNull(playerIndex)?.profileId
@@ -165,7 +164,6 @@ class MainActivity : AppCompatActivity() {
                     val available = allProfiles.filter { profile ->
                         !usedProfileIdsByOthers.contains(profile.id)
                     }
-                    // This sorting is from a previous step, keeping it.
                     Pair(available.sortedBy { it.nickname }, available)
                 }
 
@@ -196,31 +194,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 segment.profilesRecyclerView.adapter = adapter
 
-                // --- START OF MODIFIED CODE ---
-                // Remove any existing decoration first to be safe.
                 if (segment.profilesRecyclerView.itemDecorationCount > 0) {
                     segment.profilesRecyclerView.removeItemDecorationAt(0)
                 }
 
-                // Conditionally add our new custom divider.
                 if (availableProfiles.size > 1) {
                     val divider = DividerItemDecorationExceptLast(this@MainActivity, R.drawable.custom_divider)
                     segment.profilesRecyclerView.addItemDecoration(divider)
                 }
-                // --- END OF MODIFIED CODE ---
-
-
-                val popupParams = segment.profilePopupContainer.layoutParams
-                popupParams.width = resources.getDimensionPixelSize(R.dimen.profile_popup_width)
-
-                val itemHeightDp = 58
-                val itemHeightPx = (itemHeightDp * resources.displayMetrics.density).toInt()
-
-                val heightForAllItems = availableProfiles.size * itemHeightPx
-                val maxHeightForFiveItems = 5 * itemHeightPx
-                popupParams.height = minOf(heightForAllItems, maxHeightForFiveItems)
-
-                segment.profilePopupContainer.layoutParams = popupParams
 
                 segment.profilePopupContainer.visibility = View.VISIBLE
             } finally {

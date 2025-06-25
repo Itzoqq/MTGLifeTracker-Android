@@ -45,18 +45,28 @@
         app:tint="@android:color/white"
         tools:visibility="visible" />
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/bottom_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.95" />
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/profile_popup_container"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:visibility="gone"
         app:cardBackgroundColor="#424242"
         app:cardCornerRadius="8dp"
         app:cardElevation="8dp"
         app:contentPadding="0dp"
+        app:layout_constraintBottom_toTopOf="@id/bottom_guideline"
+        app:layout_constrainedHeight="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_player_name"
+        app:layout_constraintVertical_bias="0.0"
         tools:visibility="visible">
 
         <androidx.recyclerview.widget.RecyclerView
