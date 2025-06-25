@@ -9,10 +9,6 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import com.example.mtglifetracker.R
 
-/**
- * Manages the creation and arrangement of player layouts within a ConstraintLayout.
- * ...
- */
 class PlayerLayoutManager(
     private val container: ConstraintLayout,
     private val context: Context
@@ -58,17 +54,26 @@ class PlayerLayoutManager(
         constraintSet.applyTo(container)
 
         val resources = context.resources
-        // Life Counter Sizes
+        // Life Counter Text Sizes
         val lifeLarge = resources.getDimension(R.dimen.life_counter_text_size_large)
         val lifeMedium = resources.getDimension(R.dimen.life_counter_text_size_medium)
         val lifeSmall = resources.getDimension(R.dimen.life_counter_text_size_small)
 
-        // Nickname Sizes
+        // Nickname Text Sizes
         val nameLarge = resources.getDimension(R.dimen.nickname_text_size_large)
         val nameMedium = resources.getDimension(R.dimen.nickname_text_size_medium)
         val nameSmall = resources.getDimension(R.dimen.nickname_text_size_small)
 
+        // Player Counters View Sizes
+        val countersWidthLarge = resources.getDimensionPixelSize(R.dimen.player_counters_width_large)
+        val countersHeightLarge = resources.getDimensionPixelSize(R.dimen.player_counters_height_large)
+        val countersWidthMedium = resources.getDimensionPixelSize(R.dimen.player_counters_width_medium)
+        val countersHeightMedium = resources.getDimensionPixelSize(R.dimen.player_counters_height_medium)
+        val countersWidthSmall = resources.getDimensionPixelSize(R.dimen.player_counters_width_small)
+        val countersHeightSmall = resources.getDimensionPixelSize(R.dimen.player_counters_height_small)
+
         playerSegments.forEachIndexed { index, segment ->
+            // Updated logic based on user feedback
             val (lifeSize, nameSize) = when (playerCount) {
                 2 -> lifeLarge to nameLarge
                 3 -> if (index == 0) lifeLarge to nameLarge else lifeMedium to nameMedium
@@ -77,13 +82,38 @@ class PlayerLayoutManager(
                     0, 1 -> lifeMedium to nameMedium
                     else -> lifeSmall to nameSmall
                 }
-                6 -> lifeMedium to nameMedium // Or small, based on preference
+                6 -> lifeMedium to nameMedium
                 else -> lifeMedium to nameMedium
             }
 
-            // Apply the sizes
+            // *** REFINED SIZING LOGIC PER USER SPECIFICATION ***
+            val (countersWidth, countersHeight) = when (playerCount) {
+                2 -> countersWidthLarge to countersHeightLarge // Large for both
+                3 -> if (index == 0) {
+                    countersWidthLarge to countersHeightLarge // Large for top player
+                } else {
+                    countersWidthMedium to countersHeightMedium // Medium for bottom two
+                }
+                4 -> countersWidthMedium to countersHeightMedium // Medium for all
+                5 -> if (index < 2) {
+                    countersWidthMedium to countersHeightMedium // Medium for the two left players
+                } else {
+                    countersWidthSmall to countersHeightSmall // Small for the three right players
+                }
+                6 -> countersWidthSmall to countersHeightSmall // Small for all
+                else -> countersWidthMedium to countersHeightMedium // Default case
+            }
+
+            // Apply the text sizes
             segment.lifeCounter.setTextSize(TypedValue.COMPLEX_UNIT_PX, lifeSize)
             segment.playerName.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSize)
+
+            // Apply the dynamic size to the PlayerCountersView rectangle
+            val countersView = segment.playerCounters
+            val layoutParams = countersView.layoutParams
+            layoutParams.width = countersWidth
+            layoutParams.height = countersHeight
+            countersView.layoutParams = layoutParams
         }
 
         container.post {
@@ -91,7 +121,8 @@ class PlayerLayoutManager(
             playerSegments.forEachIndexed { index, segment ->
                 val rect = android.graphics.Rect()
                 segment.getGlobalVisibleRect(rect)
-                Log.d("LayoutManagerTest",
+                Log.d(
+                    "LayoutManagerTest",
                     "Segment $index (tag: ${segment.tag}): " +
                             "width=${segment.width}, height=${segment.height}, " +
                             "visibleRect=$rect"

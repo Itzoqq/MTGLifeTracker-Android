@@ -96,6 +96,9 @@ class MainActivity : AppCompatActivity() {
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
             segment.lifeCounter.addDismissibleOverlay(segment.profilePopupContainer)
             setDynamicLifeTapListener(segment.lifeCounter, index)
+            segment.playerCounters.setOnClickListener {
+                togglePlayerCountersPopup(segment)
+            }
 
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
@@ -143,6 +146,15 @@ class MainActivity : AppCompatActivity() {
             isFirstLoad = false
         }
     }
+
+    private fun togglePlayerCountersPopup(segment: RotatableLayout) {
+        if (segment.playerCountersPopupContainer.isVisible) {
+            segment.playerCountersPopupContainer.visibility = View.GONE
+        } else {
+            segment.playerCountersPopupContainer.visibility = View.VISIBLE
+        }
+    }
+
 
     private fun toggleProfilePopup(segment: RotatableLayout, playerIndex: Int) {
         if (segment.profilePopupContainer.isVisible) {
@@ -224,6 +236,9 @@ class MainActivity : AppCompatActivity() {
             playerLayoutManager.playerSegments.forEach { segment ->
                 if (segment.profilePopupContainer.isVisible) {
                     segment.profilePopupContainer.visibility = View.GONE
+                }
+                if (segment.playerCountersPopupContainer.isVisible) {
+                    segment.playerCountersPopupContainer.visibility = View.GONE
                 }
             }
             // --- END OF NEW LOGIC ---

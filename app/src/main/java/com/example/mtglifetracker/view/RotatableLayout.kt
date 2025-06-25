@@ -21,9 +21,10 @@ class RotatableLayout @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     val lifeCounter: LifeCounterView
-    // The 'deltaCounter' TextView reference is now removed.
+    val playerCounters: PlayerCountersView
     val playerName: TextView
     val profilePopupContainer: MaterialCardView
+    val playerCountersPopupContainer: MaterialCardView
     val profilesRecyclerView: RecyclerView
     val unloadProfileButton: ImageView
 
@@ -48,9 +49,10 @@ class RotatableLayout @JvmOverloads constructor(
         inflate(context, R.layout.layout_player_segment, this)
 
         lifeCounter = findViewById(R.id.lifeCounter)
-        // The initialization for 'deltaCounter' is also removed.
+        playerCounters = findViewById(R.id.playerCounters)
         playerName = findViewById(R.id.tv_player_name)
         profilePopupContainer = findViewById(R.id.profile_popup_container)
+        playerCountersPopupContainer = findViewById(R.id.player_counters_popup_container)
         profilesRecyclerView = findViewById(R.id.profiles_recycler_view)
         unloadProfileButton = findViewById(R.id.unload_profile_button)
         profilesRecyclerView.layoutManager = LinearLayoutManager(context)
