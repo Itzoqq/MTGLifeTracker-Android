@@ -23,12 +23,12 @@ import com.example.mtglifetracker.view.SettingsDialogFragment
 import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.google.android.material.snackbar.Snackbar
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {

@@ -58,6 +58,7 @@ abstract class BaseUITest {
         // This clears all data between tests, which is correct.
         runBlocking {
             db.clearAllTables()
+            db.close()
         }
 
         activityRule.scenario.close()
