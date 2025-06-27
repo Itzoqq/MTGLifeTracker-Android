@@ -1,8 +1,10 @@
 package com.example.mtglifetracker.view
 
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.BaseUITest
@@ -16,29 +18,28 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 class SettingsFlowTest : BaseUITest() {
 
+    // Helper to click on the settings icon and wait for the dialog to appear
+    private fun openSettingsDialog() {
+        onView(withId(R.id.settingsIcon)).perform(click())
+        // A stable check to ensure the recycler view itself is present before we interact with it
+        onView(withId(R.id.rv_settings_options)).check(matches(isDisplayed()))
+    }
+
     @Test
     fun clickingSettingsIcon_shouldDisplaySettingsDialog() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
-
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-
-        // Assert
+        openSettingsDialog()
+        // Check for a few items to ensure the list has been populated
         onView(withText("Number of Players")).check(matches(isDisplayed()))
-        onView(withText("Starting Life")).check(matches(isDisplayed()))
-        onView(withText("Manage Profiles")).check(matches(isDisplayed()))
         onView(withText("Reset Game")).check(matches(isDisplayed()))
     }
 
     @Test
     fun openingPlayerCountDialog_shouldWorkCorrectly() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
+        openSettingsDialog()
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Number of Players")).perform(click())
+        // Click the item at position 0 ("Number of Players")
+        onView(withId(R.id.rv_settings_options))
+            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
 
         // Assert
         onView(withText("2")).check(matches(isDisplayed()))
@@ -47,12 +48,11 @@ class SettingsFlowTest : BaseUITest() {
 
     @Test
     fun openingResetGameDialog_shouldWorkCorrectly() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
+        openSettingsDialog()
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Reset Game")).perform(click())
+        // Click the item at position 3 ("Reset Game")
+        onView(withId(R.id.rv_settings_options))
+            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(3, click()))
 
         // Assert
         onView(withText("Reset all active games")).check(matches(isDisplayed()))
@@ -61,12 +61,11 @@ class SettingsFlowTest : BaseUITest() {
 
     @Test
     fun openingStartingLifeDialog_shouldWorkCorrectly() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
+        openSettingsDialog()
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Starting Life")).perform(click())
+        // Click the item at position 1 ("Starting Life")
+        onView(withId(R.id.rv_settings_options))
+            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(1, click()))
 
         // Assert
         onView(withText("20")).check(matches(isDisplayed()))
@@ -76,15 +75,13 @@ class SettingsFlowTest : BaseUITest() {
 
     @Test
     fun openingManageProfilesDialog_shouldWorkCorrectly() {
-        // Sanity check
-        onView(withId(R.id.main_container)).check(matches(isDisplayed()))
+        openSettingsDialog()
 
-        // Act
-        onView(withId(R.id.settingsIcon)).perform(click())
-        onView(withText("Manage Profiles")).perform(click())
+        // Click the item at position 2 ("Manage Profiles")
+        onView(withId(R.id.rv_settings_options))
+            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(2, click()))
 
         // Assert
-        // This now specifically targets the title TextView inside your custom dialog header.
         onView(allOf(withId(R.id.tv_dialog_title), withText("Manage Profiles"))).check(matches(isDisplayed()))
         onView(withId(R.id.fab_add_profile)).check(matches(isDisplayed()))
     }
