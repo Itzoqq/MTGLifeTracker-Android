@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.BaseUITest
 import com.example.mtglifetracker.R
 import dagger.hilt.android.testing.HiltAndroidTest
+import org.hamcrest.CoreMatchers.allOf
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -83,7 +84,8 @@ class SettingsFlowTest : BaseUITest() {
         onView(withText("Manage Profiles")).perform(click())
 
         // Assert
-        onView(withText("Manage Profiles")).check(matches(isDisplayed()))
+        // This now specifically targets the title TextView inside your custom dialog header.
+        onView(allOf(withId(R.id.tv_dialog_title), withText("Manage Profiles"))).check(matches(isDisplayed()))
         onView(withId(R.id.fab_add_profile)).check(matches(isDisplayed()))
     }
 }
