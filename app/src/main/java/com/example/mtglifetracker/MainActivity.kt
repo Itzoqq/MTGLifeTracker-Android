@@ -1,25 +1,20 @@
 package com.example.mtglifetracker
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mtglifetracker.databinding.ActivityMainBinding
-import com.example.mtglifetracker.util.isColorDark
 import com.example.mtglifetracker.view.DividerItemDecorationExceptLast
-import com.example.mtglifetracker.view.LifeCounterView
 import com.example.mtglifetracker.view.PlayerCountersDialogFragment
 import com.example.mtglifetracker.view.PlayerLayoutManager
+import com.example.mtglifetracker.view.PlayerSegmentView
 import com.example.mtglifetracker.view.ProfilePopupAdapter
-import com.example.mtglifetracker.view.RotatableLayout
 import com.example.mtglifetracker.view.SettingsDialogFragment
 import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
@@ -62,23 +57,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun dismissAllDialogs() {
-        // Create a copy of the list to iterate over, to avoid modification issues
         val fragmentsToDismiss = supportFragmentManager.fragments.filterIsInstance<DialogFragment>()
         fragmentsToDismiss.forEach { it.dismiss() }
     }
 
-
     private fun updateUiForNewState(gameState: GameState) {
         if (playerLayoutManager.playerSegments.size != gameState.playerCount) {
             playerLayoutManager.createPlayerLayouts(gameState.playerCount)
-            // This ensures the settings icon is drawn on top and forces a layout recalculation
             binding.settingsIcon.bringToFront()
             isFirstLoad = true
         }
 
-        // --- Final, Robust Reset Detection Logic ---
         val onScreenLives = playerLayoutManager.playerSegments.mapNotNull { segment ->
-            // Ensure the segment is actually part of the layout before accessing its view
             if (segment.parent != null) segment.lifeCounter.life else null
         }
         val newLives = gameState.players.map { it.life }
@@ -90,61 +80,17 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        // A "mass update" is any event that changes more than one player's life simultaneously.
         val isMassUpdate = changedPlayerCount > 1
-        // --- End of Detection Logic ---
 
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
-            segment.lifeCounter.addDismissibleOverlay(segment.profilePopupContainer)
-            setDynamicLifeTapListener(segment.lifeCounter, index)
-            segment.playerCounters.setOnClickListener {
-                val player = gameViewModel.gameState.value.players[index]
-                // Pass the segment's 'angle' property for correct rotation
-                PlayerCountersDialogFragment.newInstance(player.name, segment.angle.toFloat())
-                    .show(supportFragmentManager, PlayerCountersDialogFragment.TAG)
-            }
-
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
 
-                segment.playerName.text = player.name
-                segment.playerName.setOnClickListener { toggleProfilePopup(segment, index) }
+                // Update the entire segment's UI with one method call
+                segment.updateUI(player, isFirstLoad || isMassUpdate)
 
-                // Use the no-delta method for the initial load OR for a mass update event.
-                if (isFirstLoad || isMassUpdate) {
-                    segment.lifeCounter.setLifeAnimate(player.life)
-                } else {
-                    segment.lifeCounter.life = player.life
-                }
-
-                try {
-                    if (player.color != null) {
-                        val backgroundColor = player.color.toColorInt()
-                        segment.setBackgroundColor(backgroundColor)
-                        if (isColorDark(backgroundColor)) {
-                            segment.playerName.setTextColor(Color.WHITE)
-                        } else {
-                            segment.playerName.setTextColor(Color.BLACK)
-                        }
-                    } else {
-                        segment.setBackgroundColor(ContextCompat.getColor(this, R.color.default_segment_background))
-                        segment.playerName.setTextColor(Color.WHITE)
-                    }
-                } catch (_: Exception) {
-                    segment.setBackgroundColor(ContextCompat.getColor(this, R.color.default_segment_background))
-                    segment.playerName.setTextColor(Color.WHITE)
-                }
-
-                if (player.profileId != null) {
-                    segment.unloadProfileButton.visibility = View.VISIBLE
-                    segment.unloadProfileButton.setOnClickListener {
-                        gameViewModel.unloadProfile(index)
-                        // Close the popup if it's open
-                        segment.profilePopupContainer.visibility = View.GONE
-                    }
-                } else {
-                    segment.unloadProfileButton.visibility = View.INVISIBLE
-                }
+                // Set up listeners for the segment
+                setPlayerSegmentListeners(segment, index)
             }
         }
 
@@ -153,7 +99,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun toggleProfilePopup(segment: RotatableLayout, playerIndex: Int) {
+    private fun setPlayerSegmentListeners(segment: PlayerSegmentView, playerIndex: Int) {
+        segment.lifeCounter.onLifeIncreasedListener = { gameViewModel.increaseLife(playerIndex) }
+        segment.lifeCounter.onLifeDecreasedListener = { gameViewModel.decreaseLife(playerIndex) }
+
+        segment.onPlayerNameClickListener = { toggleProfilePopup(segment, playerIndex) }
+        segment.onUnloadProfileListener = {
+            gameViewModel.unloadProfile(playerIndex)
+            segment.profilePopupContainer.visibility = View.GONE
+        }
+        segment.onPlayerCountersClickListener = {
+            val player = gameViewModel.gameState.value.players[playerIndex]
+            PlayerCountersDialogFragment.newInstance(player.name, segment.angle.toFloat())
+                .show(supportFragmentManager, PlayerCountersDialogFragment.TAG)
+        }
+    }
+
+    private fun toggleProfilePopup(segment: PlayerSegmentView, playerIndex: Int) {
         if (segment.profilePopupContainer.isVisible) {
             segment.profilePopupContainer.visibility = View.GONE
             return
@@ -164,12 +126,10 @@ class MainActivity : AppCompatActivity() {
             try {
                 val (sortedProfiles, availableProfiles) = withContext(Dispatchers.Default) {
                     val allProfiles = profileViewModel.profiles.first()
-                    // Get a set of all profile IDs currently in use
                     val allUsedProfileIds = gameViewModel.gameState.value.players
                         .mapNotNull { it.profileId }
                         .toSet()
 
-                    // Filter out all used profiles
                     val available = allProfiles.filter { profile ->
                         !allUsedProfileIds.contains(profile.id)
                     }
@@ -178,13 +138,11 @@ class MainActivity : AppCompatActivity() {
 
                 if (availableProfiles.isEmpty()) {
                     Snackbar.make(binding.mainContainer, "No other profiles available", Snackbar.LENGTH_SHORT).show()
-                    SingletonIdlingResource.decrement()
                     return@launch
                 }
 
                 val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
                     val currentState = gameViewModel.gameState.value
-                    // Get all used IDs again to prevent race conditions
                     val usedProfileIds = currentState.players
                         .mapNotNull { it.profileId }
                         .toSet()
@@ -220,26 +178,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setDynamicLifeTapListener(view: LifeCounterView, playerIndex: Int) {
-        view.onLifeIncreasedListener = { gameViewModel.increaseLife(playerIndex) }
-        view.onLifeDecreasedListener = { gameViewModel.decreaseLife(playerIndex) }
-    }
-
     private fun setupStaticListeners() {
         binding.settingsIcon.setOnClickListener {
-            // --- NEW LOGIC TO CLOSE OPEN POPUPS ---
-            // Iterate through all player segments and hide any visible profile popups.
             playerLayoutManager.playerSegments.forEach { segment ->
-                if (segment.profilePopupContainer.isVisible) {
-                    segment.profilePopupContainer.visibility = View.GONE
-                }
-                if (segment.playerCountersPopupContainer.isVisible) {
-                    segment.playerCountersPopupContainer.visibility = View.GONE
-                }
+                segment.profilePopupContainer.visibility = View.GONE
+                segment.playerCountersPopupContainer.visibility = View.GONE
             }
-            // --- END OF NEW LOGIC ---
-
-            // Now, show the settings dialog as before.
             SettingsDialogFragment().show(supportFragmentManager, SettingsDialogFragment.TAG)
         }
     }
