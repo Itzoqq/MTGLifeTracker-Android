@@ -109,8 +109,11 @@ class MainActivity : AppCompatActivity() {
             segment.profilePopupContainer.visibility = View.GONE
         }
         segment.onPlayerCountersClickListener = {
-            val player = gameViewModel.gameState.value.players[playerIndex]
-            PlayerCountersDialogFragment.newInstance(player.name, segment.angle.toFloat())
+            // Get the whole game state
+            val gameState = gameViewModel.gameState.value
+            val player = gameState.players[playerIndex]
+            // Pass the player count to the dialog's newInstance method
+            PlayerCountersDialogFragment.newInstance(player.name, segment.angle.toFloat(), gameState.playerCount)
                 .show(supportFragmentManager, PlayerCountersDialogFragment.TAG)
         }
     }
