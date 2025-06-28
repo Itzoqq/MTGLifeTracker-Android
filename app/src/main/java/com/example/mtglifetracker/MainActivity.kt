@@ -139,6 +139,8 @@ class MainActivity : AppCompatActivity() {
                     segment.unloadProfileButton.visibility = View.VISIBLE
                     segment.unloadProfileButton.setOnClickListener {
                         gameViewModel.unloadProfile(index)
+                        // Close the popup if it's open
+                        segment.profilePopupContainer.visibility = View.GONE
                     }
                 } else {
                     segment.unloadProfileButton.visibility = View.INVISIBLE
@@ -162,14 +164,14 @@ class MainActivity : AppCompatActivity() {
             try {
                 val (sortedProfiles, availableProfiles) = withContext(Dispatchers.Default) {
                     val allProfiles = profileViewModel.profiles.first()
-                    val currentPlayerProfileId = gameViewModel.gameState.value.players.getOrNull(playerIndex)?.profileId
-                    val usedProfileIdsByOthers = gameViewModel.gameState.value.players
+                    // Get a set of all profile IDs currently in use
+                    val allUsedProfileIds = gameViewModel.gameState.value.players
                         .mapNotNull { it.profileId }
                         .toSet()
-                        .minus(currentPlayerProfileId)
 
+                    // Filter out all used profiles
                     val available = allProfiles.filter { profile ->
-                        !usedProfileIdsByOthers.contains(profile.id)
+                        !allUsedProfileIds.contains(profile.id)
                     }
                     Pair(available.sortedBy { it.nickname }, available)
                 }
@@ -182,13 +184,12 @@ class MainActivity : AppCompatActivity() {
 
                 val adapter = ProfilePopupAdapter(sortedProfiles) { selectedProfile ->
                     val currentState = gameViewModel.gameState.value
-                    val currentPlayerProfileId = currentState.players.getOrNull(playerIndex)?.profileId
-                    val usedProfileIdsByOthers = currentState.players
+                    // Get all used IDs again to prevent race conditions
+                    val usedProfileIds = currentState.players
                         .mapNotNull { it.profileId }
                         .toSet()
-                        .minus(currentPlayerProfileId)
 
-                    if (usedProfileIdsByOthers.contains(selectedProfile.id)) {
+                    if (usedProfileIds.contains(selectedProfile.id)) {
                         Snackbar.make(
                             binding.mainContainer,
                             "'${selectedProfile.nickname}' is already in use.",
