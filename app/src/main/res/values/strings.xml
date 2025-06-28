@@ -24,4 +24,5 @@
     <string name="title_manage_specific_profile">Manage %1$s</string>
     <string name="title_delete_profile">Delete Profile</string>
     <string name="player_counters">Player Counters</string>
+    <string name="player_counters_title">%1$s Counters</string>
 </resources>

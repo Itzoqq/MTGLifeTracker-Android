@@ -16,6 +16,7 @@ import com.example.mtglifetracker.databinding.ActivityMainBinding
 import com.example.mtglifetracker.util.isColorDark
 import com.example.mtglifetracker.view.DividerItemDecorationExceptLast
 import com.example.mtglifetracker.view.LifeCounterView
+import com.example.mtglifetracker.view.PlayerCountersDialogFragment
 import com.example.mtglifetracker.view.PlayerLayoutManager
 import com.example.mtglifetracker.view.ProfilePopupAdapter
 import com.example.mtglifetracker.view.RotatableLayout
@@ -97,7 +98,10 @@ class MainActivity : AppCompatActivity() {
             segment.lifeCounter.addDismissibleOverlay(segment.profilePopupContainer)
             setDynamicLifeTapListener(segment.lifeCounter, index)
             segment.playerCounters.setOnClickListener {
-                togglePlayerCountersPopup(segment)
+                val player = gameViewModel.gameState.value.players[index]
+                // Pass the segment's 'angle' property for correct rotation
+                PlayerCountersDialogFragment.newInstance(player.name, segment.angle.toFloat())
+                    .show(supportFragmentManager, PlayerCountersDialogFragment.TAG)
             }
 
             if (index < gameState.players.size) {
@@ -146,15 +150,6 @@ class MainActivity : AppCompatActivity() {
             isFirstLoad = false
         }
     }
-
-    private fun togglePlayerCountersPopup(segment: RotatableLayout) {
-        if (segment.playerCountersPopupContainer.isVisible) {
-            segment.playerCountersPopupContainer.visibility = View.GONE
-        } else {
-            segment.playerCountersPopupContainer.visibility = View.VISIBLE
-        }
-    }
-
 
     private fun toggleProfilePopup(segment: RotatableLayout, playerIndex: Int) {
         if (segment.profilePopupContainer.isVisible) {
