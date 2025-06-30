@@ -4,6 +4,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("jacoco")
+    id("kotlin-parcelize")
 }
 
 // Configure the JaCoCo version at the top level
