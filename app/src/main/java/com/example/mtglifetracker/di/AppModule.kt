@@ -2,12 +2,7 @@ package com.example.mtglifetracker.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.mtglifetracker.data.AppDatabase
-import com.example.mtglifetracker.data.GameRepository
-import com.example.mtglifetracker.data.GameSettingsDao
-import com.example.mtglifetracker.data.PlayerDao
-import com.example.mtglifetracker.data.ProfileDao
-import com.example.mtglifetracker.data.ProfileRepository
+import com.example.mtglifetracker.data.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,7 +24,7 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "mtg_database"
-        ).addMigrations(AppDatabase.MIGRATION_5_6) // Add this line
+        ).addMigrations(AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_8_9) // Add new migration
             .fallbackToDestructiveMigration(false)
             .build()
     }
@@ -38,6 +33,12 @@ object AppModule {
     @Singleton
     fun providePlayerDao(appDatabase: AppDatabase): PlayerDao {
         return appDatabase.playerDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCommanderDamageDao(appDatabase: AppDatabase): CommanderDamageDao {
+        return appDatabase.commanderDamageDao()
     }
 
     @Provides
@@ -63,11 +64,11 @@ object AppModule {
     fun provideGameRepository(
         playerDao: PlayerDao,
         settingsDao: GameSettingsDao,
-        profileDao: ProfileDao, // Add this parameter
+        profileDao: ProfileDao,
+        commanderDamageDao: CommanderDamageDao, // Add this
         externalScope: CoroutineScope
     ): GameRepository {
-        // Pass the new parameter to the constructor
-        return GameRepository(playerDao, settingsDao, profileDao, externalScope)
+        return GameRepository(playerDao, settingsDao, profileDao, commanderDamageDao, externalScope)
     }
 
     @Provides

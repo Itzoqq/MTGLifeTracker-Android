@@ -1,18 +1,13 @@
 package com.example.mtglifetracker.data
 
+import com.example.mtglifetracker.model.CommanderDamage
 import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.model.Profile
 import com.example.mtglifetracker.viewmodel.GameState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
@@ -23,6 +18,7 @@ class GameRepository constructor(
     private val playerDao: PlayerDao,
     private val settingsDao: GameSettingsDao,
     private val profileDao: ProfileDao,
+    private val commanderDamageDao: CommanderDamageDao,
     externalScope: CoroutineScope
 ) {
 
@@ -30,7 +26,6 @@ class GameRepository constructor(
     val gameState = _gameState.asStateFlow()
 
     init {
-        // This collector for UI state remains the same and is perfectly fine.
         externalScope.launch {
             initializeDatabase()
             settingsDao.getSettings()
@@ -50,8 +45,6 @@ class GameRepository constructor(
                 }
         }
 
-        // FIX: This launch block is now refactored to use `combine`.
-        // This is more declarative, avoids nested collectors, and is much easier to test.
         externalScope.launch {
             combine(profileDao.getAll(), playerDao.getAllPlayers()) { allProfiles, allPlayersInDb ->
                 val playersToUpdate = mutableListOf<Player>()
@@ -77,14 +70,23 @@ class GameRepository constructor(
                         )
                     }
                 }
-                playersToUpdate // The combine transform returns the list of players to update
+                playersToUpdate
             }.collect { playersToUpdate ->
                 if (playersToUpdate.isNotEmpty()) {
-                    // This collector now only acts on the result.
                     playerDao.updatePlayers(playersToUpdate)
                 }
             }
         }
+    }
+
+    fun getCommanderDamageForPlayer(targetPlayerIndex: Int): Flow<List<CommanderDamage>> {
+        val gameSize = _gameState.value.playerCount
+        return commanderDamageDao.getCommanderDamageForPlayer(gameSize, targetPlayerIndex)
+    }
+
+    suspend fun incrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
+        val gameSize = _gameState.value.playerCount
+        commanderDamageDao.incrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
     }
 
     private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
@@ -128,6 +130,16 @@ class GameRepository constructor(
                 )
             }
             playerDao.insertAll(newPlayers)
+
+            val newDamages = mutableListOf<CommanderDamage>()
+            for (i in 0 until gameSize) {
+                for (j in 0 until gameSize) {
+                    if (i != j) {
+                        newDamages.add(CommanderDamage(gameSize, i, j, 0))
+                    }
+                }
+            }
+            commanderDamageDao.insertAll(newDamages)
         }
     }
     suspend fun changePlayerCount(newPlayerCount: Int) {
@@ -146,12 +158,14 @@ class GameRepository constructor(
     suspend fun resetCurrentGame() {
         val currentSettings = settingsDao.getSettings().first()!!
         playerDao.deletePlayersForGame(currentSettings.playerCount)
+        commanderDamageDao.deleteCommanderDamageForGame(currentSettings.playerCount)
         ensurePlayersExistForGameSize(currentSettings.playerCount, currentSettings.startingLife)
     }
 
     suspend fun resetAllGames() {
         val currentSettings = settingsDao.getSettings().first()!!
         playerDao.deleteAll()
+        commanderDamageDao.deleteAll()
         (2..6).forEach { gameSize ->
             ensurePlayersExistForGameSize(gameSize, currentSettings.startingLife)
         }

@@ -3,9 +3,11 @@ package com.example.mtglifetracker.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mtglifetracker.data.GameRepository
+import com.example.mtglifetracker.model.CommanderDamage
 import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.model.Profile
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -68,6 +70,16 @@ class GameViewModel @Inject constructor(private val repository: GameRepository) 
     fun unloadProfile(playerIndex: Int) {
         viewModelScope.launch {
             repository.unloadPlayerProfile(playerIndex)
+        }
+    }
+
+    fun getCommanderDamageForPlayer(targetPlayerIndex: Int): Flow<List<CommanderDamage>> {
+        return repository.getCommanderDamageForPlayer(targetPlayerIndex)
+    }
+
+    fun incrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
+        viewModelScope.launch {
+            repository.incrementCommanderDamage(sourcePlayerIndex, targetPlayerIndex)
         }
     }
 }

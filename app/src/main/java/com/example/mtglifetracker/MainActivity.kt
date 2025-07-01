@@ -10,12 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mtglifetracker.databinding.ActivityMainBinding
-import com.example.mtglifetracker.view.DividerItemDecorationExceptLast
-import com.example.mtglifetracker.view.PlayerCountersDialogFragment
-import com.example.mtglifetracker.view.PlayerLayoutManager
-import com.example.mtglifetracker.view.PlayerSegmentView
-import com.example.mtglifetracker.view.ProfilePopupAdapter
-import com.example.mtglifetracker.view.SettingsDialogFragment
+import com.example.mtglifetracker.view.*
 import com.example.mtglifetracker.viewmodel.GameState
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import com.example.mtglifetracker.viewmodel.ProfileViewModel
@@ -86,10 +81,9 @@ class MainActivity : AppCompatActivity() {
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
 
-                // Update the entire segment's UI with one method call
                 segment.updateUI(player, isFirstLoad || isMassUpdate)
 
-                // Set up listeners for the segment
+                // Reverted to passing the loop index, which is correct.
                 setPlayerSegmentListeners(segment, index)
             }
         }
@@ -109,12 +103,8 @@ class MainActivity : AppCompatActivity() {
             segment.profilePopupContainer.visibility = View.GONE
         }
         segment.onPlayerCountersClickListener = {
-            // Get the current player object to access its name
-            val player = gameViewModel.gameState.value.players[playerIndex]
-
-            // Call the new, simplified newInstance method
-            PlayerCountersDialogFragment.newInstance(player.name)
-                .show(supportFragmentManager, PlayerCountersDialogFragment.TAG)
+            CommanderDamageDialogFragment.newInstance(playerIndex)
+                .show(supportFragmentManager, CommanderDamageDialogFragment.TAG)
         }
     }
 
