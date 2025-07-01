@@ -26,9 +26,9 @@
     <string name="player_counters">Player Counters</string>
     <string name="player_counters_title">%1$s Counters</string>
 
-    <string name="poison_counter">Poison</string>
     <string name="commander_damage">Commander Damage</string>
     <string name="commander_damage_to_player">Commander Damage to %1$s</string>
+    <string name="player_commander_damage_title">%1$s Commander Dmg</string>
     <string name="poison_counter_icon_description">Poison counter icon</string>
     <string name="me">Me</string>
 </resources>

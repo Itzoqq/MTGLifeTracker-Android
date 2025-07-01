@@ -89,6 +89,11 @@ class GameRepository constructor(
         commanderDamageDao.incrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
     }
 
+    suspend fun decrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
+        val gameSize = _gameState.value.playerCount
+        commanderDamageDao.decrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
+    }
+
     private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
         val currentState = _gameState.value
         val playerToUpdate = currentState.players.getOrNull(playerIndex) ?: return
@@ -112,10 +117,30 @@ class GameRepository constructor(
     }
 
     private suspend fun initializeDatabase() {
-        if (settingsDao.getSettings().first() == null) {
+        val settings = settingsDao.getSettings().first()
+        if (settings == null) {
             val defaultSettings = GameSettings(playerCount = 2, startingLife = 40)
             settingsDao.saveSettings(defaultSettings)
             ensurePlayersExistForGameSize(defaultSettings.playerCount, defaultSettings.startingLife)
+        } else {
+            ensureDamageEntriesExist(settings.playerCount)
+        }
+    }
+
+    private suspend fun ensureDamageEntriesExist(gameSize: Int) {
+        val expectedCount = gameSize * (gameSize - 1)
+        val actualCount = commanderDamageDao.getDamageEntryCountForGame(gameSize)
+
+        if (actualCount < expectedCount) {
+            val newDamages = mutableListOf<CommanderDamage>()
+            for (i in 0 until gameSize) {
+                for (j in 0 until gameSize) {
+                    if (i != j) {
+                        newDamages.add(CommanderDamage(gameSize, i, j, 0))
+                    }
+                }
+            }
+            commanderDamageDao.insertAll(newDamages)
         }
     }
 
@@ -130,24 +155,15 @@ class GameRepository constructor(
                 )
             }
             playerDao.insertAll(newPlayers)
-
-            val newDamages = mutableListOf<CommanderDamage>()
-            for (i in 0 until gameSize) {
-                for (j in 0 until gameSize) {
-                    if (i != j) {
-                        newDamages.add(CommanderDamage(gameSize, i, j, 0))
-                    }
-                }
-            }
-            commanderDamageDao.insertAll(newDamages)
         }
+        ensureDamageEntriesExist(gameSize)
     }
+
     suspend fun changePlayerCount(newPlayerCount: Int) {
         val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
         ensurePlayersExistForGameSize(newPlayerCount, currentSettings.startingLife)
         settingsDao.saveSettings(currentSettings.copy(playerCount = newPlayerCount))
     }
-
 
     suspend fun changeStartingLife(newStartingLife: Int) {
         val currentSettings = settingsDao.getSettings().first() ?: GameSettings()

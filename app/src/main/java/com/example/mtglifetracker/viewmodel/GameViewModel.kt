@@ -82,4 +82,10 @@ class GameViewModel @Inject constructor(private val repository: GameRepository) 
             repository.incrementCommanderDamage(sourcePlayerIndex, targetPlayerIndex)
         }
     }
+
+    fun decrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
+        viewModelScope.launch {
+            repository.decrementCommanderDamage(sourcePlayerIndex, targetPlayerIndex)
+        }
+    }
 }
