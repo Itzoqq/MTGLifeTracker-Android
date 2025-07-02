@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
+import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -55,14 +56,45 @@ class CommanderDamageDialogFragment : DialogFragment() {
             }
         )
 
+        // The total number of players determines the grid layout
+        val playerCount = allPlayers.size
+
+        // Use 1 column for 2 players, and 2 columns for all other counts
+        val spanCount = if (playerCount == 2) 1 else 2
+        val layoutManager = GridLayoutManager(context, spanCount)
+
+        // For 3-player games, the first player should span the entire width
+        if (playerCount == 3) {
+            layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                override fun getSpanSize(position: Int): Int {
+                    // The item at position 0 gets 2 spans, others get 1
+                    return if (position == 0) 2 else 1
+                }
+            }
+        }
         recyclerView.adapter = adapter
-        recyclerView.layoutManager = GridLayoutManager(context, 2)
+        recyclerView.layoutManager = layoutManager
+
 
         lifecycleScope.launch {
             gameViewModel.getCommanderDamageForPlayer(targetPlayerIndex).collectLatest { damages ->
                 val damageMap = damages.associate { it.sourcePlayerIndex to it.damage }
-                val playerDamageItems = allPlayers.map { PlayerDamageItem(it, damageMap[it.playerIndex] ?: 0) }
-                adapter.submitList(playerDamageItems)
+                val initialItems = allPlayers.map { PlayerDamageItem(it, damageMap[it.playerIndex] ?: 0) }
+
+                val finalList = if (playerCount == 5) {
+                    mutableListOf<PlayerDamageItem>().apply {
+                        val placeholder = PlayerDamageItem(Player(gameSize = 5, playerIndex = -1, life = 0), 0)
+                        add(initialItems[0]) // Top-left
+                        add(initialItems[2]) // Top-right
+                        add(initialItems[1]) // Bottom-left
+                        add(initialItems[3]) // Middle-right
+                        add(placeholder)     // Invisible item for spacing
+                        add(initialItems[4]) // Bottom-right (now in the correct column)
+                    }
+                } else {
+                    initialItems
+                }
+                adapter.submitList(finalList)
             }
         }
 

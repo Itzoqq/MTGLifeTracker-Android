@@ -93,6 +93,15 @@ class CommanderDamageAdapter(
             targetPlayerIndex: Int,
             onDamageDecremented: (opponentIndex: Int) -> Unit
         ) {
+            // If this is the placeholder item, clear its text, make it invisible, and stop.
+            if (item.player.playerIndex == -1) {
+                opponentName.text = ""
+                damageAmount.text = ""
+                itemView.visibility = View.INVISIBLE
+                return
+            }
+            // Otherwise, ensure the view is visible and bind the player data.
+            itemView.visibility = View.VISIBLE
             opponentName.text = item.player.name
             val background = damageAmount.background as GradientDrawable
 
