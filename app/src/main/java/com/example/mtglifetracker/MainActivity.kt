@@ -103,7 +103,8 @@ class MainActivity : AppCompatActivity() {
             segment.profilePopupContainer.visibility = View.GONE
         }
         segment.onPlayerCountersClickListener = {
-            CommanderDamageDialogFragment.newInstance(playerIndex)
+            // Pass the segment's angle to the dialog
+            CommanderDamageDialogFragment.newInstance(playerIndex, segment.angle)
                 .show(supportFragmentManager, CommanderDamageDialogFragment.TAG)
         }
     }

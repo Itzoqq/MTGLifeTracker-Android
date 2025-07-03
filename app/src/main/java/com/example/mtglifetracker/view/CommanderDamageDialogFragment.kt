@@ -1,20 +1,12 @@
 package com.example.mtglifetracker.view
 
-import android.app.Dialog
-import android.graphics.drawable.GradientDrawable
+import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.ColorUtils
-import androidx.core.graphics.toColorInt
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -25,60 +17,71 @@ import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import androidx.core.view.isVisible
+import androidx.core.graphics.drawable.toDrawable
 
 class CommanderDamageDialogFragment : DialogFragment() {
 
     private val gameViewModel: GameViewModel by activityViewModels()
     private lateinit var adapter: CommanderDamageAdapter
-    private val manualPlayerViews = mutableMapOf<Int, View>()
 
-    override fun onResume() {
-        super.onResume()
-        // Set the dialog to a fixed square size
-        val window = dialog?.window ?: return
-        val displayMetrics = resources.displayMetrics
-        // Set size to 90% of the screen width
-        val size = (displayMetrics.widthPixels * 0.90).toInt()
-        window.setLayout(size, size)
-        window.setGravity(Gravity.CENTER)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        // Inflate the correct layout based on the player's rotation angle
+        val angle = requireArguments().getInt(ARG_ANGLE)
+        val layoutId = when (angle) {
+            90 -> R.layout.dialog_commander_damage_rotated
+            -90 -> R.layout.dialog_commander_damage_rotated_left
+            180 -> R.layout.dialog_commander_damage_rotated_180
+            else -> R.layout.dialog_commander_damage
+        }
+        return inflater.inflate(layoutId, container, false)
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-        val inflater = requireActivity().layoutInflater
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val targetPlayerIndex = requireArguments().getInt(ARG_TARGET_PLAYER_INDEX)
         val targetPlayer = gameViewModel.gameState.value.players.find { it.playerIndex == targetPlayerIndex }!!
-        val allPlayers = gameViewModel.gameState.value.players
-        val playerCount = allPlayers.size
+        val angle = requireArguments().getInt(ARG_ANGLE)
 
-        val view = inflater.inflate(R.layout.dialog_commander_damage, FrameLayout(requireContext()), false)
-
-        if (playerCount == 5) {
-            setupFivePlayerLayout(view, allPlayers, targetPlayerIndex, inflater)
+        // Handle the title view based on which layout was inflated
+        if (angle == 90 || angle == -90) {
+            val verticalTitleView: VerticalTextView = view.findViewById(R.id.tv_dialog_content_title)
+            verticalTitleView.text = getString(R.string.player_commander_damage_title, targetPlayer.name)
+            // Set the drawing direction based on the angle
+            verticalTitleView.isTopDown = (angle == 90)
         } else {
-            setupDefaultLayout(view, allPlayers, targetPlayerIndex)
+            val titleTextView: TextView = view.findViewById(R.id.tv_dialog_content_title)
+            titleTextView.text = getString(R.string.player_commander_damage_title, targetPlayer.name)
+            // Also apply 180 degree rotation to the title
+            titleTextView.rotation = angle.toFloat()
         }
 
-        val customTitleView = inflater.inflate(R.layout.dialog_custom_title, FrameLayout(requireContext()), false)
-        val titleTextView = customTitleView.findViewById<TextView>(R.id.tv_dialog_title)
-
-        titleTextView.text = getString(R.string.player_commander_damage_title, targetPlayer.name)
-        customTitleView.findViewById<ImageView>(R.id.iv_back_arrow).visibility = View.GONE
-
-        builder.setCustomTitle(customTitleView)
-            .setView(view)
-
-        return builder.create()
+        setupRecyclerView(view, targetPlayerIndex)
     }
 
-    private fun setupDefaultLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int) {
+    override fun onStart() {
+        super.onStart()
+        // Set dialog window properties for a custom layout
+        dialog?.window?.let { window ->
+            val displayMetrics = resources.displayMetrics
+            // Make the dialog a square based on 90% of screen width
+            val size = (displayMetrics.widthPixels * 0.90).toInt()
+            window.setLayout(size, size)
+            window.setGravity(Gravity.CENTER)
+            // Make the default window background transparent so our custom background shows
+            window.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+    }
+
+    private fun setupRecyclerView(view: View, targetPlayerIndex: Int) {
+        val allPlayers = gameViewModel.gameState.value.players
+        val playerCount = allPlayers.size
+        val angle = requireArguments().getInt(ARG_ANGLE)
         val recyclerView: RecyclerView = view.findViewById(R.id.rv_commander_damage)
-        recyclerView.visibility = View.VISIBLE
 
         adapter = CommanderDamageAdapter(
             targetPlayerIndex,
+            angle,
             onDamageIncremented = { opponentIndex ->
                 gameViewModel.incrementCommanderDamage(opponentIndex, targetPlayerIndex)
             },
@@ -87,7 +90,6 @@ class CommanderDamageDialogFragment : DialogFragment() {
             }
         )
 
-        val playerCount = allPlayers.size
         val spanCount = if (playerCount == 2) 1 else 2
         val layoutManager = GridLayoutManager(context, spanCount)
 
@@ -98,6 +100,7 @@ class CommanderDamageDialogFragment : DialogFragment() {
                 }
             }
         }
+
         recyclerView.adapter = adapter
         recyclerView.layoutManager = layoutManager
 
@@ -105,97 +108,21 @@ class CommanderDamageDialogFragment : DialogFragment() {
             gameViewModel.getCommanderDamageForPlayer(targetPlayerIndex).collectLatest { damages ->
                 val damageMap = damages.associate { it.sourcePlayerIndex to it.damage }
                 val initialItems = allPlayers.map { PlayerDamageItem(it, damageMap[it.playerIndex] ?: 0) }
-                adapter.submitList(initialItems)
-            }
-        }
-    }
 
-    private fun setupFivePlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, inflater: LayoutInflater) {
-        val rootContainer = view as FrameLayout
-        val recyclerView: RecyclerView = view.findViewById(R.id.rv_commander_damage)
-        recyclerView.visibility = View.GONE
-
-        val horizontalLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            weightSum = 2f
-        }
-
-        val col1 = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-        }
-
-        val col2 = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-        }
-
-        allPlayers.forEach { player ->
-            val playerView = inflater.inflate(R.layout.item_commander_damage, rootContainer, false)
-            manualPlayerViews[player.playerIndex] = playerView
-
-            if (player.playerIndex == 0 || player.playerIndex == 1) {
-                col1.addView(playerView)
-            } else {
-                col2.addView(playerView)
-            }
-        }
-
-        horizontalLayout.addView(col1)
-        horizontalLayout.addView(col2)
-        rootContainer.addView(horizontalLayout)
-
-        lifecycleScope.launch {
-            gameViewModel.getCommanderDamageForPlayer(targetPlayerIndex).collectLatest { damages ->
-                val damageMap = damages.associate { it.sourcePlayerIndex to it.damage }
-                allPlayers.forEach { player ->
-                    val playerView = manualPlayerViews[player.playerIndex] ?: return@forEach
-                    val damage = damageMap[player.playerIndex] ?: 0
-                    bindManualPlayerView(playerView, player, damage, targetPlayerIndex)
+                val finalList = if (playerCount == 5) {
+                    mutableListOf<PlayerDamageItem>().apply {
+                        val placeholder = PlayerDamageItem(Player(gameSize = 5, playerIndex = -1, life = 0), 0)
+                        add(placeholder)
+                        add(initialItems[2])
+                        add(initialItems[0])
+                        add(initialItems[3])
+                        add(initialItems[1])
+                        add(initialItems[4])
+                    }
+                } else {
+                    initialItems
                 }
-            }
-        }
-    }
-
-    private fun bindManualPlayerView(view: View, player: Player, damage: Int, targetPlayerIndex: Int) {
-        val opponentName: TextView = view.findViewById(R.id.tv_opponent_name)
-        val damageAmount: TextView = view.findViewById(R.id.tv_commander_damage)
-        val decrementButton: ImageView = view.findViewById(R.id.iv_decrement_button)
-        val defaultFillColor = ContextCompat.getColor(view.context, R.color.default_segment_background)
-
-        opponentName.text = player.name
-        val background = damageAmount.background as GradientDrawable
-
-        player.color?.let {
-            val color = it.toColorInt()
-            val darkerFillColor = ColorUtils.blendARGB(color, android.graphics.Color.BLACK, 0.2f)
-            background.setColor(darkerFillColor)
-        } ?: run {
-            background.setColor(defaultFillColor)
-        }
-
-        if (player.playerIndex == targetPlayerIndex) {
-            damageAmount.text = view.context.getString(R.string.me)
-            view.alpha = 0.6f
-            damageAmount.isClickable = false
-            decrementButton.visibility = View.GONE
-        } else {
-            damageAmount.text = damage.toString()
-            view.alpha = 1.0f
-            damageAmount.isClickable = true
-            damageAmount.setOnClickListener {
-                decrementButton.visibility = View.GONE
-                gameViewModel.incrementCommanderDamage(player.playerIndex, targetPlayerIndex)
-            }
-            damageAmount.setOnLongClickListener {
-                decrementButton.visibility = if (decrementButton.isVisible) View.GONE else View.VISIBLE
-                true
-            }
-            decrementButton.setOnClickListener {
-                gameViewModel.decrementCommanderDamage(player.playerIndex, targetPlayerIndex)
+                adapter.submitList(finalList)
             }
         }
     }
@@ -203,11 +130,13 @@ class CommanderDamageDialogFragment : DialogFragment() {
     companion object {
         const val TAG = "CommanderDamageDialogFragment"
         private const val ARG_TARGET_PLAYER_INDEX = "target_player_index"
+        private const val ARG_ANGLE = "angle"
 
-        fun newInstance(targetPlayerIndex: Int): CommanderDamageDialogFragment {
+        fun newInstance(targetPlayerIndex: Int, angle: Int): CommanderDamageDialogFragment {
             return CommanderDamageDialogFragment().apply {
                 arguments = Bundle().apply {
                     putInt(ARG_TARGET_PLAYER_INDEX, targetPlayerIndex)
+                    putInt(ARG_ANGLE, angle)
                 }
             }
         }

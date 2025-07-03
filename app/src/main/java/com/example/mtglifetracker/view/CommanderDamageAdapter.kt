@@ -20,10 +20,16 @@ data class PlayerDamageItem(val player: Player, val damage: Int)
 
 class CommanderDamageAdapter(
     private val targetPlayerIndex: Int,
+    private val angle: Int,
     private val onDamageIncremented: (opponentIndex: Int) -> Unit,
     private val onDamageDecremented: (opponentIndex: Int) -> Unit
 ) : ListAdapter<PlayerDamageItem, CommanderDamageAdapter.DamageViewHolder>(PlayerDamageDiffCallback()) {
 
+    // Define view types for all layouts
+    private val viewTypeNormal = 0
+    private val viewTypeRotatedRight = 1
+    private val viewTypeRotatedLeft = 2
+    private val viewTypeRotated180 = 3
     private var decrementModePosition = RecyclerView.NO_POSITION
 
     private fun setDecrementMode(position: Int) {
@@ -42,8 +48,25 @@ class CommanderDamageAdapter(
         }
     }
 
+    override fun getItemViewType(position: Int): Int {
+        // Return a different view type based on the exact angle
+        return when (angle) {
+            90 -> viewTypeRotatedRight
+            -90 -> viewTypeRotatedLeft
+            180 -> viewTypeRotated180
+            else -> viewTypeNormal
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DamageViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_commander_damage, parent, false)
+        // Inflate the correct layout based on the view type
+        val layoutId = when (viewType) {
+            viewTypeRotatedRight -> R.layout.item_commander_damage_rotated
+            viewTypeRotatedLeft -> R.layout.item_commander_damage_rotated_left
+            viewTypeRotated180 -> R.layout.item_commander_damage_rotated_180
+            else -> R.layout.item_commander_damage
+        }
+        val view = LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
         return DamageViewHolder(view) { position, isLongClick ->
             val item = getItem(position)
             if (item.player.playerIndex != targetPlayerIndex) {
@@ -62,7 +85,7 @@ class CommanderDamageAdapter(
         holder.bind(getItem(position), position == decrementModePosition, targetPlayerIndex, onDamageDecremented)
     }
 
-    class DamageViewHolder(
+    inner class DamageViewHolder(
         itemView: View,
         private val listener: (position: Int, isLongClick: Boolean) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
@@ -74,7 +97,6 @@ class CommanderDamageAdapter(
 
         init {
             damageAmount.setOnClickListener {
-                // Use adapterPosition, the working predecessor to bindingAdapterPosition
                 if (adapterPosition != RecyclerView.NO_POSITION) {
                     listener(adapterPosition, false) // isLongClick = false
                 }
@@ -105,6 +127,10 @@ class CommanderDamageAdapter(
             opponentName.text = item.player.name
             val background = damageAmount.background as GradientDrawable
 
+            // Rotate the text content to match the segment's orientation
+            opponentName.rotation = angle.toFloat()
+            damageAmount.rotation = angle.toFloat()
+
             item.player.color?.let {
                 val color = it.toColorInt()
                 val darkerFillColor = ColorUtils.blendARGB(color, Color.BLACK, 0.2f)
@@ -125,7 +151,6 @@ class CommanderDamageAdapter(
                 decrementButton.visibility = if (isDecrementMode) View.VISIBLE else View.GONE
 
                 decrementButton.setOnClickListener {
-                    // The only role of the minus button is to decrement
                     onDamageDecremented(item.player.playerIndex)
                 }
             }
