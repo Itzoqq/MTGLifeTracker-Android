@@ -15,6 +15,8 @@
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_commander_damage"
         app:layout_constraintEnd_toStartOf="@+id/tv_commander_damage"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/tv_commander_damage"
         tools:text="Opponent Name" />
 
@@ -32,6 +34,7 @@
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_opponent_name"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="0" />
 
