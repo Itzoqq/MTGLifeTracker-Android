@@ -28,7 +28,7 @@ class CommanderDamageDialogFragment : DialogFragment() {
         // Inflate the correct layout based on the player's rotation angle
         val angle = requireArguments().getInt(ARG_ANGLE)
         val layoutId = when (angle) {
-            90 -> R.layout.dialog_commander_damage_rotated
+            90 -> R.layout.dialog_commander_damage_rotated_right
             -90 -> R.layout.dialog_commander_damage_rotated_left
             180 -> R.layout.dialog_commander_damage_rotated_180
             else -> R.layout.dialog_commander_damage

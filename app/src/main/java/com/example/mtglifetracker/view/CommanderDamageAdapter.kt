@@ -61,7 +61,7 @@ class CommanderDamageAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DamageViewHolder {
         // Inflate the correct layout based on the view type
         val layoutId = when (viewType) {
-            viewTypeRotatedRight -> R.layout.item_commander_damage_rotated
+            viewTypeRotatedRight -> R.layout.item_commander_damage_rotated_right
             viewTypeRotatedLeft -> R.layout.item_commander_damage_rotated_left
             viewTypeRotated180 -> R.layout.item_commander_damage_rotated_180
             else -> R.layout.item_commander_damage
