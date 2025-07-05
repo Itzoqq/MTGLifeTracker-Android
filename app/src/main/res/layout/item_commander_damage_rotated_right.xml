@@ -47,10 +47,11 @@
         android:padding="12dp"
         android:src="@drawable/ic_remove"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_commander_damage"
-        app:layout_constraintEnd_toStartOf="@+id/tv_commander_damage"
-        app:layout_constraintTop_toTopOf="@+id/tv_commander_damage"
         app:tint="@android:color/white"
-        tools:visibility="visible" />
+        tools:visibility="visible"
+        android:rotation="90"
+        app:layout_constraintBottom_toTopOf="@+id/tv_commander_damage"
+        app:layout_constraintStart_toStartOf="@+id/tv_commander_damage"
+        app:layout_constraintEnd_toEndOf="@+id/tv_commander_damage" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

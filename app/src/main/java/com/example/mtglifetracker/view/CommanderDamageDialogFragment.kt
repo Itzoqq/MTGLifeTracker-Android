@@ -112,11 +112,10 @@ class CommanderDamageDialogFragment : DialogFragment() {
         val damageAmount: TextView = itemView.findViewById(R.id.tv_commander_damage)
         val decrementButton: ImageView = itemView.findViewById(R.id.iv_decrement_button)
 
+        // ***FIX***: Apply rotation to the views
         opponentName.rotation = angle.toFloat()
         damageAmount.rotation = angle.toFloat()
 
-        // --- THIS IS THE FIX ---
-        // Always show the player's actual name above the box.
         opponentName.text = player.name
 
         (damageAmount.background as? GradientDrawable)?.let { background ->
@@ -125,25 +124,22 @@ class CommanderDamageDialogFragment : DialogFragment() {
             background.setColor(color)
         }
 
-        // If this box is for the player who opened the dialog...
         if (player.playerIndex == targetPlayerIndex) {
-            // ...put "Me" inside the box and disable it.
             damageAmount.text = getString(R.string.me)
             itemView.alpha = 0.6f
             damageAmount.setOnClickListener(null)
             damageAmount.setOnLongClickListener(null)
-            decrementButton.isVisible = false
+            decrementButton.visibility = View.GONE
         } else {
-            // Otherwise, show the damage and enable interactions.
             damageAmount.text = damage.toString()
             itemView.alpha = 1.0f
 
             damageAmount.setOnClickListener {
                 gameViewModel.incrementCommanderDamage(player.playerIndex, targetPlayerIndex)
-                decrementButton.isVisible = false
+                decrementButton.visibility = View.GONE
             }
             damageAmount.setOnLongClickListener {
-                decrementButton.isVisible = !decrementButton.isVisible
+                decrementButton.visibility = if (decrementButton.isVisible) View.GONE else View.VISIBLE
                 true
             }
             decrementButton.setOnClickListener {

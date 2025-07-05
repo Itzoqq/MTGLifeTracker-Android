@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.model.Player
+import androidx.core.view.isVisible
 
 data class PlayerDamageItem(val player: Player, val damage: Int)
 
@@ -30,23 +31,6 @@ class CommanderDamageAdapter(
     private val viewTypeRotatedRight = 1
     private val viewTypeRotatedLeft = 2
     private val viewTypeRotated180 = 3
-    private var decrementModePosition = RecyclerView.NO_POSITION
-
-    private fun setDecrementMode(position: Int) {
-        val previousPosition = decrementModePosition
-        decrementModePosition = if (previousPosition == position) RecyclerView.NO_POSITION else position
-
-        if (previousPosition != RecyclerView.NO_POSITION) notifyItemChanged(previousPosition)
-        if (decrementModePosition != RecyclerView.NO_POSITION) notifyItemChanged(decrementModePosition)
-    }
-
-    private fun disableDecrementMode() {
-        if (decrementModePosition != RecyclerView.NO_POSITION) {
-            val positionToUpdate = decrementModePosition
-            decrementModePosition = RecyclerView.NO_POSITION
-            notifyItemChanged(positionToUpdate)
-        }
-    }
 
     override fun getItemViewType(position: Int): Int {
         // Return a different view type based on the exact angle
@@ -67,27 +51,15 @@ class CommanderDamageAdapter(
             else -> R.layout.item_commander_damage
         }
         val view = LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
-        return DamageViewHolder(view) { position, isLongClick ->
-            val item = getItem(position)
-            if (item.player.playerIndex != targetPlayerIndex) {
-                if (isLongClick) {
-                    setDecrementMode(position)
-                } else {
-                    // Tapping the box directly increments
-                    disableDecrementMode()
-                    onDamageIncremented(item.player.playerIndex)
-                }
-            }
-        }
+        return DamageViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: DamageViewHolder, position: Int) {
-        holder.bind(getItem(position), position == decrementModePosition, targetPlayerIndex, onDamageDecremented)
+        holder.bind(getItem(position))
     }
 
     inner class DamageViewHolder(
-        itemView: View,
-        private val listener: (position: Int, isLongClick: Boolean) -> Unit
+        itemView: View
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val opponentName: TextView = itemView.findViewById(R.id.tv_opponent_name)
@@ -95,39 +67,18 @@ class CommanderDamageAdapter(
         private val decrementButton: ImageView = itemView.findViewById(R.id.iv_decrement_button)
         private val defaultFillColor = ContextCompat.getColor(itemView.context, R.color.default_segment_background)
 
-        init {
-            damageAmount.setOnClickListener {
-                if (adapterPosition != RecyclerView.NO_POSITION) {
-                    listener(adapterPosition, false) // isLongClick = false
-                }
-            }
-            damageAmount.setOnLongClickListener {
-                if (adapterPosition != RecyclerView.NO_POSITION) {
-                    listener(adapterPosition, true) // isLongClick = true
-                }
-                true
-            }
-        }
-
-        fun bind(
-            item: PlayerDamageItem,
-            isDecrementMode: Boolean,
-            targetPlayerIndex: Int,
-            onDamageDecremented: (opponentIndex: Int) -> Unit
-        ) {
-            // If this is the placeholder item, clear its text, make it invisible, and stop.
+        fun bind(item: PlayerDamageItem) {
             if (item.player.playerIndex == -1) {
                 opponentName.text = ""
                 damageAmount.text = ""
                 itemView.visibility = View.INVISIBLE
                 return
             }
-            // Otherwise, ensure the view is visible and bind the player data.
+
             itemView.visibility = View.VISIBLE
             opponentName.text = item.player.name
             val background = damageAmount.background as GradientDrawable
 
-            // Rotate the text content to match the segment's orientation
             opponentName.rotation = angle.toFloat()
             damageAmount.rotation = angle.toFloat()
 
@@ -143,12 +94,22 @@ class CommanderDamageAdapter(
                 damageAmount.text = itemView.context.getString(R.string.me)
                 itemView.alpha = 0.6f
                 damageAmount.isClickable = false
+                damageAmount.setOnLongClickListener(null)
                 decrementButton.visibility = View.GONE
             } else {
                 damageAmount.text = item.damage.toString()
                 itemView.alpha = 1.0f
                 damageAmount.isClickable = true
-                decrementButton.visibility = if (isDecrementMode) View.VISIBLE else View.GONE
+
+                damageAmount.setOnClickListener {
+                    decrementButton.visibility = View.GONE
+                    onDamageIncremented(item.player.playerIndex)
+                }
+
+                damageAmount.setOnLongClickListener {
+                    decrementButton.visibility = if (decrementButton.isVisible) View.GONE else View.VISIBLE
+                    true
+                }
 
                 decrementButton.setOnClickListener {
                     onDamageDecremented(item.player.playerIndex)
