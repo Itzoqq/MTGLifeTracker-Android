@@ -17,8 +17,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.viewmodel.GameViewModel
@@ -28,26 +26,41 @@ import kotlinx.coroutines.launch
 class CommanderDamageDialogFragment : DialogFragment() {
 
     private val gameViewModel: GameViewModel by activityViewModels()
-    private var adapter: CommanderDamageAdapter? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val playerCount = gameViewModel.gameState.value.playerCount
         val angle = requireArguments().getInt(ARG_ANGLE)
 
-        val layoutId = if (playerCount == 5) {
-            when (angle) {
+        val layoutId = when (playerCount) {
+            2 -> when (angle) {
+                0 -> R.layout.dialog_commander_damage_2_player
+                180 -> R.layout.dialog_commander_damage_2_player_rotated_180
+                else -> -1
+            }
+            3 -> when (angle) {
+                90 -> R.layout.dialog_commander_damage_3_player_rotated_right
+                -90 -> R.layout.dialog_commander_damage_3_player_rotated_left
+                180 -> R.layout.dialog_commander_damage_3_player_rotated_180
+                else -> -1
+            }
+            4 -> when (angle) {
+                90 -> R.layout.dialog_commander_damage_4_player_rotated_right
+                -90 -> R.layout.dialog_commander_damage_4_player_rotated_left
+                else -> -1
+            }
+            5 -> when (angle) {
                 90 -> R.layout.dialog_commander_damage_5_player_rotated_right
                 -90 -> R.layout.dialog_commander_damage_5_player_rotated_left
                 else -> -1
             }
-        } else {
-            when (angle) {
-                90 -> R.layout.dialog_commander_damage_rotated_right
-                -90 -> R.layout.dialog_commander_damage_rotated_left
-                180 -> R.layout.dialog_commander_damage_rotated_180
-                else -> R.layout.dialog_commander_damage
+            6 -> when (angle) {
+                90 -> R.layout.dialog_commander_damage_6_player_rotated_right
+                -90 -> R.layout.dialog_commander_damage_6_player_rotated_left
+                else -> -1
             }
+            else -> -1
         }
+
 
         if (layoutId == -1) {
             dismiss()
@@ -71,12 +84,60 @@ class CommanderDamageDialogFragment : DialogFragment() {
             titleView.isTopDown = (angle == 90)
         }
 
-        if (playerCount == 5) {
-            setup5PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
-        } else {
-            setupRecyclerView(view, allPlayers, targetPlayerIndex, angle)
+        when (playerCount) {
+            2 -> setup2PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
+            3 -> setup3PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
+            4 -> setup4PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
+            5 -> setup5PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
+            6 -> setup6PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
         }
     }
+
+    private fun setup2PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
+        val playersForLayout = allPlayers.sortedBy { it.playerIndex }
+        val column = view.findViewById<LinearLayout>(R.id.damage_column)
+        val itemViews = listOfNotNull(
+            column.getChildAt(0), column.getChildAt(1)
+        )
+        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+    }
+
+    private fun setup3PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
+        val player1 = allPlayers.find { it.playerIndex == 0 }!!
+        val player2 = allPlayers.find { it.playerIndex == 1 }!!
+        val player3 = allPlayers.find { it.playerIndex == 2 }!!
+        val playersForLayout = listOf(player1, player2, player3)
+
+        val column = view.findViewById<LinearLayout>(R.id.damage_column)
+        val topView = column.getChildAt(0)
+        val bottomRow = column.getChildAt(1) as LinearLayout
+        val bottomLeftView = bottomRow.getChildAt(0)
+        val bottomRightView = bottomRow.getChildAt(1)
+
+        val itemViews = listOfNotNull(
+            topView, bottomLeftView, bottomRightView
+        )
+        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+    }
+
+    private fun setup4PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
+        val player1 = allPlayers.find { it.playerIndex == 0 }!!
+        val player2 = allPlayers.find { it.playerIndex == 1 }!!
+        val player3 = allPlayers.find { it.playerIndex == 2 }!!
+        val player4 = allPlayers.find { it.playerIndex == 3 }!!
+
+        val playersForLayout = listOf(player1, player3, player2, player4)
+
+        val leftColumn = view.findViewById<LinearLayout>(R.id.left_column)
+        val rightColumn = view.findViewById<LinearLayout>(R.id.right_column)
+
+        val itemViews = listOfNotNull(
+            leftColumn.getChildAt(0), leftColumn.getChildAt(1),
+            rightColumn.getChildAt(0), rightColumn.getChildAt(1)
+        )
+        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+    }
+
 
     private fun setup5PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
         val playersForLayout = allPlayers.sortedBy { it.playerIndex }
@@ -88,7 +149,31 @@ class CommanderDamageDialogFragment : DialogFragment() {
             leftColumn.getChildAt(0), leftColumn.getChildAt(1),
             rightColumn.getChildAt(0), rightColumn.getChildAt(1), rightColumn.getChildAt(2)
         )
+        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+    }
 
+    private fun setup6PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
+        val player1 = allPlayers.find { it.playerIndex == 0 }!!
+        val player2 = allPlayers.find { it.playerIndex == 1 }!!
+        val player3 = allPlayers.find { it.playerIndex == 2 }!!
+        val player4 = allPlayers.find { it.playerIndex == 3 }!!
+        val player5 = allPlayers.find { it.playerIndex == 4 }!!
+        val player6 = allPlayers.find { it.playerIndex == 5 }!!
+
+        val playersForLayout = listOf(player1, player3, player5, player2, player4, player6)
+
+        val leftColumn = view.findViewById<LinearLayout>(R.id.left_column)
+        val rightColumn = view.findViewById<LinearLayout>(R.id.right_column)
+
+        val itemViews = listOfNotNull(
+            leftColumn.getChildAt(0), leftColumn.getChildAt(1), leftColumn.getChildAt(2),
+            rightColumn.getChildAt(0), rightColumn.getChildAt(1), rightColumn.getChildAt(2)
+        )
+        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+    }
+
+
+    private fun bindPlayerLayout(itemViews: List<View>, playersForLayout: List<Player>, targetPlayerIndex: Int, angle: Int) {
         lifecycleScope.launch {
             gameViewModel.getCommanderDamageForPlayer(targetPlayerIndex).collectLatest { damages ->
                 val damageMap = damages.associate { it.sourcePlayerIndex to it.damage }
@@ -107,12 +192,12 @@ class CommanderDamageDialogFragment : DialogFragment() {
         }
     }
 
+
     private fun bindDamageView(itemView: View, player: Player, damage: Int, targetPlayerIndex: Int, angle: Int) {
         val opponentName: TextView = itemView.findViewById(R.id.tv_opponent_name)
         val damageAmount: TextView = itemView.findViewById(R.id.tv_commander_damage)
         val decrementButton: ImageView = itemView.findViewById(R.id.iv_decrement_button)
 
-        // ***FIX***: Apply rotation to the views
         opponentName.rotation = angle.toFloat()
         damageAmount.rotation = angle.toFloat()
 
@@ -144,49 +229,6 @@ class CommanderDamageDialogFragment : DialogFragment() {
             }
             decrementButton.setOnClickListener {
                 gameViewModel.decrementCommanderDamage(player.playerIndex, targetPlayerIndex)
-            }
-        }
-    }
-
-    private fun setupRecyclerView(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
-        val playerCount = allPlayers.size
-        val recyclerView: RecyclerView = view.findViewById(R.id.rv_commander_damage)
-
-        adapter = CommanderDamageAdapter(
-            targetPlayerIndex,
-            angle,
-            onDamageIncremented = { opponentIndex ->
-                gameViewModel.incrementCommanderDamage(opponentIndex, targetPlayerIndex)
-            },
-            onDamageDecremented = { opponentIndex ->
-                gameViewModel.decrementCommanderDamage(opponentIndex, targetPlayerIndex)
-            }
-        )
-
-        val spanCount = if (playerCount < 3) 1 else 2
-        val layoutManager = GridLayoutManager(context, spanCount)
-
-        if (playerCount == 3) {
-            layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-                override fun getSpanSize(position: Int): Int = if (position == 0) 2 else 1
-            }
-        }
-
-        recyclerView.adapter = adapter
-        recyclerView.layoutManager = layoutManager
-
-        lifecycleScope.launch {
-            gameViewModel.getCommanderDamageForPlayer(targetPlayerIndex).collectLatest { damages ->
-                val damageMap = damages.associate { it.sourcePlayerIndex to it.damage }
-                val initialItems = allPlayers.map { PlayerDamageItem(it, damageMap[it.playerIndex] ?: 0) }
-                val finalList = if (playerCount == 3) {
-                    val me = initialItems.find { it.player.playerIndex == targetPlayerIndex }!!
-                    val opponents = initialItems.filter { it.player.playerIndex != targetPlayerIndex }
-                    listOf(me, opponents[0], opponents[1])
-                } else {
-                    initialItems
-                }
-                adapter?.submitList(finalList)
             }
         }
     }
