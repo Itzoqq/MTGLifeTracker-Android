@@ -17,6 +17,25 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Opponent Name" />
 
+    <TextView
+        android:id="@+id/tv_commander_damage"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/counter_box_background"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:gravity="center"
+        android:textColor="@android:color/white"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tv_opponent_name"
+        app:layout_constraintStart_toStartOf="@+id/tv_opponent_name"
+        app:layout_constraintTop_toBottomOf="@+id/tv_opponent_name"
+        tools:text="0" />
+
     <ImageView
         android:id="@+id/iv_decrement_button"
         android:layout_width="36dp"
@@ -28,28 +47,7 @@
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/tv_commander_damage"
         app:layout_constraintEnd_toStartOf="@+id/tv_commander_damage"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/tv_commander_damage"
         app:tint="@android:color/white" />
-
-    <TextView
-        android:id="@+id/tv_commander_damage"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="4dp"
-        android:background="@drawable/counter_box_background"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground"
-        android:gravity="center"
-        android:textColor="@android:color/white"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/iv_decrement_button"
-        app:layout_constraintTop_toBottomOf="@+id/tv_opponent_name"
-        tools:text="0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
