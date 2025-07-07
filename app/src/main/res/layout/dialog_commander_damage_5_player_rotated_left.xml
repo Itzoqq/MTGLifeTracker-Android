@@ -36,52 +36,61 @@
             android:orientation="vertical"
             app:layout_constraintGuide_percent="0.5" />
 
-        <LinearLayout
-            android:id="@+id/left_column"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
-            android:gravity="end"
-            android:orientation="vertical"
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/center_guideline"
-            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintEnd_toStartOf="@id/center_guideline">
 
-            <include layout="@layout/item_commander_damage_rotated_left" />
-            <include
-                layout="@layout/item_commander_damage_rotated_left"
+            <LinearLayout
+                android:id="@+id/left_column"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
-        </LinearLayout>
+                android:layout_gravity="center_vertical|end"
+                android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/right_column"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:gravity="start"
-            android:orientation="vertical"
+                <include layout="@layout/item_commander_damage_rotated_left" />
+
+                <include
+                    layout="@layout/item_commander_damage_rotated_left"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-50dp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toEndOf="@+id/center_guideline"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintStart_toEndOf="@id/center_guideline"
+            app:layout_constraintEnd_toEndOf="parent">
 
-            <include layout="@layout/item_commander_damage_rotated_left" />
-            <include
-                layout="@layout/item_commander_damage_rotated_left"
+            <LinearLayout
+                android:id="@+id/right_column"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
-            <include
-                layout="@layout/item_commander_damage_rotated_left"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
-        </LinearLayout>
+                android:layout_gravity="center_vertical|start"
+                android:orientation="vertical">
+
+                <include layout="@layout/item_commander_damage_rotated_left" />
+
+                <include
+                    layout="@layout/item_commander_damage_rotated_left"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-50dp" />
+
+                <include
+                    layout="@layout/item_commander_damage_rotated_left"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-50dp" />
+            </LinearLayout>
+        </FrameLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
