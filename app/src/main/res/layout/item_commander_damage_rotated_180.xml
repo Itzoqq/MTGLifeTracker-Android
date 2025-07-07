@@ -7,6 +7,18 @@
     android:padding="8dp">
 
     <TextView
+        android:id="@+id/tv_opponent_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_commander_damage"
+        tools:text="Opponent Name" />
+
+    <TextView
         android:id="@+id/tv_commander_damage"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -18,36 +30,25 @@
         android:textColor="@android:color/white"
         android:textSize="17sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/iv_decrement_button"
+        app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="0" />
 
-    <TextView
-        android:id="@+id/tv_opponent_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textColor="@android:color/white"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/tv_commander_damage"
-        app:layout_constraintStart_toStartOf="@+id/tv_commander_damage"
-        app:layout_constraintTop_toBottomOf="@+id/tv_commander_damage"
-        tools:text="Opponent Name" />
-
     <ImageView
         android:id="@+id/iv_decrement_button"
-        android:layout_width="48dp"
+        android:layout_width="36dp"
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/player_counters"
-        android:padding="12dp"
+        android:padding="6dp"
         android:src="@drawable/ic_remove"
-        android:visibility="gone"
-        app:tint="@android:color/white"
-        tools:visibility="visible"
-        app:layout_constraintTop_toTopOf="@+id/tv_commander_damage"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/tv_commander_damage"
-        app:layout_constraintStart_toEndOf="@+id/tv_commander_damage" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_commander_damage"
+        app:layout_constraintTop_toTopOf="@+id/tv_commander_damage"
+        app:tint="@android:color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,7 +13,6 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.toColorInt
-import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -212,21 +211,24 @@ class CommanderDamageDialogFragment : DialogFragment() {
         if (player.playerIndex == targetPlayerIndex) {
             damageAmount.text = getString(R.string.me)
             itemView.alpha = 0.6f
+            // Disable all clicks for the "Me" item
             damageAmount.setOnClickListener(null)
             damageAmount.setOnLongClickListener(null)
-            decrementButton.visibility = View.GONE
+            decrementButton.setOnClickListener(null)
+            decrementButton.visibility = View.INVISIBLE // Hide button for "Me"
         } else {
             damageAmount.text = damage.toString()
             itemView.alpha = 1.0f
 
+            // Click the box to increment damage
             damageAmount.setOnClickListener {
                 gameViewModel.incrementCommanderDamage(player.playerIndex, targetPlayerIndex)
-                decrementButton.visibility = View.GONE
             }
-            damageAmount.setOnLongClickListener {
-                decrementButton.visibility = if (decrementButton.isVisible) View.GONE else View.VISIBLE
-                true
-            }
+
+            // Remove the long-click listener entirely
+            damageAmount.setOnLongClickListener(null)
+
+            // Click the button to decrement damage
             decrementButton.setOnClickListener {
                 gameViewModel.decrementCommanderDamage(player.playerIndex, targetPlayerIndex)
             }

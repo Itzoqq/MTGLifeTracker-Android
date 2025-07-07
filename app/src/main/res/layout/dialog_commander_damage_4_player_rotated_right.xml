@@ -16,20 +16,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/center_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
         <LinearLayout
             android:id="@+id/left_column"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
+            android:layout_marginEnd="4dp"
+            android:gravity="end"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/right_column"
-            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintEnd_toStartOf="@+id/center_guideline"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <include layout="@layout/item_commander_damage_rotated_right" />
-
             <include
                 layout="@layout/item_commander_damage_rotated_right"
                 android:layout_width="wrap_content"
@@ -41,16 +48,16 @@
             android:id="@+id/right_column"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:gravity="center_horizontal"
+            android:layout_marginStart="4dp"
+            android:gravity="start"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/left_column"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/center_guideline"
             app:layout_constraintTop_toTopOf="parent">
 
             <include layout="@layout/item_commander_damage_rotated_right" />
-
             <include
                 layout="@layout/item_commander_damage_rotated_right"
                 android:layout_width="wrap_content"
@@ -58,7 +65,6 @@
                 android:layout_marginTop="8dp" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
     <com.example.mtglifetracker.view.VerticalTextView
         android:id="@+id/tv_dialog_content_title"
