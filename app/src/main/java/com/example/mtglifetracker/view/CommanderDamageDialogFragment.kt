@@ -21,6 +21,7 @@ import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.viewmodel.GameViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.core.view.isVisible
 
 class CommanderDamageDialogFragment : DialogFragment() {
 
@@ -89,6 +90,29 @@ class CommanderDamageDialogFragment : DialogFragment() {
             4 -> setup4PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
             5 -> setup5PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
             6 -> setup6PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
+        }
+
+        // When the dialog's background is clicked, hide all decrement buttons.
+        view.setOnClickListener {
+            if (it is ViewGroup) {
+                hideAllDecrementButtons(it)
+            }
+        }
+    }
+
+    /**
+     * Recursively traverses a ViewGroup to find and hide all visible decrement buttons.
+     */
+    private fun hideAllDecrementButtons(viewGroup: ViewGroup) {
+        for (i in 0 until viewGroup.childCount) {
+            val child = viewGroup.getChildAt(i)
+            if (child.id == R.id.iv_decrement_button) {
+                if (child.isVisible) {
+                    child.visibility = View.INVISIBLE
+                }
+            } else if (child is ViewGroup) {
+                hideAllDecrementButtons(child)
+            }
         }
     }
 
@@ -233,11 +257,15 @@ class CommanderDamageDialogFragment : DialogFragment() {
 
             // Click the box to increment damage
             damageAmount.setOnClickListener {
+                decrementButton.visibility = View.INVISIBLE
                 gameViewModel.incrementCommanderDamage(player.playerIndex, targetPlayerIndex)
             }
 
-            // Remove the long-click listener entirely
-            damageAmount.setOnLongClickListener(null)
+            // Long-click the box to show the decrement button
+            damageAmount.setOnLongClickListener {
+                decrementButton.visibility = View.VISIBLE
+                true
+            }
 
             // Click the button to decrement damage
             decrementButton.setOnClickListener {

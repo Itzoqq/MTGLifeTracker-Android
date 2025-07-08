@@ -44,10 +44,11 @@
         android:contentDescription="@string/player_counters"
         android:padding="7dp"
         android:src="@drawable/ic_remove"
-        android:visibility="visible"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@+id/tv_commander_damage"
         app:layout_constraintEnd_toStartOf="@+id/tv_commander_damage"
         app:layout_constraintTop_toTopOf="@+id/tv_commander_damage"
-        app:tint="@android:color/white" />
+        app:tint="@android:color/white"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
