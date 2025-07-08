@@ -197,8 +197,19 @@ class CommanderDamageDialogFragment : DialogFragment() {
         val damageAmount: TextView = itemView.findViewById(R.id.tv_commander_damage)
         val decrementButton: ImageView = itemView.findViewById(R.id.iv_decrement_button)
 
-        opponentName.rotation = angle.toFloat()
+        // --- ALL FIXES ARE HERE ---
+
+        // 1. Rotate the number in the box for all angles
         damageAmount.rotation = angle.toFloat()
+
+        // 2. Rotate the standard TextView nickname for 0 and 180 degrees
+        if (opponentName !is VerticalTextView) {
+            opponentName.rotation = angle.toFloat()
+        }
+
+        // 3. Set the correct orientation for the VerticalTextView nickname in +/-90 degree layouts
+        (opponentName as? VerticalTextView)?.isTopDown = (angle == 90)
+
 
         opponentName.text = player.name
 
