@@ -44,7 +44,7 @@
                     layout="@layout/item_commander_damage_rotated_right"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-50dp" />
+                    android:layout_marginTop="-60dp" />
             </LinearLayout>
         </FrameLayout>
 
@@ -69,13 +69,13 @@
                     layout="@layout/item_commander_damage_rotated_right"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-50dp" />
+                    android:layout_marginTop="-60dp" />
 
                 <include
                     layout="@layout/item_commander_damage_rotated_right"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-50dp" />
+                    android:layout_marginTop="-60dp" />
             </LinearLayout>
         </FrameLayout>
 

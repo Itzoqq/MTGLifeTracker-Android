@@ -38,20 +38,20 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
             <include
                 layout="@layout/item_commander_damage_rotated_180"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="10dp" />
 
             <include
                 layout="@layout/item_commander_damage_rotated_180"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp" />
+                android:layout_marginStart="10dp" />
         </LinearLayout>
     </LinearLayout>
 

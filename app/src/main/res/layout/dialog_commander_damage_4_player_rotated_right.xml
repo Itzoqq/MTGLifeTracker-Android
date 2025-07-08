@@ -27,7 +27,7 @@
             android:id="@+id/left_column"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="5dp"
             android:gravity="end"
             android:orientation="vertical"
             app:layout_constraintEnd_toStartOf="@+id/center_guideline"
@@ -42,14 +42,14 @@
                 layout="@layout/item_commander_damage_rotated_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-50dp" />
+                android:layout_marginTop="-60dp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/right_column"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="5dp"
             android:gravity="start"
             android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
@@ -64,7 +64,7 @@
                 layout="@layout/item_commander_damage_rotated_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-50dp" />
+                android:layout_marginTop="-60dp" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
