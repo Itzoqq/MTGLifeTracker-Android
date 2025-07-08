@@ -36,7 +36,7 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_opponent_name"
         tools:text="0" />
 
-    <ImageView
+    <com.example.mtglifetracker.view.ContinuousDecrementView
         android:id="@+id/iv_decrement_button"
         android:layout_width="43dp"
         android:layout_height="58dp"

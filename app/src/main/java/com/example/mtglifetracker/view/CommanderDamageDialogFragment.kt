@@ -7,7 +7,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -92,7 +91,6 @@ class CommanderDamageDialogFragment : DialogFragment() {
             6 -> setup6PlayerLayout(view, allPlayers, targetPlayerIndex, angle)
         }
 
-        // When the dialog's background is clicked, hide all decrement buttons.
         view.setOnClickListener {
             if (it is ViewGroup) {
                 hideAllDecrementButtons(it)
@@ -100,9 +98,6 @@ class CommanderDamageDialogFragment : DialogFragment() {
         }
     }
 
-    /**
-     * Recursively traverses a ViewGroup to find and hide all visible decrement buttons.
-     */
     private fun hideAllDecrementButtons(viewGroup: ViewGroup) {
         for (i in 0 until viewGroup.childCount) {
             val child = viewGroup.getChildAt(i)
@@ -122,7 +117,7 @@ class CommanderDamageDialogFragment : DialogFragment() {
         val itemViews = listOfNotNull(
             column.getChildAt(0), column.getChildAt(1)
         )
-        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+        bindPlayerLayout(view, itemViews, playersForLayout, targetPlayerIndex, angle)
     }
 
     private fun setup3PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
@@ -140,7 +135,7 @@ class CommanderDamageDialogFragment : DialogFragment() {
         val itemViews = listOfNotNull(
             topView, bottomLeftView, bottomRightView
         )
-        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+        bindPlayerLayout(view, itemViews, playersForLayout, targetPlayerIndex, angle)
     }
 
     private fun setup4PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
@@ -158,7 +153,7 @@ class CommanderDamageDialogFragment : DialogFragment() {
             leftColumn.getChildAt(0), leftColumn.getChildAt(1),
             rightColumn.getChildAt(0), rightColumn.getChildAt(1)
         )
-        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+        bindPlayerLayout(view, itemViews, playersForLayout, targetPlayerIndex, angle)
     }
 
 
@@ -172,7 +167,7 @@ class CommanderDamageDialogFragment : DialogFragment() {
             leftColumn.getChildAt(0), leftColumn.getChildAt(1),
             rightColumn.getChildAt(0), rightColumn.getChildAt(1), rightColumn.getChildAt(2)
         )
-        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+        bindPlayerLayout(view, itemViews, playersForLayout, targetPlayerIndex, angle)
     }
 
     private fun setup6PlayerLayout(view: View, allPlayers: List<Player>, targetPlayerIndex: Int, angle: Int) {
@@ -192,11 +187,11 @@ class CommanderDamageDialogFragment : DialogFragment() {
             leftColumn.getChildAt(0), leftColumn.getChildAt(1), leftColumn.getChildAt(2),
             rightColumn.getChildAt(0), rightColumn.getChildAt(1), rightColumn.getChildAt(2)
         )
-        bindPlayerLayout(itemViews, playersForLayout, targetPlayerIndex, angle)
+        bindPlayerLayout(view, itemViews, playersForLayout, targetPlayerIndex, angle)
     }
 
 
-    private fun bindPlayerLayout(itemViews: List<View>, playersForLayout: List<Player>, targetPlayerIndex: Int, angle: Int) {
+    private fun bindPlayerLayout(rootView: View, itemViews: List<View>, playersForLayout: List<Player>, targetPlayerIndex: Int, angle: Int) {
         lifecycleScope.launch {
             gameViewModel.getCommanderDamageForPlayer(targetPlayerIndex).collectLatest { damages ->
                 val damageMap = damages.associate { it.sourcePlayerIndex to it.damage }
@@ -206,7 +201,7 @@ class CommanderDamageDialogFragment : DialogFragment() {
                     if (player != null) {
                         itemView.visibility = View.VISIBLE
                         val damage = damageMap[player.playerIndex] ?: 0
-                        bindDamageView(itemView, player, damage, targetPlayerIndex, angle)
+                        bindDamageView(rootView, itemView, player, damage, targetPlayerIndex, angle)
                     } else {
                         itemView.visibility = View.INVISIBLE
                     }
@@ -216,22 +211,17 @@ class CommanderDamageDialogFragment : DialogFragment() {
     }
 
 
-    private fun bindDamageView(itemView: View, player: Player, damage: Int, targetPlayerIndex: Int, angle: Int) {
+    private fun bindDamageView(rootView: View, itemView: View, player: Player, damage: Int, targetPlayerIndex: Int, angle: Int) {
         val opponentName: TextView = itemView.findViewById(R.id.tv_opponent_name)
         val damageAmount: TextView = itemView.findViewById(R.id.tv_commander_damage)
-        val decrementButton: ImageView = itemView.findViewById(R.id.iv_decrement_button)
+        val decrementButton: ContinuousDecrementView = itemView.findViewById(R.id.iv_decrement_button)
 
-        // --- ALL FIXES ARE HERE ---
-
-        // 1. Rotate the number in the box for all angles
         damageAmount.rotation = angle.toFloat()
 
-        // 2. Rotate the standard TextView nickname for 0 and 180 degrees
         if (opponentName !is VerticalTextView) {
             opponentName.rotation = angle.toFloat()
         }
 
-        // 3. Set the correct orientation for the VerticalTextView nickname in +/-90 degree layouts
         (opponentName as? VerticalTextView)?.isTopDown = (angle == 90)
 
 
@@ -246,29 +236,30 @@ class CommanderDamageDialogFragment : DialogFragment() {
         if (player.playerIndex == targetPlayerIndex) {
             damageAmount.text = getString(R.string.me)
             itemView.alpha = 0.6f
-            // Disable all clicks for the "Me" item
             damageAmount.setOnClickListener(null)
             damageAmount.setOnLongClickListener(null)
-            decrementButton.setOnClickListener(null)
-            decrementButton.visibility = View.INVISIBLE // Hide button for "Me"
+            decrementButton.onDecrementListener = null
+            decrementButton.visibility = View.INVISIBLE
         } else {
             damageAmount.text = damage.toString()
             itemView.alpha = 1.0f
 
-            // Click the box to increment damage
+            // A standard tap now increments damage and ensures the button is hidden
             damageAmount.setOnClickListener {
                 decrementButton.visibility = View.INVISIBLE
                 gameViewModel.incrementCommanderDamage(player.playerIndex, targetPlayerIndex)
             }
 
-            // Long-click the box to show the decrement button
+            // A long press now hides other buttons before showing the current one
             damageAmount.setOnLongClickListener {
+                if (rootView is ViewGroup) {
+                    hideAllDecrementButtons(rootView)
+                }
                 decrementButton.visibility = View.VISIBLE
                 true
             }
 
-            // Click the button to decrement damage
-            decrementButton.setOnClickListener {
+            decrementButton.onDecrementListener = {
                 gameViewModel.decrementCommanderDamage(player.playerIndex, targetPlayerIndex)
             }
         }
