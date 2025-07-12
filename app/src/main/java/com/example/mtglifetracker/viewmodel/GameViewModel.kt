@@ -12,12 +12,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * The GameState now only contains the essential data. The delta display
- * state is now fully managed by the LifeCounterView itself.
+ * The GameState now contains the starting life total.
  */
 data class GameState(
     val playerCount: Int = 2,
-    val players: List<Player> = emptyList()
+    val players: List<Player> = emptyList(),
+    val startingLife: Int = 40
 )
 
 @HiltViewModel

@@ -63,19 +63,9 @@ class MainActivity : AppCompatActivity() {
             isFirstLoad = true
         }
 
-        val onScreenLives = playerLayoutManager.playerSegments.mapNotNull { segment ->
-            if (segment.parent != null) segment.lifeCounter.life else null
-        }
-        val newLives = gameState.players.map { it.life }
-        var changedPlayerCount = 0
-        if (onScreenLives.size == newLives.size) {
-            for (i in newLives.indices) {
-                if (newLives[i] != onScreenLives[i]) {
-                    changedPlayerCount++
-                }
-            }
-        }
-        val isMassUpdate = changedPlayerCount > 1
+        // A "mass update" happens if all players' life totals are equal to the starting life,
+        // which is what occurs during a game reset.
+        val isMassUpdate = gameState.players.isNotEmpty() && gameState.players.all { it.life == gameState.startingLife }
 
         playerLayoutManager.playerSegments.forEachIndexed { index, segment ->
             if (index < gameState.players.size) {
@@ -83,7 +73,6 @@ class MainActivity : AppCompatActivity() {
 
                 segment.updateUI(player, isFirstLoad || isMassUpdate)
 
-                // Reverted to passing the loop index, which is correct.
                 setPlayerSegmentListeners(segment, index)
             }
         }

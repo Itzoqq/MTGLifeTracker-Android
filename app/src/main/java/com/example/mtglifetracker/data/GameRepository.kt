@@ -30,13 +30,13 @@ class GameRepository constructor(
                 .filterNotNull()
                 .flatMapLatest { settings ->
                     playerDao.getPlayers(settings.playerCount)
+                        .map { players -> Pair(settings, players) }
                 }
-                .collect { players ->
-                    _gameState.update { currentState ->
-                        val settings = settingsDao.getSettings().first()
-                        val newPlayerCount = settings?.playerCount ?: currentState.playerCount
-                        currentState.copy(
-                            playerCount = newPlayerCount,
+                .collect { (settings, players) ->
+                    _gameState.update {
+                        it.copy(
+                            playerCount = settings.playerCount,
+                            startingLife = settings.startingLife,
                             players = players
                         )
                     }
@@ -93,21 +93,17 @@ class GameRepository constructor(
 
     suspend fun decrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
         val gameSize = _gameState.value.playerCount
-
-        // Get the current damage value first
         val currentDamage = commanderDamageDao.getDamageValue(gameSize, sourcePlayerIndex, targetPlayerIndex)
 
-        // Only proceed if damage is greater than 0
         if (currentDamage != null && currentDamage > 0) {
-            // Decrement in DB
             commanderDamageDao.decrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
-            // Check preference and update life
             val preferences = preferencesDao.getPreferences().first()
             if (preferences?.deduceCommanderDamage == true) {
                 updatePlayerState(targetPlayerIndex, 1)
             }
         }
     }
+
 
     private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
         val currentState = _gameState.value
