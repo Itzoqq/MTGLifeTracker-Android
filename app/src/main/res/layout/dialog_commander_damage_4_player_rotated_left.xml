@@ -55,7 +55,7 @@
                 layout="@layout/item_commander_damage_rotated_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-60dp" />
+                android:layout_marginTop="-50dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -77,7 +77,7 @@
                 layout="@layout/item_commander_damage_rotated_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-60dp" />
+                android:layout_marginTop="-50dp" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
