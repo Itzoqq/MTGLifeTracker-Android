@@ -24,7 +24,7 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "mtg_database"
-        ).addMigrations(AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_8_9) // Add new migration
+        ).addMigrations(AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10) // Add new migration
             .fallbackToDestructiveMigration(false)
             .build()
     }
@@ -55,6 +55,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun providePreferencesDao(appDatabase: AppDatabase): PreferencesDao {
+        return appDatabase.preferencesDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
@@ -65,15 +71,22 @@ object AppModule {
         playerDao: PlayerDao,
         settingsDao: GameSettingsDao,
         profileDao: ProfileDao,
-        commanderDamageDao: CommanderDamageDao, // Add this
+        commanderDamageDao: CommanderDamageDao,
+        preferencesDao: PreferencesDao,
         externalScope: CoroutineScope
     ): GameRepository {
-        return GameRepository(playerDao, settingsDao, profileDao, commanderDamageDao, externalScope)
+        return GameRepository(playerDao, settingsDao, profileDao, commanderDamageDao, preferencesDao, externalScope)
     }
 
     @Provides
     @Singleton
     fun provideProfileRepository(profileDao: ProfileDao): ProfileRepository {
         return ProfileRepository(profileDao)
+    }
+
+    @Provides
+    @Singleton
+    fun providePreferencesRepository(preferencesDao: PreferencesDao): PreferencesRepository {
+        return PreferencesRepository(preferencesDao)
     }
 }

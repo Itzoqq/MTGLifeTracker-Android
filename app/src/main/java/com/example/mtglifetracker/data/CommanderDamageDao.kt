@@ -16,6 +16,11 @@ interface CommanderDamageDao {
     @Query("SELECT * FROM commander_damage WHERE gameSize = :gameSize AND targetPlayerIndex = :targetPlayerIndex")
     fun getCommanderDamageForPlayer(gameSize: Int, targetPlayerIndex: Int): Flow<List<CommanderDamage>>
 
+    // START: ADD THIS NEW FUNCTION
+    @Query("SELECT damage FROM commander_damage WHERE gameSize = :gameSize AND sourcePlayerIndex = :sourcePlayerIndex AND targetPlayerIndex = :targetPlayerIndex")
+    suspend fun getDamageValue(gameSize: Int, sourcePlayerIndex: Int, targetPlayerIndex: Int): Int?
+    // END: ADD THIS NEW FUNCTION
+
     @Query("UPDATE commander_damage SET damage = damage + 1 WHERE gameSize = :gameSize AND sourcePlayerIndex = :sourcePlayerIndex AND targetPlayerIndex = :targetPlayerIndex")
     suspend fun incrementCommanderDamage(gameSize: Int, sourcePlayerIndex: Int, targetPlayerIndex: Int)
 
@@ -28,7 +33,6 @@ interface CommanderDamageDao {
     @Query("DELETE FROM commander_damage WHERE gameSize = :gameSize")
     suspend fun deleteCommanderDamageForGame(gameSize: Int)
 
-    // *** THE FIX IS HERE ***
     @Query("DELETE FROM commander_damage")
     suspend fun deleteAll()
 }

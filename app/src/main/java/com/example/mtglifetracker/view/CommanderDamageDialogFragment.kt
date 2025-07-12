@@ -255,7 +255,10 @@ class CommanderDamageDialogFragment : DialogFragment() {
                 if (rootView is ViewGroup) {
                     hideAllDecrementButtons(rootView)
                 }
-                decrementButton.visibility = View.VISIBLE
+                // Only show the decrement button if there is damage to remove.
+                if (damage > 0) {
+                    decrementButton.visibility = View.VISIBLE
+                }
                 true
             }
 

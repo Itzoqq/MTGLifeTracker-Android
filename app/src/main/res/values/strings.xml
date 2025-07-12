@@ -13,7 +13,6 @@
     <string name="choose_a_color_optional">Choose a color (optional)</string>
     <string name="dialog_title">Dialog Title</string>
     <string name="back">Back</string>
-
     <string name="title_player_count">Number of Players</string>
     <string name="title_starting_life">Starting Life</string>
     <string name="title_confirm_reset">Confirm Reset</string>
@@ -25,10 +24,11 @@
     <string name="title_delete_profile">Delete Profile</string>
     <string name="player_counters">Player Counters</string>
     <string name="player_counters_title">%1$s Counters</string>
-
     <string name="commander_damage">Commander Damage</string>
     <string name="commander_damage_to_player">Commander Damage to %1$s</string>
     <string name="player_commander_damage_title">%1$s Commander Dmg</string>
     <string name="poison_counter_icon_description">Poison counter icon</string>
     <string name="me">Me</string>
+    <string name="title_preferences">Preferences</string>
+    <string name="auto_deduce_commander_damage">Automatically deduce commander damage</string>
 </resources>

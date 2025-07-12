@@ -4,18 +4,16 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.mtglifetracker.model.CommanderDamage
-import com.example.mtglifetracker.model.GameSettings
-import com.example.mtglifetracker.model.Player
-import com.example.mtglifetracker.model.Profile
+import com.example.mtglifetracker.model.*
 
-@Database(entities = [Player::class, GameSettings::class, Profile::class, CommanderDamage::class], version = 9, exportSchema = true)
+@Database(entities = [Player::class, GameSettings::class, Profile::class, CommanderDamage::class, Preferences::class], version = 10, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun playerDao(): PlayerDao
     abstract fun gameSettingsDao(): GameSettingsDao
     abstract fun profileDao(): ProfileDao
     abstract fun commanderDamageDao(): CommanderDamageDao
+    abstract fun preferencesDao(): PreferencesDao
 
     companion object {
         val MIGRATION_5_6 = object : Migration(5, 6) {
@@ -42,6 +40,13 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `commander_damage` (`gameSize` INTEGER NOT NULL, `sourcePlayerIndex` INTEGER NOT NULL, `targetPlayerIndex` INTEGER NOT NULL, `damage` INTEGER NOT NULL, PRIMARY KEY(`gameSize`, `sourcePlayerIndex`, `targetPlayerIndex`))")
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `preferences` (`id` INTEGER NOT NULL, `deduceCommanderDamage` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                db.execSQL("INSERT INTO preferences (id, deduceCommanderDamage) VALUES (1, 1)")
             }
         }
     }

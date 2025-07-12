@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
+@Suppress("unused")
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
@@ -24,7 +25,7 @@ object TestAppModule {
     @Singleton
     fun provideInMemoryDb(@ApplicationContext context: Context): AppDatabase {
         return Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-            .addMigrations(AppDatabase.MIGRATION_5_6) // Add this line
+            .addMigrations(AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_9_10)
             .allowMainThreadQueries()
             .build()
     }
@@ -43,6 +44,10 @@ object TestAppModule {
 
     @Provides
     @Singleton
+    fun providePreferencesDao(db: AppDatabase): PreferencesDao = db.preferencesDao()
+
+    @Provides
+    @Singleton
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
@@ -52,11 +57,12 @@ object TestAppModule {
     fun provideGameRepository(
         playerDao: PlayerDao,
         settingsDao: GameSettingsDao,
-        profileDao: ProfileDao, // Add ProfileDao here
+        profileDao: ProfileDao,
+        commanderDamageDao: CommanderDamageDao,
+        preferencesDao: PreferencesDao,
         scope: CoroutineScope
     ): GameRepository {
-        // Pass it to the constructor
-        return GameRepository(playerDao, settingsDao, profileDao, scope)
+        return GameRepository(playerDao, settingsDao, profileDao, commanderDamageDao, preferencesDao, scope)
     }
 
     @Provides

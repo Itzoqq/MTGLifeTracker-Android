@@ -1,9 +1,6 @@
 package com.example.mtglifetracker.data
 
-import com.example.mtglifetracker.model.CommanderDamage
-import com.example.mtglifetracker.model.GameSettings
-import com.example.mtglifetracker.model.Player
-import com.example.mtglifetracker.model.Profile
+import com.example.mtglifetracker.model.*
 import com.example.mtglifetracker.viewmodel.GameState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,6 +16,7 @@ class GameRepository constructor(
     private val settingsDao: GameSettingsDao,
     private val profileDao: ProfileDao,
     private val commanderDamageDao: CommanderDamageDao,
+    private val preferencesDao: PreferencesDao,
     externalScope: CoroutineScope
 ) {
 
@@ -87,11 +85,28 @@ class GameRepository constructor(
     suspend fun incrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
         val gameSize = _gameState.value.playerCount
         commanderDamageDao.incrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
+        val preferences = preferencesDao.getPreferences().first()
+        if (preferences?.deduceCommanderDamage == true) {
+            updatePlayerState(targetPlayerIndex, -1)
+        }
     }
 
     suspend fun decrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
         val gameSize = _gameState.value.playerCount
-        commanderDamageDao.decrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
+
+        // Get the current damage value first
+        val currentDamage = commanderDamageDao.getDamageValue(gameSize, sourcePlayerIndex, targetPlayerIndex)
+
+        // Only proceed if damage is greater than 0
+        if (currentDamage != null && currentDamage > 0) {
+            // Decrement in DB
+            commanderDamageDao.decrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
+            // Check preference and update life
+            val preferences = preferencesDao.getPreferences().first()
+            if (preferences?.deduceCommanderDamage == true) {
+                updatePlayerState(targetPlayerIndex, 1)
+            }
+        }
     }
 
     private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {

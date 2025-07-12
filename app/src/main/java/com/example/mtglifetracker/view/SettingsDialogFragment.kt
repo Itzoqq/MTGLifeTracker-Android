@@ -28,7 +28,7 @@ class SettingsDialogFragment : DialogFragment() {
         val view = inflater.inflate(R.layout.dialog_settings_menu, FrameLayout(requireContext()), false)
         val recyclerView: RecyclerView = view.findViewById(R.id.rv_settings_options)
 
-        val settingsOptions = arrayOf("Number of Players", "Starting Life", "Manage Profiles", "Reset Game")
+        val settingsOptions = arrayOf("Number of Players", "Starting Life", "Manage Profiles", "Reset Game", "Preferences")
 
         // The adapter's click listener launches the sub-dialogs WITHOUT dismissing this one.
         val adapter = SettingsAdapter(settingsOptions) { position ->
@@ -37,6 +37,7 @@ class SettingsDialogFragment : DialogFragment() {
                 1 -> StartingLifeDialogFragment().show(parentFragmentManager, StartingLifeDialogFragment.TAG)
                 2 -> ManageProfilesDialogFragment().show(parentFragmentManager, ManageProfilesDialogFragment.TAG)
                 3 -> ResetConfirmationDialogFragment().show(parentFragmentManager, ResetConfirmationDialogFragment.TAG)
+                4 -> PreferencesDialogFragment().show(parentFragmentManager, PreferencesDialogFragment.TAG)
             }
         }
 
