@@ -51,10 +51,10 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
 
             textView.visibility = VISIBLE
             textView.rotation = angle.toFloat()
-            textView.background = null // Remove direct background
-            textView.alpha = 1.0f // Reset alpha to default
+            textView.background = null
+            textView.alpha = 1.0f
 
-            // Determine contrast color based on the background
+
             val contrastColor = if (sourcePlayer.color != null && !isColorDark(sourcePlayer.color.toColorInt())) {
                 Color.BLACK
             } else {
@@ -62,19 +62,19 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             }
             textView.setTextColor(contrastColor)
 
-            // Set text content and apply special "Me" styling
+
             if (sourcePlayer.playerIndex == currentPlayer.playerIndex) {
                 textView.text = context.getString(R.string.me)
-                textView.alpha = 0.6f // Apply semi-transparency
+                textView.alpha = 0.6f
             } else {
                 textView.text = (damageMap[sourcePlayer.playerIndex]?.damage ?: 0).toString()
             }
         }
-        invalidate() // Trigger a redraw
+        invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
-        // Draw custom backgrounds first
+
         textViews.forEachIndexed { index, textView ->
             playerGrid.getOrNull(index)?.color?.let { colorString ->
                 try {
@@ -87,11 +87,11 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
                         backgroundPaint
                     )
                 } catch (_: Exception) {
-                    // Color parsing failed, do not draw background
+
                 }
             }
         }
-        // Draw text and dividers on top
+
         super.onDraw(canvas)
     }
 
@@ -166,6 +166,7 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         }
     }
 
+
     private fun setup2PlayerConstraints(cs: ConstraintSet) {
         val hDivider = addDivider()
         centerDivider(cs, hDivider.id, LayoutParams.HORIZONTAL)
@@ -186,23 +187,42 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
     private fun setup3PlayerConstraints(cs: ConstraintSet) {
         val hDivider = addDivider()
         val vDivider = addDivider()
+
+
         centerDivider(cs, hDivider.id, LayoutParams.HORIZONTAL)
-        centerDivider(cs, vDivider.id, LayoutParams.VERTICAL)
+
+
+        cs.constrainWidth(vDivider.id, 1)
+        cs.constrainHeight(vDivider.id, 0)
+        cs.connect(vDivider.id, ConstraintSet.TOP, hDivider.id, ConstraintSet.BOTTOM)
+        cs.connect(vDivider.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
+        cs.connect(vDivider.id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
+        cs.connect(vDivider.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
+
+
         val p1 = textViews[0]
         val p2 = textViews[1]
         val p3 = textViews[2]
+
+
         cs.connect(p1.id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         cs.connect(p1.id, ConstraintSet.BOTTOM, hDivider.id, ConstraintSet.TOP)
         cs.connect(p1.id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         cs.connect(p1.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
+
+
         cs.connect(p2.id, ConstraintSet.TOP, hDivider.id, ConstraintSet.BOTTOM)
         cs.connect(p2.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         cs.connect(p2.id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         cs.connect(p2.id, ConstraintSet.END, vDivider.id, ConstraintSet.START)
+
+
         cs.connect(p3.id, ConstraintSet.TOP, hDivider.id, ConstraintSet.BOTTOM)
         cs.connect(p3.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         cs.connect(p3.id, ConstraintSet.START, vDivider.id, ConstraintSet.END)
         cs.connect(p3.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
+
+
         cs.constrainPercentWidth(textViews[0].id, 1.0f)
         cs.constrainPercentHeight(textViews[0].id, 0.5f)
         cs.constrainPercentWidth(textViews[1].id, 0.5f)
