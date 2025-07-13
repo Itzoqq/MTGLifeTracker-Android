@@ -50,22 +50,6 @@
         app:layout_constraintVertical_bias="0.15"
         tools:text="Player 1" />
 
-    <ImageView
-        android:id="@+id/unload_profile_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginStart="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/delete_profile"
-        android:padding="4dp"
-        android:src="@android:drawable/ic_menu_close_clear_cancel"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="@id/tv_player_name"
-        app:layout_constraintStart_toEndOf="@id/tv_player_name"
-        app:layout_constraintTop_toTopOf="@id/tv_player_name"
-        app:tint="@android:color/white"
-        tools:visibility="visible" />
-
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/bottom_guideline"
         android:layout_width="wrap_content"

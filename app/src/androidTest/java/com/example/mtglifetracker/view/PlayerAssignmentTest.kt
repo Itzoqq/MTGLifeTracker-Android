@@ -114,7 +114,6 @@ class PlayerAssignmentTest : BaseUITest() {
 
         val rotatedSegmentMatcher = withTagValue(equalTo("player_segment_0"))
         val playerNameMatcher = allOf(withId(R.id.tv_player_name), isDescendantOfA(rotatedSegmentMatcher))
-        val unloadButtonMatcher = allOf(withId(R.id.unload_profile_button), isDescendantOfA(rotatedSegmentMatcher))
 
         // --- ACT & ASSERT (ASSIGN) ---
         onView(playerNameMatcher).perform(directlyPerformClick())
@@ -129,17 +128,15 @@ class PlayerAssignmentTest : BaseUITest() {
 
         onView(playerNameMatcher).check(matches(withText(profileName)))
         onView(rotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.delta_negative)))
-        onView(unloadButtonMatcher).check(matches(isDisplayed()))
 
         // --- ACT & ASSERT (UNLOAD) ---
-        onView(unloadButtonMatcher).perform(directlyPerformClick())
+        onView(playerNameMatcher).perform(longClick())
 
         // Use the new waitForView function to wait for the UI to update
         waitForView(allOf(playerNameMatcher, withText("Player 1")))
 
         onView(playerNameMatcher).check(matches(withText("Player 1")))
         onView(rotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
-        onView(unloadButtonMatcher).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -150,7 +147,6 @@ class PlayerAssignmentTest : BaseUITest() {
 
         val nonRotatedSegmentMatcher = withTagValue(equalTo("player_segment_1"))
         val playerNameMatcher = allOf(withId(R.id.tv_player_name), isDescendantOfA(nonRotatedSegmentMatcher))
-        val unloadButtonMatcher = allOf(withId(R.id.unload_profile_button), isDescendantOfA(nonRotatedSegmentMatcher))
 
         // --- ACT & ASSERT (ASSIGN) ---
         onView(playerNameMatcher).perform(directlyPerformClick())
@@ -165,17 +161,15 @@ class PlayerAssignmentTest : BaseUITest() {
 
         onView(playerNameMatcher).check(matches(withText(profileName)))
         onView(nonRotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.delta_positive)))
-        onView(unloadButtonMatcher).check(matches(isDisplayed()))
 
         // --- ACT & ASSERT (UNLOAD) ---
-        onView(unloadButtonMatcher).perform(directlyPerformClick())
+        onView(playerNameMatcher).perform(longClick())
 
         // Use the new waitForView function to wait for the UI to update
         waitForView(allOf(playerNameMatcher, withText("Player 2")))
 
         onView(playerNameMatcher).check(matches(withText("Player 2")))
         onView(nonRotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
-        onView(unloadButtonMatcher).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -297,9 +291,6 @@ class PlayerAssignmentTest : BaseUITest() {
         // 7. Verify the player segment has fully reverted to its default state.
         onView(segment0PlayerName).check(matches(withText("Player 1")))
         onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
-
-        val unloadButtonMatcher = allOf(withId(R.id.unload_profile_button), isDescendantOfA(segment0Matcher))
-        onView(unloadButtonMatcher).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -397,9 +388,6 @@ class PlayerAssignmentTest : BaseUITest() {
         // 5. Verify the entire player segment has been reverted to its default state.
         onView(segment0PlayerName).check(matches(withText("Player 1")))
         onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
-
-        val unloadButtonMatcher = allOf(withId(R.id.unload_profile_button), isDescendantOfA(segment0Matcher))
-        onView(unloadButtonMatcher).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -438,9 +426,6 @@ class PlayerAssignmentTest : BaseUITest() {
         // 5. Verify the player segment has fully reverted to its default state.
         onView(segment0PlayerName).check(matches(withText("Player 1")))
         onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
-
-        val unloadButtonMatcher = allOf(withId(R.id.unload_profile_button), isDescendantOfA(segment0Matcher))
-        onView(unloadButtonMatcher).check(matches(not(isDisplayed())))
     }
 
     @Test
