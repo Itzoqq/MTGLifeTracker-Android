@@ -174,17 +174,26 @@ open class PlayerSegmentView @JvmOverloads constructor(
             if (player.color != null) {
                 val backgroundColor = player.color.toColorInt()
                 this.setBackgroundColor(backgroundColor)
+
+                // Determine contrast color once and apply to all relevant views
                 val isDark = isColorDark(backgroundColor)
-                playerName.setTextColor(if (isDark) Color.WHITE else Color.BLACK)
-                unloadProfileButton.setColorFilter(if (isDark) Color.WHITE else Color.BLACK)
+                val contrastColor = if (isDark) Color.WHITE else Color.BLACK
+
+                playerName.setTextColor(contrastColor)
+                lifeCounter.setTextColor(contrastColor) // <-- CHANGE APPLIED HERE
+                unloadProfileButton.setColorFilter(contrastColor)
+
             } else {
+                // Reset to default colors when no profile is loaded
                 this.setBackgroundColor(ContextCompat.getColor(context, R.color.default_segment_background))
                 playerName.setTextColor(Color.WHITE)
+                lifeCounter.setTextColor(Color.WHITE) // <-- CHANGE APPLIED HERE
                 unloadProfileButton.setColorFilter(Color.WHITE)
             }
         } catch (_: Exception) {
             this.setBackgroundColor(ContextCompat.getColor(context, R.color.default_segment_background))
             playerName.setTextColor(Color.WHITE)
+            lifeCounter.setTextColor(Color.WHITE)
             unloadProfileButton.setColorFilter(Color.WHITE)
         }
 

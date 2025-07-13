@@ -11,11 +11,11 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.toColorInt
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.model.CommanderDamage
 import com.example.mtglifetracker.model.Player
+import com.example.mtglifetracker.util.isColorDark
 
 class CommanderDamageSummaryView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -49,28 +49,37 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             textView.visibility = VISIBLE
             textView.rotation = angle.toFloat()
 
-            // Set cell background color
-            val background = textView.background as? GradientDrawable
+            // 1. Create a new square drawable programmatically.
+            val cellDrawable = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+            }
+
+            // 2. Apply profile color and set text contrast color.
             if (sourcePlayer.color != null) {
                 try {
                     val color = sourcePlayer.color.toColorInt()
-                    // Darken the color slightly to provide better contrast for the white text
-                    val darkerCellColor = ColorUtils.blendARGB(color, Color.BLACK, 0.3f)
-                    background?.setColor(darkerCellColor)
+                    cellDrawable.setColor(color) // Use the full profile color
+
+                    val textColor = if (isColorDark(color)) Color.WHITE else Color.BLACK
+                    textView.setTextColor(textColor)
                 } catch (_: Exception) {
-                    background?.setColor(Color.TRANSPARENT)
+                    cellDrawable.setColor(Color.TRANSPARENT)
+                    textView.setTextColor(Color.WHITE)
                 }
             } else {
-                background?.setColor(Color.TRANSPARENT)
+                cellDrawable.setColor(Color.TRANSPARENT)
+                textView.setTextColor(Color.WHITE)
             }
 
-            // Set text and text color
+            // 3. Set the programmatically created drawable as the background.
+            textView.background = cellDrawable
+
+            // Set text content
             if (sourcePlayer.playerIndex == currentPlayer.playerIndex) {
                 textView.text = context.getString(R.string.me)
                 textView.setTextColor(ContextCompat.getColor(context, R.color.purple_200))
             } else {
                 textView.text = (damageMap[sourcePlayer.playerIndex]?.damage ?: 0).toString()
-                textView.setTextColor(ContextCompat.getColor(context, R.color.white))
             }
         }
     }
@@ -119,8 +128,7 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             gravity = Gravity.CENTER
             textSize = 11f
             typeface = Typeface.DEFAULT_BOLD
-            // Set the new drawable as the background for the cell
-            setBackgroundResource(R.drawable.cell_background)
+            // We no longer set a background resource here.
             addView(this)
         }
     }
@@ -148,6 +156,8 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         }
     }
 
+    // --- SIZING HAS BEEN MADE MORE AGGRESSIVE TO FILL GAPS ---
+
     private fun setup2PlayerConstraints(cs: ConstraintSet) {
         val hDivider = addDivider()
         centerDivider(cs, hDivider.id, LayoutParams.HORIZONTAL)
@@ -160,8 +170,8 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         textViews.forEach {
             cs.connect(it.id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
             cs.connect(it.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
-            cs.constrainPercentWidth(it.id, 0.8f)
-            cs.constrainPercentHeight(it.id, 0.4f)
+            cs.constrainPercentWidth(it.id, 1.0f)
+            cs.constrainPercentHeight(it.id, 0.5f)
         }
     }
 
@@ -185,7 +195,12 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         cs.connect(p3.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         cs.connect(p3.id, ConstraintSet.START, vDivider.id, ConstraintSet.END)
         cs.connect(p3.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
-        textViews.forEach { cs.constrainPercentWidth(it.id, 0.4f); cs.constrainPercentHeight(it.id, 0.4f) }
+        cs.constrainPercentWidth(textViews[0].id, 1.0f)
+        cs.constrainPercentHeight(textViews[0].id, 0.5f)
+        cs.constrainPercentWidth(textViews[1].id, 0.5f)
+        cs.constrainPercentHeight(textViews[1].id, 0.5f)
+        cs.constrainPercentWidth(textViews[2].id, 0.5f)
+        cs.constrainPercentHeight(textViews[2].id, 0.5f)
     }
 
     private fun setup4PlayerConstraints(cs: ConstraintSet) {
@@ -213,7 +228,7 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         cs.connect(p4.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         cs.connect(p4.id, ConstraintSet.START, vDivider.id, ConstraintSet.END)
         cs.connect(p4.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
-        textViews.forEach { cs.constrainPercentHeight(it.id, 0.4f); cs.constrainPercentWidth(it.id, 0.4f) }
+        textViews.forEach { cs.constrainPercentHeight(it.id, 0.5f); cs.constrainPercentWidth(it.id, 0.5f) }
     }
 
     private fun setup5PlayerConstraints(cs: ConstraintSet) {
@@ -262,9 +277,9 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             cs.connect(it.id, ConstraintSet.START, vDivider.id, ConstraintSet.END)
             cs.connect(it.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
         }
-        textViews.forEach { cs.constrainPercentWidth(it.id, 0.4f) }
-        listOf(p1, p3).forEach { cs.constrainPercentHeight(it.id, 0.4f) }
-        listOf(p2, p4, p5).forEach { cs.constrainPercentHeight(it.id, 0.25f) }
+        textViews.forEach { cs.constrainPercentWidth(it.id, 0.5f) }
+        listOf(p1, p3).forEach { cs.constrainPercentHeight(it.id, 0.5f) }
+        listOf(p2, p4, p5).forEach { cs.constrainPercentHeight(it.id, 0.333f) }
     }
 
     private fun setup6PlayerConstraints(cs: ConstraintSet) {
@@ -272,8 +287,8 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         val hDivider1 = addDivider()
         val hDivider2 = addDivider()
         centerDivider(cs, vDivider.id, LayoutParams.VERTICAL)
-        centerDivider(cs, hDivider1.id, LayoutParams.HORIZONTAL); cs.setVerticalBias(hDivider1.id, 0.33f)
-        centerDivider(cs, hDivider2.id, LayoutParams.HORIZONTAL); cs.setVerticalBias(hDivider2.id, 0.66f)
+        centerDivider(cs, hDivider1.id, LayoutParams.HORIZONTAL); cs.setVerticalBias(hDivider1.id, 0.333f)
+        centerDivider(cs, hDivider2.id, LayoutParams.HORIZONTAL); cs.setVerticalBias(hDivider2.id, 0.666f)
 
         val topLeft = textViews[0]
         val topRight = textViews[1]
@@ -304,8 +319,8 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         cs.connect(bottomRight.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
 
         textViews.forEach {
-            cs.constrainPercentWidth(it.id, 0.4f)
-            cs.constrainPercentHeight(it.id, 0.25f)
+            cs.constrainPercentWidth(it.id, 0.5f)
+            cs.constrainPercentHeight(it.id, 0.333f)
         }
     }
 }
