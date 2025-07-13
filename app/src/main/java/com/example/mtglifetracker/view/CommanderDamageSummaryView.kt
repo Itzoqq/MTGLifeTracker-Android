@@ -52,17 +52,20 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             textView.visibility = VISIBLE
             textView.rotation = angle.toFloat()
             textView.background = null // Remove direct background
+            textView.alpha = 1.0f // Reset alpha to default
 
-            val textColor = if (sourcePlayer.color != null && isColorDark(sourcePlayer.color.toColorInt())) {
-                Color.WHITE
-            } else {
+            // Determine contrast color based on the background
+            val contrastColor = if (sourcePlayer.color != null && !isColorDark(sourcePlayer.color.toColorInt())) {
                 Color.BLACK
+            } else {
+                Color.WHITE
             }
-            textView.setTextColor(textColor)
+            textView.setTextColor(contrastColor)
 
+            // Set text content and apply special "Me" styling
             if (sourcePlayer.playerIndex == currentPlayer.playerIndex) {
                 textView.text = context.getString(R.string.me)
-                textView.setTextColor(ContextCompat.getColor(context, R.color.purple_200))
+                textView.alpha = 0.6f // Apply semi-transparency
             } else {
                 textView.text = (damageMap[sourcePlayer.playerIndex]?.damage ?: 0).toString()
             }
@@ -91,7 +94,6 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         // Draw text and dividers on top
         super.onDraw(canvas)
     }
-
 
     private fun getPlayerGrid(playerCount: Int, allPlayers: List<Player>): List<Player> {
         if (allPlayers.isEmpty()) return emptyList()
