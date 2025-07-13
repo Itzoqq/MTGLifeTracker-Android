@@ -16,6 +16,7 @@ import androidx.core.graphics.withSave
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mtglifetracker.R
+import com.example.mtglifetracker.model.CommanderDamage
 import com.example.mtglifetracker.model.Player
 import com.example.mtglifetracker.util.isColorDark
 import com.google.android.material.card.MaterialCardView
@@ -32,7 +33,7 @@ open class PlayerSegmentView @JvmOverloads constructor(
 
     // UI View References
     val lifeCounter: LifeCounterView
-    val playerCounters: PlayerCountersView
+    private val commanderDamageSummary: CommanderDamageSummaryView
     val playerName: TextView
     val profilePopupContainer: MaterialCardView
     val playerCountersPopupContainer: MaterialCardView
@@ -68,7 +69,7 @@ open class PlayerSegmentView @JvmOverloads constructor(
 
         // Find all child views
         lifeCounter = findViewById(R.id.lifeCounter)
-        playerCounters = findViewById(R.id.playerCounters)
+        commanderDamageSummary = findViewById(R.id.commander_damage_summary)
         playerName = findViewById(R.id.tv_player_name)
         profilePopupContainer = findViewById(R.id.profile_popup_container)
         playerCountersPopupContainer = findViewById(R.id.player_counters_popup_container)
@@ -78,7 +79,7 @@ open class PlayerSegmentView @JvmOverloads constructor(
         // Set up internal listeners
         playerName.setOnClickListener { onPlayerNameClickListener?.invoke() }
         unloadProfileButton.setOnClickListener { onUnloadProfileListener?.invoke() }
-        playerCounters.setOnClickListener { onPlayerCountersClickListener?.invoke() }
+        commanderDamageSummary.setOnClickListener { onPlayerCountersClickListener?.invoke() }
 
         // Configure internal components
         profilesRecyclerView.layoutManager = LinearLayoutManager(context)
@@ -86,7 +87,11 @@ open class PlayerSegmentView @JvmOverloads constructor(
         lifeCounter.addDismissibleOverlay(playerCountersPopupContainer)
     }
 
-    // --- All logic below is moved from the deleted RotatableLayout ---
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        // Set the counter-rotation here, before the draw pass.
+        commanderDamageSummary.rotation = -angle.toFloat()
+    }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (isRotated90degrees()) {
@@ -120,11 +125,6 @@ open class PlayerSegmentView @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Applies the view's rotation matrix to the given MotionEvent.
-     * This method is public to allow for direct testing of the transformation logic.
-     * @param event The MotionEvent to transform.
-     */
     fun transformEvent(event: MotionEvent) {
         val matrix = Matrix()
         when (angle) {
@@ -141,21 +141,28 @@ open class PlayerSegmentView @JvmOverloads constructor(
                 matrix.postTranslate(height.toFloat(), 0f)
             }
         }
-
         event.transform(matrix)
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        // The transformation logic is now in its own testable method.
         transformEvent(event)
         return super.dispatchTouchEvent(event)
     }
 
-    /**
-     * Updates the entire player segment's UI based on a Player data object.
-     */
-    fun updateUI(player: Player, isMassUpdate: Boolean) {
+    fun updateUI(
+        player: Player,
+        allPlayers: List<Player>,
+        allDamage: List<CommanderDamage>,
+        isMassUpdate: Boolean
+    ) {
         playerName.text = player.name
+
+        val damageToThisPlayer = allDamage.filter {
+            it.targetPlayerIndex == player.playerIndex && it.gameSize == allPlayers.size
+        }
+        if (allPlayers.isNotEmpty()) {
+            commanderDamageSummary.updateView(player, allPlayers, damageToThisPlayer, this.angle)
+        }
 
         if (isMassUpdate) {
             lifeCounter.setLifeAnimate(player.life)
@@ -167,29 +174,25 @@ open class PlayerSegmentView @JvmOverloads constructor(
             if (player.color != null) {
                 val backgroundColor = player.color.toColorInt()
                 this.setBackgroundColor(backgroundColor)
-                playerName.setTextColor(if (isColorDark(backgroundColor)) Color.WHITE else Color.BLACK)
+                val isDark = isColorDark(backgroundColor)
+                playerName.setTextColor(if (isDark) Color.WHITE else Color.BLACK)
+                unloadProfileButton.setColorFilter(if (isDark) Color.WHITE else Color.BLACK)
             } else {
                 this.setBackgroundColor(ContextCompat.getColor(context, R.color.default_segment_background))
                 playerName.setTextColor(Color.WHITE)
+                unloadProfileButton.setColorFilter(Color.WHITE)
             }
         } catch (_: Exception) {
             this.setBackgroundColor(ContextCompat.getColor(context, R.color.default_segment_background))
             playerName.setTextColor(Color.WHITE)
+            unloadProfileButton.setColorFilter(Color.WHITE)
         }
 
         unloadProfileButton.visibility = if (player.profileId != null) VISIBLE else INVISIBLE
     }
 
-    /**
-     * Sets the text and view sizes for this segment based on the total number of players.
-     */
-    fun setViewSizes(lifeSize: Float, nameSize: Float, countersWidth: Int, countersHeight: Int) {
+    fun setViewSizes(lifeSize: Float, nameSize: Float) {
         lifeCounter.setTextSize(TypedValue.COMPLEX_UNIT_PX, lifeSize)
         playerName.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSize)
-
-        val countersLayoutParams = playerCounters.layoutParams
-        countersLayoutParams.width = countersWidth
-        countersLayoutParams.height = countersHeight
-        playerCounters.layoutParams = countersLayoutParams
     }
 }

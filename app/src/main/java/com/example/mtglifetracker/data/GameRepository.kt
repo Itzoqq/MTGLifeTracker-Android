@@ -26,21 +26,26 @@ class GameRepository constructor(
     init {
         externalScope.launch {
             initializeDatabase()
-            settingsDao.getSettings()
-                .filterNotNull()
-                .flatMapLatest { settings ->
-                    playerDao.getPlayers(settings.playerCount)
-                        .map { players -> Pair(settings, players) }
+            combine(
+                settingsDao.getSettings().filterNotNull(),
+                playerDao.getAllPlayers(),
+                commanderDamageDao.getAllDamage()
+            ) { settings, allPlayers, allDamage ->
+                // Filter players based on the current game size from settings
+                val currentPlayers = allPlayers.filter { it.gameSize == settings.playerCount }
+
+                Triple(settings, currentPlayers, allDamage)
+
+            }.collect { (settings, players, allDamage) ->
+                _gameState.update {
+                    it.copy(
+                        playerCount = settings.playerCount,
+                        startingLife = settings.startingLife,
+                        players = players,
+                        allCommanderDamage = allDamage
+                    )
                 }
-                .collect { (settings, players) ->
-                    _gameState.update {
-                        it.copy(
-                            playerCount = settings.playerCount,
-                            startingLife = settings.startingLife,
-                            players = players
-                        )
-                    }
-                }
+            }
         }
 
         externalScope.launch {

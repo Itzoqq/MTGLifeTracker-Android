@@ -16,6 +16,9 @@ interface CommanderDamageDao {
     @Query("SELECT * FROM commander_damage WHERE gameSize = :gameSize AND targetPlayerIndex = :targetPlayerIndex")
     fun getCommanderDamageForPlayer(gameSize: Int, targetPlayerIndex: Int): Flow<List<CommanderDamage>>
 
+    @Query("SELECT * FROM commander_damage")
+    fun getAllDamage(): Flow<List<CommanderDamage>>
+
     // START: ADD THIS NEW FUNCTION
     @Query("SELECT damage FROM commander_damage WHERE gameSize = :gameSize AND sourcePlayerIndex = :sourcePlayerIndex AND targetPlayerIndex = :targetPlayerIndex")
     suspend fun getDamageValue(gameSize: Int, sourcePlayerIndex: Int, targetPlayerIndex: Int): Int?

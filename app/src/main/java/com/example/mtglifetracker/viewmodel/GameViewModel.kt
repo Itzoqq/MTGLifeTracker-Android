@@ -17,7 +17,8 @@ import javax.inject.Inject
 data class GameState(
     val playerCount: Int = 2,
     val players: List<Player> = emptyList(),
-    val startingLife: Int = 40
+    val startingLife: Int = 40,
+    val allCommanderDamage: List<CommanderDamage> = emptyList()
 )
 
 @HiltViewModel

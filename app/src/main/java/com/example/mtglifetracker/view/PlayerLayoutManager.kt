@@ -78,7 +78,7 @@ class PlayerLayoutManager(
                 else -> lifeMedium to nameMedium
             }
 
-            val (countersWidth, countersHeight) = when (playerCount) {
+            val (_, _) = when (playerCount) {
                 2 -> countersWidthLarge to countersHeightLarge
                 3 -> if (index == 0) countersWidthLarge to countersHeightLarge else countersWidthMedium to countersHeightMedium
                 4 -> countersWidthMedium to countersHeightMedium
@@ -88,7 +88,7 @@ class PlayerLayoutManager(
             }
 
             // Call the sizing method directly on the segment
-            segment.setViewSizes(lifeSize, nameSize, countersWidth, countersHeight)
+            segment.setViewSizes(lifeSize, nameSize)
         }
 
         container.post {

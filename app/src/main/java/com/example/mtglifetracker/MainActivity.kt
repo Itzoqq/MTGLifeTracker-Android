@@ -71,7 +71,12 @@ class MainActivity : AppCompatActivity() {
             if (index < gameState.players.size) {
                 val player = gameState.players[index]
 
-                segment.updateUI(player, isFirstLoad || isMassUpdate)
+                segment.updateUI(
+                    player,
+                    gameState.players,
+                    gameState.allCommanderDamage,
+                    isFirstLoad || isMassUpdate
+                )
 
                 setPlayerSegmentListeners(segment, index)
             }
