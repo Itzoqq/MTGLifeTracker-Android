@@ -244,18 +244,17 @@ class CommanderDamageDialogFragment : DialogFragment() {
             damageAmount.text = damage.toString()
             itemView.alpha = 1.0f
 
-            // A standard tap now increments damage and ensures the button is hidden
             damageAmount.setOnClickListener {
-                decrementButton.visibility = View.INVISIBLE
+                if (rootView is ViewGroup) {
+                    hideAllDecrementButtons(rootView)
+                }
                 gameViewModel.incrementCommanderDamage(player.playerIndex, targetPlayerIndex)
             }
 
-            // A long press now hides other buttons before showing the current one
             damageAmount.setOnLongClickListener {
                 if (rootView is ViewGroup) {
                     hideAllDecrementButtons(rootView)
                 }
-                // Only show the decrement button if there is damage to remove.
                 if (damage > 0) {
                     decrementButton.visibility = View.VISIBLE
                 }
@@ -264,6 +263,10 @@ class CommanderDamageDialogFragment : DialogFragment() {
 
             decrementButton.onDecrementListener = {
                 gameViewModel.decrementCommanderDamage(player.playerIndex, targetPlayerIndex)
+            }
+
+            if (damage <= 0 && decrementButton.isVisible) {
+                decrementButton.visibility = View.INVISIBLE
             }
         }
     }
