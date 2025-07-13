@@ -1,9 +1,10 @@
 package com.example.mtglifetracker.view
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
@@ -24,6 +25,8 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
     private var textViews = mutableListOf<TextView>()
     private var dividers = mutableListOf<View>()
     private var currentPlayerCount = 0
+    private var playerGrid = listOf<Player>()
+    private val backgroundPaint = Paint()
 
     fun updateView(
         currentPlayer: Player,
@@ -36,8 +39,8 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             setupLayout(playerCount)
         }
 
+        playerGrid = getPlayerGrid(playerCount, allPlayersInGame)
         val damageMap = damageToCurrentPlayer.associateBy { it.sourcePlayerIndex }
-        val playerGrid = getPlayerGrid(playerCount, allPlayersInGame)
 
         textViews.forEachIndexed { index, textView ->
             val sourcePlayer = playerGrid.getOrNull(index)
@@ -48,33 +51,15 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
 
             textView.visibility = VISIBLE
             textView.rotation = angle.toFloat()
+            textView.background = null // Remove direct background
 
-            // 1. Create a new square drawable programmatically.
-            val cellDrawable = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-            }
-
-            // 2. Apply profile color and set text contrast color.
-            if (sourcePlayer.color != null) {
-                try {
-                    val color = sourcePlayer.color.toColorInt()
-                    cellDrawable.setColor(color) // Use the full profile color
-
-                    val textColor = if (isColorDark(color)) Color.WHITE else Color.BLACK
-                    textView.setTextColor(textColor)
-                } catch (_: Exception) {
-                    cellDrawable.setColor(Color.TRANSPARENT)
-                    textView.setTextColor(Color.WHITE)
-                }
+            val textColor = if (sourcePlayer.color != null && isColorDark(sourcePlayer.color.toColorInt())) {
+                Color.WHITE
             } else {
-                cellDrawable.setColor(Color.TRANSPARENT)
-                textView.setTextColor(Color.WHITE)
+                Color.BLACK
             }
+            textView.setTextColor(textColor)
 
-            // 3. Set the programmatically created drawable as the background.
-            textView.background = cellDrawable
-
-            // Set text content
             if (sourcePlayer.playerIndex == currentPlayer.playerIndex) {
                 textView.text = context.getString(R.string.me)
                 textView.setTextColor(ContextCompat.getColor(context, R.color.purple_200))
@@ -82,7 +67,31 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
                 textView.text = (damageMap[sourcePlayer.playerIndex]?.damage ?: 0).toString()
             }
         }
+        invalidate() // Trigger a redraw
     }
+
+    override fun onDraw(canvas: Canvas) {
+        // Draw custom backgrounds first
+        textViews.forEachIndexed { index, textView ->
+            playerGrid.getOrNull(index)?.color?.let { colorString ->
+                try {
+                    backgroundPaint.color = colorString.toColorInt()
+                    canvas.drawRect(
+                        textView.left.toFloat(),
+                        textView.top.toFloat(),
+                        textView.right.toFloat(),
+                        textView.bottom.toFloat(),
+                        backgroundPaint
+                    )
+                } catch (_: Exception) {
+                    // Color parsing failed, do not draw background
+                }
+            }
+        }
+        // Draw text and dividers on top
+        super.onDraw(canvas)
+    }
+
 
     private fun getPlayerGrid(playerCount: Int, allPlayers: List<Player>): List<Player> {
         if (allPlayers.isEmpty()) return emptyList()
@@ -128,7 +137,6 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             gravity = Gravity.CENTER
             textSize = 11f
             typeface = Typeface.DEFAULT_BOLD
-            // We no longer set a background resource here.
             addView(this)
         }
     }
@@ -155,8 +163,6 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             cs.constrainHeight(viewId, 0)
         }
     }
-
-    // --- SIZING HAS BEEN MADE MORE AGGRESSIVE TO FILL GAPS ---
 
     private fun setup2PlayerConstraints(cs: ConstraintSet) {
         val hDivider = addDivider()
