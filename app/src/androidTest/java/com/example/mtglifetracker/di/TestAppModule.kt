@@ -44,6 +44,10 @@ object TestAppModule {
 
     @Provides
     @Singleton
+    fun provideCommanderDamageDao(db: AppDatabase): CommanderDamageDao = db.commanderDamageDao()
+
+    @Provides
+    @Singleton
     fun providePreferencesDao(db: AppDatabase): PreferencesDao = db.preferencesDao()
 
     @Provides

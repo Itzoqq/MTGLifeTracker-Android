@@ -123,7 +123,6 @@ class PlayerAssignmentTest : BaseUITest() {
                 hasDescendant(withText(profileName)), directlyPerformClick()
             ))
 
-        // Use the new waitForView function before asserting
         waitForView(allOf(playerNameMatcher, withText(profileName)))
 
         onView(playerNameMatcher).check(matches(withText(profileName)))
@@ -156,7 +155,6 @@ class PlayerAssignmentTest : BaseUITest() {
                 hasDescendant(withText(profileName)), directlyPerformClick()
             ))
 
-        // Use the new waitForView function before asserting
         waitForView(allOf(playerNameMatcher, withText(profileName)))
 
         onView(playerNameMatcher).check(matches(withText(profileName)))
