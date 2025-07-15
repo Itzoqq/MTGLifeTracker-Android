@@ -13,31 +13,34 @@ class PlayerLayoutManager(
     private val context: Context
 ) {
 
-    // The list now holds PlayerSegmentView directly
     val playerSegments = mutableListOf<PlayerSegmentView>()
     private val dividers = mutableListOf<View>()
 
     fun createPlayerLayouts(playerCount: Int) {
+        Log.d("CommanderTest", "--- PlayerLayoutManager: createPlayerLayouts called for $playerCount players. ---")
         val currentCount = playerSegments.size
         if (playerCount == currentCount) {
+            Log.d("CommanderTest", "Player count is already $playerCount. Returning.")
             return
         }
 
+        Log.d("CommanderTest", "Clearing ${dividers.size} dividers.")
         dividers.forEach { container.removeView(it) }
         dividers.clear()
 
         while (playerSegments.size < playerCount) {
             val index = playerSegments.size
-            // Create a PlayerSegmentView instead of a RotatableLayout
             val segment = PlayerSegmentView(context).apply {
                 id = View.generateViewId()
                 tag = "player_segment_$index"
+                Log.d("CommanderTest", "CREATE: PlayerSegmentView for index $index created with tag: $tag")
             }
             container.addView(segment)
             playerSegments.add(segment)
         }
         while (playerSegments.size > playerCount) {
             val segmentToRemove = playerSegments.removeAt(playerSegments.lastIndex)
+            Log.d("CommanderTest", "REMOVE: Removing PlayerSegmentView with tag: ${segmentToRemove.tag}")
             container.removeView(segmentToRemove)
         }
 
@@ -52,6 +55,7 @@ class PlayerLayoutManager(
             6 -> setupSixPlayerLayout(constraintSet)
         }
 
+        Log.d("CommanderTest", "Applying constraints for $playerCount players.")
         constraintSet.applyTo(container)
 
         val resources = context.resources
@@ -61,12 +65,6 @@ class PlayerLayoutManager(
         val nameLarge = resources.getDimension(R.dimen.nickname_text_size_large)
         val nameMedium = resources.getDimension(R.dimen.nickname_text_size_medium)
         val nameSmall = resources.getDimension(R.dimen.nickname_text_size_small)
-        val countersWidthLarge = resources.getDimensionPixelSize(R.dimen.player_counters_width_large)
-        val countersHeightLarge = resources.getDimensionPixelSize(R.dimen.player_counters_height_large)
-        val countersWidthMedium = resources.getDimensionPixelSize(R.dimen.player_counters_width_medium)
-        val countersHeightMedium = resources.getDimensionPixelSize(R.dimen.player_counters_height_medium)
-        val countersWidthSmall = resources.getDimensionPixelSize(R.dimen.player_counters_width_small)
-        val countersHeightSmall = resources.getDimensionPixelSize(R.dimen.player_counters_height_small)
 
         playerSegments.forEachIndexed { index, segment ->
             val (lifeSize, nameSize) = when (playerCount) {
@@ -77,48 +75,33 @@ class PlayerLayoutManager(
                 6 -> lifeMedium to nameMedium
                 else -> lifeMedium to nameMedium
             }
-
-            val (_, _) = when (playerCount) {
-                2 -> countersWidthLarge to countersHeightLarge
-                3 -> if (index == 0) countersWidthLarge to countersHeightLarge else countersWidthMedium to countersHeightMedium
-                4 -> countersWidthMedium to countersHeightMedium
-                5 -> if (index < 2) countersWidthMedium to countersHeightMedium else countersWidthSmall to countersHeightSmall
-                6 -> countersWidthSmall to countersHeightSmall
-                else -> countersWidthMedium to countersHeightMedium
-            }
-
-            // Call the sizing method directly on the segment
             segment.setViewSizes(lifeSize, nameSize)
         }
 
         container.post {
-            Log.d("LayoutManagerTest", "--- Layout applied for $playerCount players ---")
+            Log.d("CommanderTest", "--- PlayerLayoutManager: Layout applied and posted for $playerCount players ---")
             playerSegments.forEachIndexed { index, segment ->
                 val rect = android.graphics.Rect()
                 segment.getGlobalVisibleRect(rect)
                 Log.d(
-                    "LayoutManagerTest",
-                    "Segment $index (tag: ${segment.tag}): " +
+                    "CommanderTest",
+                    "POST_LAYOUT: Segment $index (tag: ${segment.tag}): " +
                             "width=${segment.width}, height=${segment.height}, " +
                             "visibleRect=$rect"
                 )
             }
         }
+        Log.d("CommanderTest", "--- PlayerLayoutManager: Finished createPlayerLayouts for $playerCount players. ---")
     }
 
-    // The rest of the setup...Layout and addDivider methods remain the same,
-    // as they operate on the `playerSegments` list which is now of the correct type.
-    // ...
     private fun setupTwoPlayerLayout(constraintSet: ConstraintSet) {
         val dividerId = View.generateViewId()
         addDivider(dividerId, constraintSet, ConstraintLayout.LayoutParams.HORIZONTAL)
 
-        // Player 1
         playerSegments[0].angle = 180
         constraintSet.connect(playerSegments[0].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.BOTTOM, dividerId, ConstraintSet.TOP)
 
-        // Player 2
         playerSegments[1].angle = 0
         constraintSet.connect(playerSegments[1].id, ConstraintSet.TOP, dividerId, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
@@ -137,23 +120,18 @@ class PlayerLayoutManager(
         addDivider(hDividerId, constraintSet, ConstraintLayout.LayoutParams.HORIZONTAL)
         addDivider(vDividerId, constraintSet, ConstraintLayout.LayoutParams.VERTICAL, hDividerId, ConstraintSet.PARENT_ID)
 
-
-        // Player 1
         playerSegments[0].angle = 180
         constraintSet.connect(playerSegments[0].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.BOTTOM, hDividerId, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
 
-
-        // Player 2
         playerSegments[1].angle = 90
         constraintSet.connect(playerSegments[1].id, ConstraintSet.TOP, hDividerId, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 3
         playerSegments[2].angle = -90
         constraintSet.connect(playerSegments[2].id, ConstraintSet.TOP, hDividerId, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
@@ -171,28 +149,24 @@ class PlayerLayoutManager(
         addDivider(hDividerId, constraintSet, ConstraintLayout.LayoutParams.HORIZONTAL)
         addDivider(vDividerId, constraintSet, ConstraintLayout.LayoutParams.VERTICAL)
 
-        // Player 1
         playerSegments[0].angle = 90
         constraintSet.connect(playerSegments[0].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.BOTTOM, hDividerId, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 2
         playerSegments[1].angle = -90
         constraintSet.connect(playerSegments[1].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.BOTTOM, hDividerId, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.START, vDividerId, ConstraintSet.END)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
 
-        // Player 3
         playerSegments[2].angle = 90
         constraintSet.connect(playerSegments[2].id, ConstraintSet.TOP, hDividerId, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 4
         playerSegments[3].angle = -90
         constraintSet.connect(playerSegments[3].id, ConstraintSet.TOP, hDividerId, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[3].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
@@ -215,35 +189,30 @@ class PlayerLayoutManager(
         addDivider(hDividerRight1Id, constraintSet, ConstraintLayout.LayoutParams.HORIZONTAL, vDividerId, ConstraintSet.PARENT_ID, 0.33f)
         addDivider(hDividerRight2Id, constraintSet, ConstraintLayout.LayoutParams.HORIZONTAL, vDividerId, ConstraintSet.PARENT_ID, 0.66f)
 
-        // Player 1
         playerSegments[0].angle = 90
         constraintSet.connect(playerSegments[0].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.BOTTOM, hDividerLeftId, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 2
         playerSegments[1].angle = 90
         constraintSet.connect(playerSegments[1].id, ConstraintSet.TOP, hDividerLeftId, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 3
         playerSegments[2].angle = -90
         constraintSet.connect(playerSegments[2].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.BOTTOM, hDividerRight1Id, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.START, vDividerId, ConstraintSet.END)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
 
-        // Player 4
         playerSegments[3].angle = -90
         constraintSet.connect(playerSegments[3].id, ConstraintSet.TOP, hDividerRight1Id, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[3].id, ConstraintSet.BOTTOM, hDividerRight2Id, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[3].id, ConstraintSet.START, vDividerId, ConstraintSet.END)
         constraintSet.connect(playerSegments[3].id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
 
-        // Player 5
         playerSegments[4].angle = -90
         constraintSet.connect(playerSegments[4].id, ConstraintSet.TOP, hDividerRight2Id, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[4].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
@@ -265,42 +234,36 @@ class PlayerLayoutManager(
         addDivider(hDivider1Id, constraintSet, ConstraintLayout.LayoutParams.HORIZONTAL, ConstraintSet.PARENT_ID, ConstraintSet.PARENT_ID, 0.33f)
         addDivider(hDivider2Id, constraintSet, ConstraintLayout.LayoutParams.HORIZONTAL, ConstraintSet.PARENT_ID, ConstraintSet.PARENT_ID, 0.66f)
 
-        // Player 1
         playerSegments[0].angle = 90
         constraintSet.connect(playerSegments[0].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.BOTTOM, hDivider1Id, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[0].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 2
         playerSegments[1].angle = -90
         constraintSet.connect(playerSegments[1].id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.BOTTOM, hDivider1Id, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.START, vDividerId, ConstraintSet.END)
         constraintSet.connect(playerSegments[1].id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
 
-        // Player 3
         playerSegments[2].angle = 90
         constraintSet.connect(playerSegments[2].id, ConstraintSet.TOP, hDivider1Id, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.BOTTOM, hDivider2Id, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[2].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 4
         playerSegments[3].angle = -90
         constraintSet.connect(playerSegments[3].id, ConstraintSet.TOP, hDivider1Id, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[3].id, ConstraintSet.BOTTOM, hDivider2Id, ConstraintSet.TOP)
         constraintSet.connect(playerSegments[3].id, ConstraintSet.START, vDividerId, ConstraintSet.END)
         constraintSet.connect(playerSegments[3].id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
 
-        // Player 5
         playerSegments[4].angle = 90
         constraintSet.connect(playerSegments[4].id, ConstraintSet.TOP, hDivider2Id, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[4].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[4].id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
         constraintSet.connect(playerSegments[4].id, ConstraintSet.END, vDividerId, ConstraintSet.START)
 
-        // Player 6
         playerSegments[5].angle = -90
         constraintSet.connect(playerSegments[5].id, ConstraintSet.TOP, hDivider2Id, ConstraintSet.BOTTOM)
         constraintSet.connect(playerSegments[5].id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)

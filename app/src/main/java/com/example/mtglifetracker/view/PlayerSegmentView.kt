@@ -8,6 +8,7 @@ import android.graphics.Matrix
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.widget.TextView
@@ -44,7 +45,7 @@ open class PlayerSegmentView @JvmOverloads constructor(
     var angle: Int = 0
     private val longPressHandler = Handler(Looper.getMainLooper())
     private var longPressRunnable: Runnable? = null
-    private val longPressDelay = 500L // Increased from default
+    private val longPressDelay = 500L
 
     init {
         context.theme.obtainStyledAttributes(
@@ -70,15 +71,12 @@ open class PlayerSegmentView @JvmOverloads constructor(
         playerCountersPopupContainer = findViewById(R.id.player_counters_popup_container)
         profilesRecyclerView = findViewById(R.id.profiles_recycler_view)
 
-        // Set up internal listeners
         playerName.setOnClickListener { onPlayerNameClickListener?.invoke() }
         playerName.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     longPressRunnable = Runnable {
-                        if (onUnloadProfileListener != null) {
-                            onUnloadProfileListener?.invoke()
-                        }
+                        onUnloadProfileListener?.invoke()
                     }
                     longPressHandler.postDelayed(longPressRunnable!!, longPressDelay)
                     true
@@ -93,11 +91,48 @@ open class PlayerSegmentView @JvmOverloads constructor(
                 else -> false
             }
         }
+        // AND REPLACE IT WITH THIS BLOCK:
+        commanderDamageSummary.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // By returning true here, we are telling the system that this view
+                    // has handled the touch event and it should not be passed to any other views.
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // We still want to perform the standard click action when the touch is released.
+                    v.performClick()
+                    true
+                }
+                else -> false
+            }
+        }
+        // We still need this listener to define what happens when performClick() is called.
         commanderDamageSummary.setOnClickListener { onPlayerCountersClickListener?.invoke() }
+
+
 
         profilesRecyclerView.layoutManager = LinearLayoutManager(context)
         lifeCounter.addDismissibleOverlay(profilePopupContainer)
         lifeCounter.addDismissibleOverlay(playerCountersPopupContainer)
+
+        Log.d("CommanderTest", "PlayerSegmentView init. View tag is: ${this.tag}")
+        if (this.tag != null) {
+            commanderDamageSummary.tag = this.tag.toString() + "_commander_summary"
+        } else {
+            Log.d("CommanderTest", "PlayerSegmentView init: this.tag is NULL. Cannot set summary tag yet.")
+        }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        Log.d("CommanderTest", "PlayerSegmentView onAttachedToWindow. View tag is: ${this.tag}")
+        if (this.tag != null) {
+            commanderDamageSummary.tag = this.tag.toString() + "_commander_summary"
+            Log.d("CommanderTest", "Set commander summary tag to: ${commanderDamageSummary.tag}")
+        } else {
+            Log.d("CommanderTest", "PlayerSegmentView onAttachedToWindow: this.tag is STILL NULL.")
+        }
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {

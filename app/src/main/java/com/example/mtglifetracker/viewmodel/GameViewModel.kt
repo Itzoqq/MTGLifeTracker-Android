@@ -18,7 +18,8 @@ data class GameState(
     val playerCount: Int = 2,
     val players: List<Player> = emptyList(),
     val startingLife: Int = 40,
-    val allCommanderDamage: List<CommanderDamage> = emptyList()
+    val allCommanderDamage: List<CommanderDamage> = emptyList(),
+    val deduceCommanderDamage: Boolean = true // This line is correct
 )
 
 @HiltViewModel
