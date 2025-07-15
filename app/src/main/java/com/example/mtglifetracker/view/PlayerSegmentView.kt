@@ -44,7 +44,7 @@ open class PlayerSegmentView @JvmOverloads constructor(
     var angle: Int = 0
     private val longPressHandler = Handler(Looper.getMainLooper())
     private var longPressRunnable: Runnable? = null
-    private val longPressDelay = 800L // Increased from default
+    private val longPressDelay = 500L // Increased from default
 
     init {
         context.theme.obtainStyledAttributes(

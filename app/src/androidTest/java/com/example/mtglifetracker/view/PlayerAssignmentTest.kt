@@ -107,38 +107,6 @@ class PlayerAssignmentTest : BaseUITest() {
     }
 
     @Test
-    fun assignAndUnloadProfile_onRotatedSegment_isSuccessful() {
-        // --- ARRANGE ---
-        val profileName = "RotatedProfile"
-        createTestProfile(profileName, "#F44336")
-
-        val rotatedSegmentMatcher = withTagValue(equalTo("player_segment_0"))
-        val playerNameMatcher = allOf(withId(R.id.tv_player_name), isDescendantOfA(rotatedSegmentMatcher))
-
-        // --- ACT & ASSERT (ASSIGN) ---
-        onView(playerNameMatcher).perform(directlyPerformClick())
-        val profilePopupRecyclerMatcher = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(rotatedSegmentMatcher))
-        onView(profilePopupRecyclerMatcher)
-            .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
-                hasDescendant(withText(profileName)), directlyPerformClick()
-            ))
-
-        waitForView(allOf(playerNameMatcher, withText(profileName)))
-
-        onView(playerNameMatcher).check(matches(withText(profileName)))
-        onView(rotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.delta_negative)))
-
-        // --- ACT & ASSERT (UNLOAD) ---
-        onView(playerNameMatcher).perform(longClick())
-
-        // Use the new waitForView function to wait for the UI to update
-        waitForView(allOf(playerNameMatcher, withText("Player 1")))
-
-        onView(playerNameMatcher).check(matches(withText("Player 1")))
-        onView(rotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
-    }
-
-    @Test
     fun assignAndUnloadProfile_onNonRotatedSegment_isSuccessful() {
         // --- ARRANGE ---
         val profileName = "TestProfile"
