@@ -1,5 +1,6 @@
 package com.example.mtglifetracker.data
 
+import com.example.mtglifetracker.SingletonIdlingResource
 import com.example.mtglifetracker.model.CommanderDamage
 import com.example.mtglifetracker.model.GameSettings
 import com.example.mtglifetracker.model.Player
@@ -49,23 +50,17 @@ class GameRepository constructor(
     externalScope: CoroutineScope
 ) {
 
-    // A private MutableStateFlow to hold the current game state. This is the internal state.
     private val _gameState = MutableStateFlow(GameState())
-    // A public, read-only StateFlow that external classes can observe for UI updates.
     val gameState = _gameState.asStateFlow()
 
     init {
         Logger.i("GameRepository: Initializing...")
 
-        // Main coroutine to combine all necessary data flows into a single GameState.
         externalScope.launch {
             Logger.d("GameRepository init: Launching primary state collection coroutine.")
-            // First, ensure the database is initialized with default settings if it's empty.
             initializeDatabase()
             Logger.d("GameRepository init: Database initialization complete.")
 
-            // This nested combine block listens to changes from multiple DAOs.
-            // It first combines settings, players, and damage into a Triple.
             combine(
                 settingsDao.getSettings().filterNotNull(),
                 playerDao.getAllPlayers(),
@@ -73,16 +68,12 @@ class GameRepository constructor(
             ) { settings, allPlayers, allDamage ->
                 Triple(settings, allPlayers, allDamage)
             }.combine(preferencesDao.getPreferences().map { it ?: Preferences() }) { triple, preferences ->
-                // This second combine adds the preferences flow.
-                // When any of the source flows emit a new value, this block re-executes.
                 val (settings, allPlayers, allDamage) = triple
                 Logger.d("GameRepository state combine: Received updates. Settings players=${settings.playerCount}, All players in DB=${allPlayers.size}, All damage entries=${allDamage.size}, Prefs=${preferences.deduceCommanderDamage}")
 
-                // Filter the list of all players to get only those for the current game size.
                 val currentPlayers = allPlayers.filter { it.gameSize == settings.playerCount }
                 Logger.d("GameRepository state combine: Filtered to ${currentPlayers.size} players for game size ${settings.playerCount}.")
 
-                // Construct the new, complete GameState object.
                 GameState(
                     playerCount = settings.playerCount,
                     startingLife = settings.startingLife,
@@ -91,39 +82,38 @@ class GameRepository constructor(
                     deduceCommanderDamage = preferences.deduceCommanderDamage
                 )
             }.collect { newGameState ->
-                // Emit the newly constructed GameState to all observers.
                 Logger.i("GameRepository state collector: Updating game state. Player count: ${newGameState.playerCount}, Players: ${newGameState.players.size}, DeduceDmg: ${newGameState.deduceCommanderDamage}")
                 _gameState.value = newGameState
             }
         }
 
-        // A separate coroutine to handle automatic updates to players when their assigned profile changes.
         externalScope.launch {
             Logger.d("GameRepository init: Launching profile update collection coroutine.")
             combine(profileDao.getAll(), playerDao.getAllPlayers()) { allProfiles, allPlayersInDb ->
                 Logger.d("GameRepository profile combine: Received updates. Profiles: ${allProfiles.size}, Players in DB: ${allPlayersInDb.size}")
                 val playersToUpdate = mutableListOf<Player>()
-                // Find all players who have a profile assigned.
                 allPlayersInDb.filter { it.profileId != null }.forEach { player ->
                     val matchingProfile = allProfiles.find { it.id == player.profileId }
                     if (matchingProfile != null) {
-                        // If the profile exists, check if the player's name or color is out of sync.
                         if (player.name != matchingProfile.nickname || player.color != matchingProfile.color) {
                             Logger.i("GameRepository profile combine: Profile change detected for player ${player.playerIndex}. Updating name/color.")
                             playersToUpdate.add(player.copy(name = matchingProfile.nickname, color = matchingProfile.color))
                         }
                     } else {
-                        // If the profile no longer exists (i.e., it was deleted), revert the player to defaults.
                         Logger.i("GameRepository profile combine: Profile for player ${player.playerIndex} deleted. Reverting to default.")
                         playersToUpdate.add(player.copy(name = "Player ${player.playerIndex + 1}", profileId = null, color = null))
                     }
                 }
                 playersToUpdate
             }.collect { playersToUpdate ->
-                // If any players need updating, perform the database operation.
                 if (playersToUpdate.isNotEmpty()) {
                     Logger.i("GameRepository profile collector: Found ${playersToUpdate.size} players to update based on profile changes. Updating now.")
-                    playerDao.updatePlayers(playersToUpdate)
+                    SingletonIdlingResource.increment()
+                    try {
+                        playerDao.updatePlayers(playersToUpdate)
+                    } finally {
+                        SingletonIdlingResource.decrement()
+                    }
                 } else {
                     Logger.d("GameRepository profile collector: No player updates required based on profile changes.")
                 }
@@ -131,69 +121,52 @@ class GameRepository constructor(
         }
     }
 
-    /**
-     * Retrieves a reactive flow of commander damage dealt *to* a specific player.
-     *
-     * @param targetPlayerIndex The index of the player receiving the damage.
-     * @return A [Flow] that emits the list of [CommanderDamage] dealt to that player.
-     */
     fun getCommanderDamageForPlayer(targetPlayerIndex: Int): Flow<List<CommanderDamage>> {
         val gameSize = _gameState.value.playerCount
         Logger.d("getCommanderDamageForPlayer: Fetching damage for player $targetPlayerIndex in game size $gameSize.")
         return commanderDamageDao.getCommanderDamageForPlayer(gameSize, targetPlayerIndex)
     }
 
-    /**
-     * Increments commander damage and optionally deducts life from the target player.
-     *
-     * @param sourcePlayerIndex The index of the player dealing the damage.
-     * @param targetPlayerIndex The index of the player receiving the damage.
-     */
     suspend fun incrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
-        val gameSize = _gameState.value.playerCount
-        Logger.d("incrementCommanderDamage: Args(source=$sourcePlayerIndex, target=$targetPlayerIndex, gameSize=$gameSize)")
-        commanderDamageDao.incrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
-
-        // Read the deduction preference directly from the current reactive game state.
-        val deduceDamage = _gameState.value.deduceCommanderDamage
-        Logger.d("incrementCommanderDamage: Damage deduction preference is $deduceDamage.")
-        if (deduceDamage) {
-            Logger.d("incrementCommanderDamage: Deducting 1 life from player $targetPlayerIndex.")
-            updatePlayerState(targetPlayerIndex, -1)
-        }
-    }
-
-    /**
-     * Decrements commander damage and optionally adds life back to the target player.
-     * Will not decrement below zero.
-     *
-     * @param sourcePlayerIndex The index of the player who dealt the damage.
-     * @param targetPlayerIndex The index of the player who received the damage.
-     */
-    suspend fun decrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
-        val gameSize = _gameState.value.playerCount
-        val currentDamage = commanderDamageDao.getDamageValue(gameSize, sourcePlayerIndex, targetPlayerIndex)
-        Logger.d("decrementCommanderDamage: Args(source=$sourcePlayerIndex, target=$targetPlayerIndex, gameSize=$gameSize), currentDamage=$currentDamage")
-
-        if (currentDamage != null && currentDamage > 0) {
-            commanderDamageDao.decrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
+        SingletonIdlingResource.increment()
+        try {
+            val gameSize = _gameState.value.playerCount
+            Logger.d("incrementCommanderDamage: Args(source=$sourcePlayerIndex, target=$targetPlayerIndex, gameSize=$gameSize)")
+            commanderDamageDao.incrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
             val deduceDamage = _gameState.value.deduceCommanderDamage
-            Logger.d("decrementCommanderDamage: Damage deduction preference is $deduceDamage.")
+            Logger.d("incrementCommanderDamage: Damage deduction preference is $deduceDamage.")
             if (deduceDamage) {
-                Logger.d("decrementCommanderDamage: Adding 1 life back to player $targetPlayerIndex.")
-                updatePlayerState(targetPlayerIndex, 1)
+                Logger.d("incrementCommanderDamage: Deducting 1 life from player $targetPlayerIndex.")
+                updatePlayerState(targetPlayerIndex, -1)
             }
-        } else {
-            Logger.w("decrementCommanderDamage: Skipping decrement. Current damage is 0 or null.")
+        } finally {
+            SingletonIdlingResource.decrement()
         }
     }
 
-    /**
-     * A centralized method to update a player's state, primarily for life changes.
-     *
-     * @param playerIndex The index of the player to update.
-     * @param lifeChange The amount to change the life by (can be positive or negative).
-     */
+    suspend fun decrementCommanderDamage(sourcePlayerIndex: Int, targetPlayerIndex: Int) {
+        SingletonIdlingResource.increment()
+        try {
+            val gameSize = _gameState.value.playerCount
+            val currentDamage = commanderDamageDao.getDamageValue(gameSize, sourcePlayerIndex, targetPlayerIndex)
+            Logger.d("decrementCommanderDamage: Args(source=$sourcePlayerIndex, target=$targetPlayerIndex, gameSize=$gameSize), currentDamage=$currentDamage")
+
+            if (currentDamage != null && currentDamage > 0) {
+                commanderDamageDao.decrementCommanderDamage(gameSize, sourcePlayerIndex, targetPlayerIndex)
+                val deduceDamage = _gameState.value.deduceCommanderDamage
+                Logger.d("decrementCommanderDamage: Damage deduction preference is $deduceDamage.")
+                if (deduceDamage) {
+                    Logger.d("decrementCommanderDamage: Adding 1 life back to player $targetPlayerIndex.")
+                    updatePlayerState(targetPlayerIndex, 1)
+                }
+            } else {
+                Logger.w("decrementCommanderDamage: Skipping decrement. Current damage is 0 or null.")
+            }
+        } finally {
+            SingletonIdlingResource.decrement()
+        }
+    }
+
     private suspend fun updatePlayerState(playerIndex: Int, lifeChange: Int) {
         val playerToUpdate = _gameState.value.players.getOrNull(playerIndex)
         if (playerToUpdate == null) {
@@ -206,26 +179,26 @@ class GameRepository constructor(
         playerDao.updatePlayer(updatedPlayer)
     }
 
-    /**
-     * Increases a player's life total by 1.
-     */
     suspend fun increaseLife(playerIndex: Int) {
-        Logger.d("increaseLife: Called for player $playerIndex.")
-        updatePlayerState(playerIndex, 1)
+        SingletonIdlingResource.increment()
+        try {
+            Logger.d("increaseLife: Called for player $playerIndex.")
+            updatePlayerState(playerIndex, 1)
+        } finally {
+            SingletonIdlingResource.decrement()
+        }
     }
 
-    /**
-     * Decreases a player's life total by 1.
-     */
     suspend fun decreaseLife(playerIndex: Int) {
-        Logger.d("decreaseLife: Called for player $playerIndex.")
-        updatePlayerState(playerIndex, -1)
+        SingletonIdlingResource.increment()
+        try {
+            Logger.d("decreaseLife: Called for player $playerIndex.")
+            updatePlayerState(playerIndex, -1)
+        } finally {
+            SingletonIdlingResource.decrement()
+        }
     }
 
-    /**
-     * Ensures the database is in a valid state on first launch. If no settings exist,
-     * it creates default settings and the corresponding player/damage entries.
-     */
     private suspend fun initializeDatabase() {
         val settings = settingsDao.getSettings().first()
         if (settings == null) {
@@ -239,12 +212,6 @@ class GameRepository constructor(
         }
     }
 
-    /**
-     * Checks if the correct number of commander damage entries exist for a given game size
-     * and creates them if they are missing.
-     *
-     * @param gameSize The number of players in the game.
-     */
     private suspend fun ensureDamageEntriesExist(gameSize: Int) {
         val expectedCount = gameSize * (gameSize - 1)
         val actualCount = commanderDamageDao.getDamageEntryCountForGame(gameSize)
@@ -261,13 +228,6 @@ class GameRepository constructor(
         }
     }
 
-    /**
-     * Checks if player entries exist for a given game size and creates them if they are missing.
-     * Also ensures corresponding commander damage entries are created.
-     *
-     * @param gameSize The number of players in the game.
-     * @param startingLife The life total to initialize new players with.
-     */
     private suspend fun ensurePlayersExistForGameSize(gameSize: Int, startingLife: Int) {
         if (playerDao.getPlayers(gameSize).first().isEmpty()) {
             Logger.i("ensurePlayersExistForGameSize: No players found for game size $gameSize. Creating them now with starting life $startingLife.")
@@ -281,104 +241,97 @@ class GameRepository constructor(
             }
             playerDao.insertAll(newPlayers)
         }
-        // Always ensure damage entries are also present
         ensureDamageEntriesExist(gameSize)
     }
 
-    /**
-     * Changes the active player count. This involves updating the game settings and ensuring
-     * the necessary player entries exist in the database for the new game size.
-     *
-     * @param newPlayerCount The desired number of players.
-     */
     suspend fun changePlayerCount(newPlayerCount: Int) {
-        Logger.i("changePlayerCount: Changing player count to $newPlayerCount.")
-        val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
-        ensurePlayersExistForGameSize(newPlayerCount, currentSettings.startingLife)
-        settingsDao.saveSettings(currentSettings.copy(playerCount = newPlayerCount))
+        SingletonIdlingResource.increment()
+        try {
+            Logger.i("changePlayerCount: Changing player count to $newPlayerCount.")
+            val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
+            ensurePlayersExistForGameSize(newPlayerCount, currentSettings.startingLife)
+            settingsDao.saveSettings(currentSettings.copy(playerCount = newPlayerCount))
+        } finally {
+            SingletonIdlingResource.decrement()
+        }
     }
 
-    /**
-     * Changes the starting life total for all games. This is a destructive action that
-     * resets all player data across all game sizes to reflect the new starting life.
-     *
-     * @param newStartingLife The new starting life total.
-     */
     suspend fun changeStartingLife(newStartingLife: Int) {
-        Logger.i("changeStartingLife: Changing starting life to $newStartingLife. This will reset all games.")
-        val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
-        settingsDao.saveSettings(currentSettings.copy(startingLife = newStartingLife))
-        resetAllGames()
+        SingletonIdlingResource.increment()
+        try {
+            Logger.i("changeStartingLife: Changing starting life to $newStartingLife. This will reset all games.")
+            val currentSettings = settingsDao.getSettings().first() ?: GameSettings()
+            settingsDao.saveSettings(currentSettings.copy(startingLife = newStartingLife))
+            resetAllGames()
+        } finally {
+            SingletonIdlingResource.decrement()
+        }
     }
 
-    /**
-     * Resets the game state for the currently active player count only.
-     * This involves deleting and re-creating the players and commander damage entries
-     * for the current game size.
-     */
     suspend fun resetCurrentGame() {
-        val currentSettings = settingsDao.getSettings().first()!!
-        Logger.i("resetCurrentGame: Resetting game for ${currentSettings.playerCount} players.")
-        playerDao.deletePlayersForGame(currentSettings.playerCount)
-        commanderDamageDao.deleteCommanderDamageForGame(currentSettings.playerCount)
-        ensurePlayersExistForGameSize(currentSettings.playerCount, currentSettings.startingLife)
+        SingletonIdlingResource.increment()
+        try {
+            val currentSettings = settingsDao.getSettings().first()!!
+            Logger.i("resetCurrentGame: Resetting game for ${currentSettings.playerCount} players.")
+            playerDao.deletePlayersForGame(currentSettings.playerCount)
+            commanderDamageDao.deleteCommanderDamageForGame(currentSettings.playerCount)
+            ensurePlayersExistForGameSize(currentSettings.playerCount, currentSettings.startingLife)
+        } finally {
+            SingletonIdlingResource.decrement()
+        }
     }
 
-    /**
-     * Resets all game states across all supported player counts (2-6).
-     * This is a destructive operation that clears all player and commander damage data
-     * and re-initializes it based on the current starting life setting.
-     */
     suspend fun resetAllGames() {
-        val currentSettings = settingsDao.getSettings().first()!!
-        Logger.i("resetAllGames: Resetting all games to starting life ${currentSettings.startingLife}.")
-        Logger.d("resetAllGames: Deleting all player and commander damage data.")
-        playerDao.deleteAll()
-        commanderDamageDao.deleteAll()
-        // Re-initialize players for all supported game sizes
-        (2..6).forEach { gameSize ->
-            Logger.d("resetAllGames: Ensuring players exist for game size $gameSize.")
-            ensurePlayersExistForGameSize(gameSize, currentSettings.startingLife)
+        SingletonIdlingResource.increment()
+        try {
+            val currentSettings = settingsDao.getSettings().first()!!
+            Logger.i("resetAllGames: Resetting all games to starting life ${currentSettings.startingLife}.")
+            Logger.d("resetAllGames: Deleting all player and commander damage data.")
+            playerDao.deleteAll()
+            commanderDamageDao.deleteAll()
+            (2..6).forEach { gameSize ->
+                Logger.d("resetAllGames: Ensuring players exist for game size $gameSize.")
+                ensurePlayersExistForGameSize(gameSize, currentSettings.startingLife)
+            }
+        } finally {
+            SingletonIdlingResource.decrement()
         }
     }
 
-    /**
-     * Assigns a [Profile] to a player. This updates the player's name and color to match
-     * the profile and stores the association via the profile ID.
-     *
-     * @param playerIndex The index of the player to update.
-     * @param profile The profile to assign to the player.
-     */
     suspend fun updatePlayerProfile(playerIndex: Int, profile: Profile) {
-        Logger.i("updatePlayerProfile: Assigning profile '${profile.nickname}' to player $playerIndex.")
-        val playerToUpdate = _gameState.value.players.getOrNull(playerIndex)
-        if (playerToUpdate != null) {
-            val updatedPlayer = playerToUpdate.copy(
-                name = profile.nickname,
-                profileId = profile.id,
-                color = profile.color
-            )
-            playerDao.updatePlayer(updatedPlayer)
-        } else {
-            Logger.e(null, "updatePlayerProfile: Could not find player at index $playerIndex to assign profile.")
+        SingletonIdlingResource.increment()
+        try {
+            Logger.i("updatePlayerProfile: Assigning profile '${profile.nickname}' to player $playerIndex.")
+            val playerToUpdate = _gameState.value.players.getOrNull(playerIndex)
+            if (playerToUpdate != null) {
+                val updatedPlayer = playerToUpdate.copy(
+                    name = profile.nickname,
+                    profileId = profile.id,
+                    color = profile.color
+                )
+                playerDao.updatePlayer(updatedPlayer)
+            } else {
+                Logger.e(null, "updatePlayerProfile: Could not find player at index $playerIndex to assign profile.")
+            }
+        } finally {
+            SingletonIdlingResource.decrement()
         }
     }
 
-    /**
-     * Removes a profile assignment from a player, reverting their name and color
-     * to the default state.
-     *
-     * @param playerIndex The index of the player whose profile should be unloaded.
-     */
     suspend fun unloadPlayerProfile(playerIndex: Int) {
-        Logger.i("unloadPlayerProfile: Unloading profile from player $playerIndex.")
-        val playerToUpdate = _gameState.value.players.getOrNull(playerIndex)
-        if (playerToUpdate != null) {
-            val defaultName = "Player ${playerIndex + 1}"
-            val updatedPlayer = playerToUpdate.copy(name = defaultName, profileId = null, color = null)
-            playerDao.updatePlayer(updatedPlayer)
-        } else {
-            Logger.e(null, "unloadPlayerProfile: Could not find player at index $playerIndex to unload profile.")
+        SingletonIdlingResource.increment()
+        try {
+            Logger.i("unloadPlayerProfile: Unloading profile from player $playerIndex.")
+            val playerToUpdate = _gameState.value.players.getOrNull(playerIndex)
+            if (playerToUpdate != null) {
+                val defaultName = "Player ${playerIndex + 1}"
+                val updatedPlayer = playerToUpdate.copy(name = defaultName, profileId = null, color = null)
+                playerDao.updatePlayer(updatedPlayer)
+            } else {
+                Logger.e(null, "unloadPlayerProfile: Could not find player at index $playerIndex to unload profile.")
+            }
+        } finally {
+            SingletonIdlingResource.decrement()
         }
     }
 }

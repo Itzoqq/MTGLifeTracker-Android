@@ -6,7 +6,7 @@ object Logger {
 
     // Predefined tags for tests
     private const val UNIT_TAG = "UNIT_TEST"
-    //private const val INSTRUMENTED_TAG = "INSTRUMENTED_TEST"
+    private const val INSTRUMENTED_TAG = "INSTRUMENTED_TEST"
 
     // For application code
     fun i(message: String, vararg args: Any?) = Timber.i(message, *args)
@@ -18,5 +18,5 @@ object Logger {
     fun unit(message: String, vararg args: Any?) = Timber.tag(UNIT_TAG).d(message, *args)
 
     // For instrumented tests
-    //fun instrumented(message: String, vararg args: Any?) = Timber.tag(INSTRUMENTED_TAG).d(message, *args)
+    fun instrumented(message: String, vararg args: Any?) = Timber.tag(INSTRUMENTED_TAG).d(message, *args)
 }

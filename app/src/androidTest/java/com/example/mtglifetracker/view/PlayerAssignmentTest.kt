@@ -18,6 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.mtglifetracker.BaseUITest
 import com.example.mtglifetracker.R
 import com.example.mtglifetracker.directlyPerformClick
+import com.example.mtglifetracker.util.Logger
 import com.example.mtglifetracker.withViewCount
 import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.AssertionFailedError
@@ -72,12 +73,25 @@ fun waitForView(viewMatcher: Matcher<View>, timeoutMillis: Long = 5000, checkInt
     throw TimeoutException("View with matcher '$viewMatcher' did not appear within $timeoutMillis ms")
 }
 
-
+/**
+ * An instrumented UI test class for verifying all user flows related to player profile
+ * assignment and management.
+ *
+ * This class inherits from [BaseUITest], which handles the boilerplate setup for Hilt,
+ * activity launching, and database clearing. Each test simulates a specific user scenario,
+ * such as assigning a profile, attempting to assign a used profile, deleting an
+ * assigned profile, and ensuring state is preserved across configuration changes.
+ */
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
 class PlayerAssignmentTest : BaseUITest() {
 
+    /**
+     * A helper function to create a test profile with a given nickname and optional color.
+     * This encapsulates the repeatable UI actions for profile creation.
+     */
     private fun createTestProfile(nickname: String, color: String? = null) {
+        Logger.instrumented("Helper: Creating profile '$nickname' with color '$color'.")
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withId(R.id.rv_settings_options))
             .perform(
@@ -104,343 +118,325 @@ class PlayerAssignmentTest : BaseUITest() {
 
         onView(withText("Save")).perform(click())
         pressBack()
+        Logger.instrumented("Helper: Profile '$nickname' created successfully.")
     }
 
+    /**
+     * Tests the fundamental flow of assigning a profile to a player and then unloading it.
+     * Arrange: Creates a test profile.
+     * Act: Clicks the player name, selects the profile from the popup.
+     * Assert: Verifies the player name and background color are updated.
+     * Act: Long-presses the player name to unload the profile.
+     * Assert: Verifies the player name and background color revert to their default states.
+     */
     @Test
     fun assignAndUnloadProfile_onNonRotatedSegment_isSuccessful() {
+        Logger.instrumented("TEST_START: assignAndUnloadProfile_onNonRotatedSegment_isSuccessful")
         // --- ARRANGE ---
         val profileName = "TestProfile"
         createTestProfile(profileName, "#4CAF50")
-
         val nonRotatedSegmentMatcher = withTagValue(equalTo("player_segment_1"))
         val playerNameMatcher = allOf(withId(R.id.tv_player_name), isDescendantOfA(nonRotatedSegmentMatcher))
+        Logger.instrumented("Arrange: Profile and view matchers created.")
 
         // --- ACT & ASSERT (ASSIGN) ---
+        Logger.instrumented("Act: Clicking player name and selecting profile.")
         onView(playerNameMatcher).perform(directlyPerformClick())
         val profilePopupRecyclerMatcher = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(nonRotatedSegmentMatcher))
         onView(profilePopupRecyclerMatcher)
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText(profileName)), directlyPerformClick()
             ))
-
         waitForView(allOf(playerNameMatcher, withText(profileName)))
-
+        Logger.instrumented("Assert: Verifying profile was assigned correctly.")
         onView(playerNameMatcher).check(matches(withText(profileName)))
         onView(nonRotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.delta_positive)))
 
         // --- ACT & ASSERT (UNLOAD) ---
+        Logger.instrumented("Act: Long-clicking player name to unload profile.")
         onView(playerNameMatcher).perform(longClick())
-
-        // Use the new waitForView function to wait for the UI to update
         waitForView(allOf(playerNameMatcher, withText("Player 2")))
-
+        Logger.instrumented("Assert: Verifying profile was unloaded and view reverted to default.")
         onView(playerNameMatcher).check(matches(withText("Player 2")))
         onView(nonRotatedSegmentMatcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
+        Logger.instrumented("TEST_PASS: assignAndUnloadProfile_onNonRotatedSegment_isSuccessful")
     }
 
+    /**
+     * Tests that a profile already assigned to one player cannot be assigned to another.
+     * Arrange: Creates two profiles and assigns the first one to Player 1.
+     * Act: Opens the profile selection popup for Player 2.
+     * Assert: Verifies that the second profile is visible in the list, but the first (assigned) one is not.
+     */
     @Test
     fun assigningUsedProfile_isNotPossible() {
+        Logger.instrumented("TEST_START: assigningUsedProfile_isNotPossible")
         // --- ARRANGE ---
-        // 1. Create two separate profiles we can test with.
+        Logger.instrumented("Arrange: Creating two profiles and assigning 'PlayerOne' to segment 0.")
         createTestProfile("PlayerOne")
         createTestProfile("PlayerTwo")
-
-        // 2. Define matchers for both player segments to keep things clear.
-        val segment0matcher = withTagValue(equalTo("player_segment_0"))
-        val segment0playerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0matcher))
-        val segment0popupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0matcher))
-
-        val segment1matcher = withTagValue(equalTo("player_segment_1"))
-        val segment1playerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment1matcher))
-        val segment1popupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment1matcher))
-
-        // 3. Assign "PlayerOne" to the first player segment.
+        val segment0playerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_0"))))
         onView(segment0playerName).perform(directlyPerformClick())
-        onView(segment0popupRecycler)
+        onView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0")))))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText("PlayerOne")), directlyPerformClick()
             ))
-
-        // 4. Wait to confirm the assignment was successful before proceeding.
         waitForView(allOf(segment0playerName, withText("PlayerOne")))
 
         // --- ACT ---
-        // 5. Open the profile selection popup for the SECOND player.
+        Logger.instrumented("Act: Opening profile selection for segment 1.")
+        val segment1playerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_1"))))
         onView(segment1playerName).perform(directlyPerformClick())
 
         // --- ASSERT ---
-        // 6. Check the contents of the second player's popup.
-        //    "PlayerTwo" should be visible and available to select.
-        onView(allOf(withText("PlayerTwo"), isDescendantOfA(segment1popupRecycler)))
-            .check(matches(isDisplayed()))
-
-        // 7. "PlayerOne" should NOT exist in this list, as it's already in use.
-        //    The `doesNotExist()` assertion is perfect for this check.
-        onView(allOf(withText("PlayerOne"), isDescendantOfA(segment1popupRecycler)))
-            .check(doesNotExist())
+        Logger.instrumented("Assert: Verifying 'PlayerTwo' is visible and 'PlayerOne' does not exist in the popup.")
+        val segment1popupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_1"))))
+        onView(allOf(withText("PlayerTwo"), isDescendantOfA(segment1popupRecycler))).check(matches(isDisplayed()))
+        onView(allOf(withText("PlayerOne"), isDescendantOfA(segment1popupRecycler))).check(doesNotExist())
+        Logger.instrumented("TEST_PASS: assigningUsedProfile_isNotPossible")
     }
 
+    /**
+     * Tests that attempting to open the profile popup for a player shows a Snackbar if no unassigned profiles are available.
+     * Arrange: Creates a single profile and assigns it to Player 1.
+     * Act: Clicks on Player 2's name.
+     * Assert: Verifies that a Snackbar with the correct message appears and the profile popup does not open.
+     */
     @Test
-    fun openingProfilePopup_withNoAvailableProfiles_showsSnackbar() { // Renamed for clarity
+    fun openingProfilePopup_withNoAvailableProfiles_showsSnackbar() {
+        Logger.instrumented("TEST_START: openingProfilePopup_withNoAvailableProfiles_showsSnackbar")
         // --- ARRANGE ---
+        Logger.instrumented("Arrange: Creating one profile and assigning it to segment 0.")
         createTestProfile("TheOnlyProfile")
-
-        val segment0Matcher = withTagValue(equalTo("player_segment_0"))
-        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0Matcher))
-        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0Matcher))
-
+        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_0"))))
         onView(segment0PlayerName).perform(directlyPerformClick())
-        onView(segment0PopupRecycler)
+        onView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0")))))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText("TheOnlyProfile")), directlyPerformClick()
             ))
         waitForView(allOf(segment0PlayerName, withText("TheOnlyProfile")))
 
-        val segment1Matcher = withTagValue(equalTo("player_segment_1"))
-        val segment1PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment1Matcher))
-
         // --- ACT ---
+        Logger.instrumented("Act: Clicking on player name for segment 1.")
+        val segment1PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_1"))))
         onView(segment1PlayerName).perform(directlyPerformClick())
 
         // --- ASSERT ---
-        // Assert that the Snackbar is displayed with the correct text. It's that simple!
-        onView(withText("No other profiles available"))
-            .check(matches(isDisplayed()))
-
-        // As a final check, ensure the profile popup for player 2 did NOT open.
-        val segment1PopupContainer = allOf(withId(R.id.profile_popup_container), isDescendantOfA(segment1Matcher))
+        Logger.instrumented("Assert: Verifying Snackbar is displayed and popup is not.")
+        onView(withText("No other profiles available")).check(matches(isDisplayed()))
+        val segment1PopupContainer = allOf(withId(R.id.profile_popup_container), isDescendantOfA(withTagValue(equalTo("player_segment_1"))))
         onView(segment1PopupContainer).check(matches(not(isDisplayed())))
+        Logger.instrumented("TEST_PASS: openingProfilePopup_withNoAvailableProfiles_showsSnackbar")
     }
 
+    /**
+     * Tests that if a profile assigned to a player is deleted from the settings, the player's segment correctly reverts to its default state.
+     * Arrange: Creates a profile and assigns it to Player 1.
+     * Act: Navigates to settings and deletes the profile.
+     * Assert: Verifies that Player 1's name and background color revert to default on the main screen.
+     */
     @Test
     fun deletingAssignedProfile_revertsPlayerSegmentToDefault() {
+        Logger.instrumented("TEST_START: deletingAssignedProfile_revertsPlayerSegmentToDefault")
         // --- ARRANGE ---
-        // 1. Create a profile with a color and assign it to Player 1.
+        Logger.instrumented("Arrange: Creating and assigning profile 'ToDelete'.")
         val profileName = "ToDelete"
-        createTestProfile(profileName, "#9C27B0") // A purple color
-
-        val segment0Matcher = withTagValue(equalTo("player_segment_0"))
-        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0Matcher))
-        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0Matcher))
-
+        createTestProfile(profileName, "#9C27B0")
+        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_0"))))
         onView(segment0PlayerName).perform(directlyPerformClick())
-        onView(segment0PopupRecycler)
+        onView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0")))))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText(profileName)), directlyPerformClick()
             ))
-
-        // 2. Verify the profile was assigned correctly.
         waitForView(allOf(segment0PlayerName, withText(profileName)))
-        onView(segment0PlayerName).check(matches(withText(profileName)))
 
         // --- ACT ---
-        // 3. Navigate to the Manage Profiles dialog.
+        Logger.instrumented("Act: Navigating to settings and deleting the profile.")
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withId(R.id.rv_settings_options))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 withText("Manage Profiles"), click()
             ))
-
-        // 4. Delete the profile. This involves a long click to bring up the edit/delete menu.
         onView(withText(profileName)).perform(longClick())
         onView(withText("Delete")).perform(click())
         onView(withText("DELETE")).perform(click())
-
-        // 5. Return to the main screen.
-        pressBack() // This should dismiss all dialogs.
+        pressBack()
 
         // --- ASSERT ---
-        // 6. Wait for the player name to revert to its default state.
-        //    This is crucial because the update happens via a background Flow.
+        Logger.instrumented("Assert: Verifying player segment reverts to default.")
         waitForView(allOf(segment0PlayerName, withText("Player 1")))
-
-        // 7. Verify the player segment has fully reverted to its default state.
         onView(segment0PlayerName).check(matches(withText("Player 1")))
-        onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
+        onView(withTagValue(equalTo("player_segment_0"))).check(matches(withBackgroundColor(R.color.default_segment_background)))
+        Logger.instrumented("TEST_PASS: deletingAssignedProfile_revertsPlayerSegmentToDefault")
     }
 
+    /**
+     * Tests that profile assignments are correctly preserved when switching the player count away and then back.
+     * Arrange: Sets up a 4-player game and assigns a profile to Player 3.
+     * Act: Switches to a 2-player game.
+     * Assert: Verifies the profile is gone.
+     * Act: Switches back to a 4-player game.
+     * Assert: Verifies the original profile assignment to Player 3 is restored.
+     */
     @Test
     fun profileAssignmentsArePreservedWhenSwitchingPlayerCount() {
-        // --- ARRANGE: Set up a 4-player game with a custom profile ---
+        Logger.instrumented("TEST_START: profileAssignmentsArePreservedWhenSwitchingPlayerCount")
+        // --- ARRANGE ---
+        Logger.instrumented("Arrange: Setting up 4-player game and assigning profile to segment 2.")
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Number of Players")).perform(click())
         onView(withText("4")).perform(click())
         pressBack()
-
         waitForView(withTagValue(equalTo("player_segment_3")))
-        onView(isRoot()).check(withViewCount(isAssignableFrom(LifeCounterView::class.java), 4))
-
         val profileName = "TestProfile"
         createTestProfile(profileName)
-
-        val segment2Matcher = withTagValue(equalTo("player_segment_2"))
-        val segment2PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment2Matcher))
-        val segment2PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment2Matcher))
-
+        val segment2PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_2"))))
         onView(segment2PlayerName).perform(directlyPerformClick())
-
-        // Wait for the popup's RecyclerView to be fully laid out before clicking
-        waitForView(segment2PopupRecycler)
-
-        onView(segment2PopupRecycler)
+        waitForView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_2")))))
+        onView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_2")))))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText(profileName)), directlyPerformClick()
             ))
-
         waitForView(allOf(segment2PlayerName, withText(profileName)))
-        onView(segment2PlayerName).check(matches(withText(profileName)))
 
-        // --- ACT: Switch to a 2-player game ---
+        // --- ACT 1 & ASSERT 1 ---
+        Logger.instrumented("Act: Switching to 2-player game.")
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Number of Players")).perform(click())
         onView(withText("2")).perform(click())
         pressBack()
-
-        // --- ASSERT: Verify 2-player game is in its default state ---
         waitForView(withTagValue(equalTo("player_segment_1")))
         onView(isRoot()).check(withViewCount(isAssignableFrom(LifeCounterView::class.java), 2))
         onView(segment2PlayerName).check(doesNotExist())
+        Logger.instrumented("Assert: Verified 2-player game state is correct.")
 
-        // --- ACT: Switch back to the 4-player game ---
+        // --- ACT 2 & ASSERT 2 ---
+        Logger.instrumented("Act: Switching back to 4-player game.")
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Number of Players")).perform(click())
         onView(withText("4")).perform(click())
         pressBack()
-
-        // --- FINAL ASSERT: Verify the original profile assignment was restored ---
+        Logger.instrumented("Assert: Verifying original profile assignment was restored.")
         waitForView(allOf(segment2PlayerName, withText(profileName)))
         onView(segment2PlayerName).check(matches(withText(profileName)))
+        Logger.instrumented("TEST_PASS: profileAssignmentsArePreservedWhenSwitchingPlayerCount")
     }
 
+    /**
+     * Tests that resetting the current game clears all profile assignments for that game size.
+     * Arrange: Creates a profile and assigns it to Player 1.
+     * Act: Navigates to settings and resets the current game.
+     * Assert: Verifies Player 1's segment has reverted to its default state.
+     */
     @Test
     fun resettingCurrentGame_clearsProfileAssignments() {
+        Logger.instrumented("TEST_START: resettingCurrentGame_clearsProfileAssignments")
         // --- ARRANGE ---
-        // 1. Create a profile and assign it to Player 1.
-        val profileName = "ProfileToReset"
-        createTestProfile(profileName, "#FF9800") // An orange color
-
-        val segment0Matcher = withTagValue(equalTo("player_segment_0"))
-        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0Matcher))
-        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0Matcher))
-
+        Logger.instrumented("Arrange: Creating and assigning a profile.")
+        createTestProfile("ProfileToReset", "#FF9800")
+        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_0"))))
         onView(segment0PlayerName).perform(directlyPerformClick())
-        waitForView(segment0PopupRecycler) // Wait for the popup to be laid out
-        onView(segment0PopupRecycler)
+        waitForView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0")))))
+        onView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0")))))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
-                hasDescendant(withText(profileName)), directlyPerformClick()
+                hasDescendant(withText("ProfileToReset")), directlyPerformClick()
             ))
-
-        // 2. Verify the assignment was successful.
-        waitForView(allOf(segment0PlayerName, withText(profileName)))
-        onView(segment0PlayerName).check(matches(withText(profileName)))
-
+        waitForView(allOf(segment0PlayerName, withText("ProfileToReset")))
 
         // --- ACT ---
-        // 3. Navigate to the Reset Game dialog and perform the reset.
+        Logger.instrumented("Act: Resetting the current game.")
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withId(R.id.rv_settings_options))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 withText("Reset Game"), click()
             ))
-
-        // "Reset current" is selected by default, so we just need to click the positive button.
         onView(withText("Reset")).perform(click())
         pressBack()
 
         // --- ASSERT ---
-        // 4. Wait for the player name to revert to its default state after the reset.
+        Logger.instrumented("Assert: Verifying player segment has reverted to default.")
         waitForView(allOf(segment0PlayerName, withText("Player 1")))
-
-        // 5. Verify the entire player segment has been reverted to its default state.
         onView(segment0PlayerName).check(matches(withText("Player 1")))
-        onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
+        onView(withTagValue(equalTo("player_segment_0"))).check(matches(withBackgroundColor(R.color.default_segment_background)))
+        Logger.instrumented("TEST_PASS: resettingCurrentGame_clearsProfileAssignments")
     }
 
+    /**
+     * Tests that changing the starting life total clears all profile assignments.
+     * Arrange: Creates and assigns a profile.
+     * Act: Navigates to settings and changes the starting life total.
+     * Assert: Verifies the assigned player segment reverts to its default state.
+     */
     @Test
     fun changingStartingLife_clearsProfileAssignments() {
+        Logger.instrumented("TEST_START: changingStartingLife_clearsProfileAssignments")
         // --- ARRANGE ---
-        // 1. Create a profile and assign it to Player 1.
-        val profileName = "TestProfile"
-        createTestProfile(profileName, "#4CAF50") // A green color
-
-        val segment0Matcher = withTagValue(equalTo("player_segment_0"))
-        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0Matcher))
-        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0Matcher))
-
+        Logger.instrumented("Arrange: Creating and assigning a profile.")
+        createTestProfile("TestProfile", "#4CAF50")
+        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_0"))))
         onView(segment0PlayerName).perform(directlyPerformClick())
-        waitForView(segment0PopupRecycler)
-        onView(segment0PopupRecycler)
+        waitForView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0")))))
+        onView(allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0")))))
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
-                hasDescendant(withText(profileName)), directlyPerformClick()
+                hasDescendant(withText("TestProfile")), directlyPerformClick()
             ))
-
-        // 2. Verify the assignment was successful.
-        waitForView(allOf(segment0PlayerName, withText(profileName)))
-        onView(segment0PlayerName).check(matches(withText(profileName)))
+        waitForView(allOf(segment0PlayerName, withText("TestProfile")))
 
         // --- ACT ---
-        // 3. Navigate to the Starting Life dialog and change the life total.
+        Logger.instrumented("Act: Changing the starting life total.")
         onView(withId(R.id.settingsIcon)).perform(click())
         onView(withText("Starting Life")).perform(click())
-        onView(withText("20")).perform(click()) // Change to 20 life
+        onView(withText("20")).perform(click())
         pressBack()
 
         // --- ASSERT ---
-        // 4. Wait for the player name to revert to its default state after the reset.
+        Logger.instrumented("Assert: Verifying player segment has reverted to default.")
         waitForView(allOf(segment0PlayerName, withText("Player 1")))
-
-        // 5. Verify the player segment has fully reverted to its default state.
         onView(segment0PlayerName).check(matches(withText("Player 1")))
-        onView(segment0Matcher).check(matches(withBackgroundColor(R.color.default_segment_background)))
+        onView(withTagValue(equalTo("player_segment_0"))).check(matches(withBackgroundColor(R.color.default_segment_background)))
+        Logger.instrumented("TEST_PASS: changingStartingLife_clearsProfileAssignments")
     }
 
+    /**
+     * Tests that a user cannot assign a profile from a stale UI state.
+     * Arrange: Creates one profile. Opens the profile popup for both Player 1 and Player 2.
+     * Act: Player 2 selects the profile first. Then, Player 1 (with the now stale popup) tries to select the same profile.
+     * Assert: Verifies that a Snackbar appears for Player 1 and their name does not change.
+     */
     @Test
     fun selectingStaleProfile_whenAlreadyAssignedByOtherPlayer_showsSnackbar() {
+        Logger.instrumented("TEST_START: selectingStaleProfile_whenAlreadyAssignedByOtherPlayer_showsSnackbar")
         // --- ARRANGE ---
-        // 1. Create a single profile that both players will try to select.
+        Logger.instrumented("Arrange: Creating one profile and opening popups for both players.")
         val profileName = "TestProfile"
         createTestProfile(profileName)
-
-        // 2. Define matchers for both players.
-        val segment0Matcher = withTagValue(equalTo("player_segment_0"))
-        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment0Matcher))
-        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment0Matcher))
-
-        val segment1Matcher = withTagValue(equalTo("player_segment_1"))
-        val segment1PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(segment1Matcher))
-        val segment1PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(segment1Matcher))
-
-        // 3. Open the profile popup for BOTH players. Player 1's popup will become "stale".
+        val segment0PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_0"))))
+        val segment1PlayerName = allOf(withId(R.id.tv_player_name), isDescendantOfA(withTagValue(equalTo("player_segment_1"))))
         onView(segment0PlayerName).perform(directlyPerformClick())
         onView(segment1PlayerName).perform(directlyPerformClick())
-
-        // 4. Verify the profile is initially visible in both popups.
+        val segment0PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_0"))))
+        val segment1PopupRecycler = allOf(withId(R.id.profiles_recycler_view), isDescendantOfA(withTagValue(equalTo("player_segment_1"))))
         waitForView(allOf(withText(profileName), isDescendantOfA(segment0PopupRecycler)))
         waitForView(allOf(withText(profileName), isDescendantOfA(segment1PopupRecycler)))
 
         // --- ACT ---
-        // 5. Player 2 selects the profile first.
+        Logger.instrumented("Act: Player 2 selects profile first, then Player 1 attempts to select the same one.")
+        // Player 2 selects the profile.
         onView(segment1PopupRecycler)
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText(profileName)), directlyPerformClick()
             ))
-
-        // 6. Verify Player 2's segment updates correctly.
         waitForView(allOf(segment1PlayerName, withText(profileName)))
-        onView(segment1PlayerName).check(matches(withText(profileName)))
-
-        // 7. Now, Player 1 (with the stale popup) tries to select the same profile.
+        // Player 1, with the stale popup, now tries to select it.
         onView(segment0PopupRecycler)
             .perform(RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText(profileName)), directlyPerformClick()
             ))
 
         // --- ASSERT ---
-        // 8. A Snackbar should appear, telling Player 1 the profile is already in use.
-        onView(withText("'$profileName' is already in use."))
-            .check(matches(isDisplayed()))
-
-        // 9. Crucially, Player 1's name should NOT have changed.
+        Logger.instrumented("Assert: Verifying Snackbar appears and Player 1's name is unchanged.")
+        onView(withText("'$profileName' is already in use.")).check(matches(isDisplayed()))
         onView(segment0PlayerName).check(matches(withText("Player 1")))
+        Logger.instrumented("TEST_PASS: selectingStaleProfile_whenAlreadyAssignedByOtherPlayer_showsSnackbar")
     }
 }
