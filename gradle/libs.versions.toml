@@ -3,21 +3,22 @@ agp = "8.11.1"
 coreKtxVersion = "1.6.1"
 coreTesting = "2.2.0"
 fragmentKtx = "1.8.8"
-kotlin = "2.1.21"
+kotlin = "2.2.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.1"
-kotlinxCoroutinesTest = "1.8.1"
+kotlinxCoroutinesTest = "1.10.2"
 lifecycleViewmodelKtx = "2.9.1"
 material = "1.12.0"
 mockitoCore = "5.18.0"
 mockitoInline = "5.2.0"
-mockitoKotlin = "5.2.1"
-robolectric = "4.12.1"
+mockitoKotlin = "5.4.0"
+robolectric = "4.15.1"
 roomVersion = "2.7.2"
-turbine = "1.1.0"
+timber = "5.0.1"
+turbine = "1.2.1"
 androidx-test-ext-junit = "1.2.1"
 androidx-test-runner = "1.6.2"
 fragmentTesting = "1.8.8"
@@ -55,6 +56,7 @@ mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore
 mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockitoInline" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 androidx-test-ext-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidx-test-ext-junit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }

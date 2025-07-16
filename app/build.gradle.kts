@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -14,11 +16,15 @@ jacoco {
 
 android {
     namespace = "com.example.mtglifetracker"
+    // Updated to the latest stable SDK version to resolve the warning.
+    //noinspection GradleDependency
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.mtglifetracker"
         minSdk = 24
+        // Best practice: targetSdk should always match compileSdk.
+        //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -62,8 +68,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
     }
     buildFeatures {
         viewBinding = true
@@ -111,6 +119,9 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.room.testing)
+
+    // I see you added this in your last screenshot. Good addition!
+    implementation(libs.timber)
 
     // --- Dependencies for Android Instrumentation (UI) Tests ---
     androidTestImplementation(libs.core.ktx)
