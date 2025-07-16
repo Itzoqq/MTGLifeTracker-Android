@@ -23,12 +23,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 /**
- * A [DialogFragment] for creating a new user profile or editing an existing one.
+ * A DialogFragment for creating a new user profile or editing an existing one.
  *
- * This dialog's behavior changes based on the arguments it receives. If launched with
- * profile data, it enters "edit" mode, pre-filling the fields and updating an existing
- * profile on save. If launched without arguments, it enters "create" mode, allowing for
- * the creation of a new profile with validation for the nickname.
+ * This dialog handles user input for a nickname and color selection. It performs
+ * validation on the nickname to ensure it meets length and character requirements and
+ * checks for uniqueness before saving to the database via the [ProfileViewModel].
  */
 @AndroidEntryPoint
 class CreateProfileDialogFragment : DialogFragment() {
@@ -36,13 +35,18 @@ class CreateProfileDialogFragment : DialogFragment() {
     private val profileViewModel: ProfileViewModel by activityViewModels()
     private var selectedColor: String? = null
     private val colors = listOf(
-        "#F44336", "#9C27B0", "#2196F3", "#4CAF50", "#FFEB3B", "#FF9800"
+        "#F44336", // Red
+        "#9C27B0", // Purple
+        "#2196F3", // Blue
+        "#4CAF50", // Green
+        "#FFEB3B", // Yellow
+        "#FF9800"  // Orange
     )
     private lateinit var colorAdapter: ColorAdapter
 
     /**
-     * Overridden to ensure that if the user cancels the dialog (e.g., by pressing the
-     * back button), all other dialogs are dismissed as well, returning to a clean state.
+     * Overrides the default onCancel to ensure any related dialogs are also dismissed,
+     * preventing UI leaks.
      */
     override fun onCancel(dialog: DialogInterface) {
         super.onCancel(dialog)
@@ -50,107 +54,85 @@ class CreateProfileDialogFragment : DialogFragment() {
         (activity as? MainActivity)?.dismissAllDialogs()
     }
 
-    /**
-     * Builds and returns the dialog instance.
-     * This method sets up the view, determines if it's in "create" or "edit" mode,
-     * populates data for "edit" mode, and configures the save button's validation logic.
-     */
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        // Determine if the dialog is for creating a new profile or editing an existing one.
         val editingProfileId = arguments?.getLong(ARG_EDIT_MODE_ID, -1L) ?: -1L
         val isEditMode = editingProfileId != -1L
         Logger.i("CreateProfileDialog: onCreateDialog. Is in Edit Mode -> $isEditMode")
 
         val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
         val inflater = requireActivity().layoutInflater
-
-        // Inflate view with a temporary parent to resolve layout parameter warnings.
         val view = inflater.inflate(R.layout.dialog_create_profile, FrameLayout(requireContext()), false)
+
         val nicknameEditText: EditText = view.findViewById(R.id.et_nickname)
         val colorRecyclerView: RecyclerView = view.findViewById(R.id.rv_colors)
 
         setupRecyclerView(colorRecyclerView)
 
-        // The nickname field is always enabled initially. It will be disabled below if in edit mode.
-        nicknameEditText.isEnabled = true
+        // The nickname field is only editable in create mode.
+        nicknameEditText.isEnabled = !isEditMode
 
-        // Inflate and set up the custom title view.
+        // Set up the custom title with a back arrow.
         val customTitleView = inflater.inflate(R.layout.dialog_custom_title, FrameLayout(requireContext()), false)
         val titleTextView = customTitleView.findViewById<TextView>(R.id.tv_dialog_title)
         titleTextView.text = if (isEditMode) getString(R.string.title_edit_profile) else getString(R.string.title_create_profile)
         customTitleView.findViewById<ImageView>(R.id.iv_back_arrow).setOnClickListener {
-            Logger.d("CreateProfileDialog: Back arrow in custom title clicked. Dismissing.")
+            Logger.d("CreateProfileDialog: Back arrow clicked. Dismissing.")
             dismiss()
         }
 
         builder.setCustomTitle(customTitleView)
             .setView(view)
-            .setPositiveButton("Save", null) // Set to null to override behavior and prevent auto-dismiss.
+            .setPositiveButton("Save", null) // Set to null to override and control dismissal manually.
             .setNegativeButton("Cancel") { dialog, _ ->
                 Logger.i("CreateProfileDialog: Cancel button clicked.")
                 dialog.cancel()
             }
 
-        // If in edit mode, populate the fields with the existing profile's data.
+        // If in edit mode, populate the fields with the existing profile data.
         if (isEditMode) {
             val nickname = arguments?.getString(ARG_EDIT_MODE_NICKNAME) ?: ""
             val color = arguments?.getString(ARG_EDIT_MODE_COLOR)
-            Logger.d("CreateProfileDialog: Populating fields for editing Profile ID $editingProfileId with Nickname='$nickname', Color='$color'.")
-
+            Logger.d("CreateProfileDialog: Populating fields for editing Profile ID $editingProfileId.")
             nicknameEditText.setText(nickname)
-            // Disable the nickname field in edit mode to prevent changing it.
-            nicknameEditText.isEnabled = false
-
             selectedColor = color
             colorAdapter.setSelectedColor(selectedColor)
         }
 
         val dialog = builder.create()
 
-        // We override the button's click listener here to add our custom validation logic.
-        // This prevents the dialog from closing if the input is invalid.
+        // Override the save button's click listener to implement custom validation logic.
         dialog.setOnShowListener {
             val saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             saveButton.setOnClickListener {
                 if (isEditMode) {
-                    // --- SAVE LOGIC FOR EDIT MODE ---
+                    // In edit mode, we only update the color.
                     Logger.i("CreateProfileDialog: Save button clicked in Edit Mode.")
                     val updatedProfile = Profile(
                         id = editingProfileId,
-                        nickname = nicknameEditText.text.toString(), // Nickname is disabled but we still read it.
+                        nickname = nicknameEditText.text.toString(),
                         color = selectedColor
                     )
                     profileViewModel.updateProfile(updatedProfile)
                     dialog.dismiss()
                 } else {
-                    // --- SAVE LOGIC FOR CREATE MODE ---
+                    // In create mode, we validate the new nickname before saving.
                     Logger.i("CreateProfileDialog: Save button clicked in Create Mode.")
                     val nickname = nicknameEditText.text.toString().trim()
-                    val isAlphaNumeric = nickname.matches("^[a-zA-Z0-9]*$".toRegex())
-                    Logger.d("CreateProfileDialog: Validating nickname '$nickname'. Length=${nickname.length}, IsAlphaNumeric=$isAlphaNumeric.")
+                    // FIX: This regex now allows for letters, numbers, AND spaces.
+                    val isAlphaNumericWithSpaces = nickname.matches("^[a-zA-Z0-9 ]*$".toRegex())
+                    Logger.d("CreateProfileDialog: Validating nickname '$nickname'. Length=${nickname.length}, IsAlphaNumericWithSpaces=$isAlphaNumericWithSpaces.")
 
-                    // Perform a series of validation checks.
                     when {
-                        nickname.length < 3 -> {
-                            Logger.w("CreateProfileDialog: Validation failed - nickname too short.")
-                            Snackbar.make(view, "Nickname must be at least 3 characters", Snackbar.LENGTH_SHORT).show()
-                        }
-                        nickname.length > 14 -> {
-                            Logger.w("CreateProfileDialog: Validation failed - nickname too long.")
-                            Snackbar.make(view, "Nickname must be no more than 14 characters", Snackbar.LENGTH_SHORT).show()
-                        }
-                        !isAlphaNumeric -> {
-                            Logger.w("CreateProfileDialog: Validation failed - nickname not alphanumeric.")
-                            Snackbar.make(view, "Nickname can only contain letters and numbers", Snackbar.LENGTH_SHORT).show()
-                        }
+                        nickname.length < 3 -> Snackbar.make(view, "Nickname must be at least 3 characters", Snackbar.LENGTH_SHORT).show()
+                        nickname.length > 14 -> Snackbar.make(view, "Nickname must be no more than 14 characters", Snackbar.LENGTH_SHORT).show()
+                        !isAlphaNumericWithSpaces -> Snackbar.make(view, "Nickname can only contain letters, numbers, and spaces", Snackbar.LENGTH_SHORT).show()
                         else -> {
-                            // If basic validation passes, check for uniqueness in the database.
+                            // Check for uniqueness before saving.
                             lifecycleScope.launch {
-                                Logger.d("CreateProfileDialog: Checking if nickname '$nickname' already exists.")
                                 if (profileViewModel.doesNicknameExist(nickname)) {
-                                    Logger.w("CreateProfileDialog: Validation failed - nickname already exists.")
                                     Snackbar.make(view, "Nickname already exists.", Snackbar.LENGTH_SHORT).show()
                                 } else {
-                                    // All validation passed, add the profile and dismiss the dialog.
                                     Logger.i("CreateProfileDialog: Validation passed. Adding new profile.")
                                     profileViewModel.addProfile(nickname, selectedColor)
                                     dialog.dismiss()
@@ -165,8 +147,7 @@ class CreateProfileDialogFragment : DialogFragment() {
     }
 
     /**
-     * Sets up the [RecyclerView] for displaying color swatches.
-     * @param recyclerView The RecyclerView to be configured.
+     * Initializes the RecyclerView for color selection.
      */
     private fun setupRecyclerView(recyclerView: RecyclerView) {
         Logger.d("CreateProfileDialog: setting up color picker RecyclerView.")
@@ -175,24 +156,15 @@ class CreateProfileDialogFragment : DialogFragment() {
             selectedColor = color
         }
         recyclerView.adapter = colorAdapter
-        recyclerView.layoutManager = GridLayoutManager(context, 6) // Display colors in a grid.
+        recyclerView.layoutManager = GridLayoutManager(context, 6)
     }
 
-    /**
-     * A companion object to provide standardized factory methods for creating fragment instances.
-     */
     companion object {
         const val TAG = "CreateProfileDialogFragment"
         private const val ARG_EDIT_MODE_ID = "edit_mode_id"
         private const val ARG_EDIT_MODE_NICKNAME = "edit_mode_nickname"
         private const val ARG_EDIT_MODE_COLOR = "edit_mode_color"
 
-        /**
-         * Creates a new instance of [CreateProfileDialogFragment] pre-configured for "edit" mode.
-         *
-         * @param profile The [Profile] to be edited.
-         * @return A new fragment instance with the profile's data packed into its arguments.
-         */
         fun newInstanceForEdit(profile: Profile): CreateProfileDialogFragment {
             val args = Bundle().apply {
                 putLong(ARG_EDIT_MODE_ID, profile.id)
