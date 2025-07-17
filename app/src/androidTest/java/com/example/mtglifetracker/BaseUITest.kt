@@ -82,7 +82,7 @@ abstract class BaseUITest {
             // in the in-memory database, ensuring the next test starts with a clean slate.
             Logger.instrumented("BaseUITest: Clearing all database tables.")
             db.clearAllTables()
-            // db.close() // REMOVE THIS LINE
+            db.close()
             Logger.instrumented("BaseUITest: Database tables cleared.")
         }
 
