@@ -82,8 +82,8 @@ abstract class BaseUITest {
             // in the in-memory database, ensuring the next test starts with a clean slate.
             Logger.instrumented("BaseUITest: Clearing all database tables.")
             db.clearAllTables()
-            db.close()
-            Logger.instrumented("BaseUITest: Database tables cleared and DB closed.")
+            // db.close() // REMOVE THIS LINE
+            Logger.instrumented("BaseUITest: Database tables cleared.")
         }
 
         // Close the activity scenario to free up resources.

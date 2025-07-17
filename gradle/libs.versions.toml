@@ -10,7 +10,7 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.1"
 kotlinxCoroutinesTest = "1.10.2"
-lifecycleViewmodelKtx = "2.9.1"
+lifecycleViewmodelKtx = "2.9.2"
 material = "1.12.0"
 mockitoCore = "5.18.0"
 mockitoInline = "5.2.0"
@@ -26,7 +26,8 @@ androidxMonitor = "1.7.2"
 jacoco = "0.8.12"
 hiltAndroid = "2.56.2"
 dagger = "2.56.2"
-ksp = "2.1.21-2.0.1"
+ksp = "2.2.0-2.0.2"
+uiTestJunit4Android = "1.8.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -62,6 +63,7 @@ androidx-test-ext-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx",
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
 androidx-fragment-testing = { module = "androidx.fragment:fragment-testing", version.ref = "fragmentTesting" }
 androidx-test-monitor = { group = "androidx.test", name = "monitor", version.ref = "androidxMonitor" }
+androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
