@@ -356,7 +356,7 @@ class PlayerLayoutManager(
         Logger.d("addDivider: Created a new divider with ID $viewId and orientation $orientation.")
 
         if (orientation == ConstraintLayout.LayoutParams.HORIZONTAL) {
-            constraintSet.constrainHeight(viewId, 2) // Set a fixed height of 2dp
+            constraintSet.constrainHeight(viewId, 6) // Set a fixed height of 2dp
             constraintSet.constrainWidth(viewId, 0)  // Set width to match constraints (0dp)
             constraintSet.connect(viewId, ConstraintSet.START, startBarrier, if (startBarrier == ConstraintSet.PARENT_ID) ConstraintSet.START else ConstraintSet.END)
             constraintSet.connect(viewId, ConstraintSet.END, endBarrier, if (endBarrier == ConstraintSet.PARENT_ID) ConstraintSet.END else ConstraintSet.START)
@@ -365,7 +365,7 @@ class PlayerLayoutManager(
             constraintSet.setVerticalBias(viewId, bias) // Position it vertically
         } else { // VERTICAL
             constraintSet.constrainHeight(viewId, 0) // Set height to match constraints (0dp)
-            constraintSet.constrainWidth(viewId, 2)   // Set a fixed width of 2dp
+            constraintSet.constrainWidth(viewId, 6)   // Set a fixed width of 2dp
             constraintSet.connect(viewId, ConstraintSet.TOP, startBarrier, if (startBarrier == ConstraintSet.PARENT_ID) ConstraintSet.TOP else ConstraintSet.BOTTOM)
             constraintSet.connect(viewId, ConstraintSet.BOTTOM, endBarrier, if (endBarrier == ConstraintSet.PARENT_ID) ConstraintSet.BOTTOM else ConstraintSet.TOP)
             constraintSet.connect(viewId, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
