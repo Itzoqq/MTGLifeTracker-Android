@@ -26,7 +26,7 @@
         android:id="@+id/commander_damage_summary"
         android:layout_width="64dp"
         android:layout_height="85dp"
-        android:background="#424242"
+        android:background="@android:color/transparent"
         android:clickable="true"
         android:contentDescription="@string/commander_damage"
         android:focusable="true"

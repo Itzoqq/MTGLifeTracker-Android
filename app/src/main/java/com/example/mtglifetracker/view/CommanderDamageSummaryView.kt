@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.Gravity
@@ -42,23 +43,38 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
     // A Paint object used for drawing the colored backgrounds of each cell.
     private val backgroundPaint = Paint()
 
+    // Paint for the view's default background color.
+    private val defaultBgPaint = Paint().apply {
+        color = "#424242".toColorInt() // A dark grey, used as the base.
+        style = Paint.Style.FILL
+    }
+
+    private val strokeWidth = resources.displayMetrics.density * 1f // 1dp stroke width
+    private val borderPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        color = Color.WHITE // Default border color is white.
+        strokeWidth = this@CommanderDamageSummaryView.strokeWidth
+        isAntiAlias = true
+    }
+    private val viewBounds = RectF()
+    // A property to hold the current contrast color (white or black) passed from the parent.
+    private var currentContrastColor: Int = Color.WHITE
+
     /**
      * The main public method to update the contents and layout of the view.
-     *
-     * This method is called whenever the game state changes. It checks if the player
-     * count has changed to determine if a full layout rebuild is necessary. It then
-     * updates the text and color of each cell in the grid.
      *
      * @param currentPlayer The [Player] who owns the parent [PlayerSegmentView].
      * @param allPlayersInGame The complete list of all players in the current game.
      * @param damageToCurrentPlayer A list of [CommanderDamage] entries where the target is the [currentPlayer].
-     * @param angle The rotation angle of the parent view, used to correctly rotate the text inside the cells.
+     * @param angle The rotation angle of the parent view.
+     * @param contrastColor The color (WHITE or BLACK) to use for elements like the border, to contrast with the parent's background.
      */
     fun updateView(
         currentPlayer: Player,
         allPlayersInGame: List<Player>,
         damageToCurrentPlayer: List<CommanderDamage>,
-        angle: Int
+        angle: Int,
+        contrastColor: Int
     ) {
         Logger.d("SummaryView: updateView called for player ${currentPlayer.playerIndex}.")
         val playerCount = allPlayersInGame.size
@@ -67,6 +83,9 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             Logger.i("SummaryView: Player count changed from $currentPlayerCount to $playerCount. Setting up new layout.")
             setupLayout(playerCount)
         }
+
+        // Store the contrast color for the border. The dividers will remain white.
+        this.currentContrastColor = contrastColor
 
         // Get the specific grid order for the current player count.
         playerGrid = getPlayerGrid(playerCount, allPlayersInGame)
@@ -87,13 +106,13 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
             textView.background = null // Clear any old background; it will be drawn manually in onDraw.
             textView.alpha = 1.0f
 
-            // Determine if the text should be light or dark based on the player's background color.
-            val contrastColor = if (sourcePlayer.color != null && !isColorDark(sourcePlayer.color.toColorInt())) {
+            // The text color inside each cell contrasts with that specific cell's background color.
+            val cellContrastColor = if (sourcePlayer.color != null && !isColorDark(sourcePlayer.color.toColorInt())) {
                 Color.BLACK
             } else {
                 Color.WHITE
             }
-            textView.setTextColor(contrastColor)
+            textView.setTextColor(cellContrastColor)
 
             // If the cell represents the current player, show "Me" and disable it.
             if (sourcePlayer.playerIndex == currentPlayer.playerIndex) {
@@ -104,20 +123,21 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
                 textView.text = (damageMap[sourcePlayer.playerIndex]?.damage ?: 0).toString()
             }
         }
-        // Trigger a redraw to render the new backgrounds set in onDraw.
+        // Trigger a redraw to render the new backgrounds and border set in onDraw.
         invalidate()
     }
 
     /**
-     * Overridden to manually draw the colored background for each grid cell.
-     *
-     * Drawing the backgrounds manually in `onDraw` instead of setting them on the TextViews
-     * gives more control and can be more performant, especially when dealing with many views
-     * in a complex layout that redraws frequently.
+     * Overridden to manually draw the background and border of the view.
      */
     override fun onDraw(canvas: Canvas) {
-        Logger.d("SummaryView: onDraw called.")
-        // Before drawing the TextViews, draw a colored rectangle behind each one.
+        super.onDraw(canvas)
+
+        // 1. Draw the default lighter grey background for the entire view first.
+        viewBounds.set(0f, 0f, width.toFloat(), height.toFloat())
+        canvas.drawRect(viewBounds, defaultBgPaint)
+
+        // 2. Draw the specific colored backgrounds for each cell on top of the grey.
         textViews.forEachIndexed { index, textView ->
             playerGrid.getOrNull(index)?.color?.let { colorString ->
                 try {
@@ -134,14 +154,17 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
                 }
             }
         }
-        // After drawing our custom backgrounds, call super.onDraw() to draw the children (the TextViews).
-        super.onDraw(canvas)
+
+        // 3. Draw the sharp border on top, using the dynamic contrast color.
+        borderPaint.color = currentContrastColor
+        val halfStroke = strokeWidth / 2f
+        // Inset the drawing rectangle by half the stroke width to prevent it from being clipped by the view bounds.
+        viewBounds.set(halfStroke, halfStroke, width.toFloat() - halfStroke, height.toFloat() - halfStroke)
+        canvas.drawRect(viewBounds, borderPaint)
     }
 
     /**
      * Determines the specific order of players for the grid layout.
-     * For most player counts, this is a simple sort by index. For 5 players, it's a custom
-     * order to match the 2x3 visual layout.
      */
     private fun getPlayerGrid(playerCount: Int, allPlayers: List<Player>): List<Player> {
         if (allPlayers.isEmpty()) return emptyList()
@@ -219,7 +242,8 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
     private fun addDivider(): View {
         return View(context).apply {
             id = generateViewId()
-            setBackgroundColor(ContextCompat.getColor(context, R.color.white))
+            // The inner dividers will now always be white.
+            setBackgroundColor(Color.WHITE)
             dividers.add(this)
             addView(this)
         }
@@ -428,3 +452,4 @@ class CommanderDamageSummaryView @JvmOverloads constructor(
         }
     }
 }
+
