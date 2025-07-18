@@ -1,7 +1,13 @@
 package com.example.mtglifetracker
 
+import android.content.Context
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.IdlingRegistry
+import androidx.test.espresso.base.DefaultFailureHandler
 import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiSelector
 import com.example.mtglifetracker.data.AppDatabase
 import com.example.mtglifetracker.util.Logger
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -9,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -25,6 +32,7 @@ import javax.inject.Inject
  * 3.  **Activity Launching:** Launches the [MainActivity] before each test.
  * 4.  **Idling Resource:** Registers an [SingletonIdlingResource] to make Espresso wait for background tasks.
  * 5.  **Database Cleanup:** Injects the database instance and clears all tables after each test.
+ * 6.  **ANR Handling:** Sets a custom failure handler to dismiss ANR dialogs.
  */
 abstract class BaseUITest {
 
@@ -46,6 +54,7 @@ abstract class BaseUITest {
      */
     @Inject
     lateinit var db: AppDatabase
+    private var anrCount = 0
 
     /**
      * Sets up the test environment before each test method is executed.
@@ -54,13 +63,14 @@ abstract class BaseUITest {
     @Before
     open fun setUp() {
         Logger.instrumented("BaseUITest: setUp started.")
-        // Injects dependencies (like the 'db' instance) into the test class.
         hiltRule.inject()
         Logger.instrumented("BaseUITest: Hilt dependencies injected.")
-        // Registers the counting idling resource with Espresso. From this point on, Espresso will
-        // wait for the resource's counter to be zero before performing any view actions.
         IdlingRegistry.getInstance().register(SingletonIdlingResource.countingIdlingResource)
-        Logger.instrumented("BaseUITest: IdlingResource registered. Setup complete.")
+        Logger.instrumented("BaseUITest: IdlingResource registered.")
+
+        // **THE FIX**: Set up the custom failure handler to catch ANR dialogs.
+        setupFailureHandler()
+        Logger.instrumented("BaseUITest: Custom failure handler set up. Setup complete.")
     }
 
     /**
@@ -71,23 +81,69 @@ abstract class BaseUITest {
     @After
     open fun tearDown() {
         Logger.instrumented("BaseUITest: tearDown started.")
-        // Unregister the idling resource to prevent memory leaks.
         IdlingRegistry.getInstance().unregister(SingletonIdlingResource.countingIdlingResource)
         Logger.instrumented("BaseUITest: IdlingResource unregistered.")
 
-        // Use runBlocking to execute the suspending database cleanup operation synchronously
-        // within the @After block.
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        // **THE FIX**: Use the non-deprecated way to get the default SharedPreferences and clear it.
+        val sharedPrefsName = "${context.packageName}_preferences"
+        val sharedPreferences = context.getSharedPreferences(sharedPrefsName, Context.MODE_PRIVATE)
+        sharedPreferences.edit().clear().apply()
+        Logger.instrumented("BaseUITest: SharedPreferences cleared.")
+
+
         runBlocking {
-            // This is a critical step for test isolation. It clears all data from all tables
-            // in the in-memory database, ensuring the next test starts with a clean slate.
             Logger.instrumented("BaseUITest: Clearing all database tables.")
             db.clearAllTables()
             db.close()
             Logger.instrumented("BaseUITest: Database tables cleared.")
         }
 
-        // Close the activity scenario to free up resources.
         activityRule.scenario.close()
         Logger.instrumented("BaseUITest: ActivityScenario closed. Teardown complete.")
+    }
+
+    /**
+     * Sets a custom failure handler for Espresso to automatically dismiss ANR dialogs.
+     */
+    private fun setupFailureHandler() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val rootCauseMsg = String.format(
+            Locale.ROOT,
+            "Waited for the root of the view hierarchy to have window focus and not request layout for 10 seconds. If you specified a non default root matcher, it may be picking a root that never takes focus. Root:"
+        )
+
+        Espresso.setFailureHandler { error, viewMatcher ->
+            // Check if the error is the specific ANR-related exception and we haven't tried to handle it too many times.
+            if (error.message?.contains(rootCauseMsg) == true && anrCount < 2) {
+                anrCount++
+                Logger.instrumented("BaseUITest: ANR detected. Attempting to dismiss dialog (Attempt #$anrCount).")
+                handleAnrDialog()
+                // IMPORTANT: Re-throw the error to make the current test fail, but allow subsequent tests to run.
+                throw error
+            } else {
+                // For all other errors, use the default Espresso failure handler.
+                DefaultFailureHandler(context).handle(error, viewMatcher)
+            }
+        }
+    }
+
+    /**
+     * Uses UiAutomator to find and click the "Wait" button on a system ANR dialog.
+     */
+    private fun handleAnrDialog() {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        // The text on the button might vary by Android version/locale, "Wait" is common for English.
+        val waitButton = device.findObject(UiSelector().textContains("Wait"))
+        if (waitButton.exists()) {
+            try {
+                Logger.instrumented("BaseUITest: Found 'Wait' button on ANR dialog. Clicking it.")
+                waitButton.click()
+            } catch (e: Exception) {
+                Logger.e(e, "BaseUITest: Error clicking ANR dialog wait button.")
+            }
+        } else {
+            Logger.w("BaseUITest: ANR dialog detected, but 'Wait' button was not found.")
+        }
     }
 }

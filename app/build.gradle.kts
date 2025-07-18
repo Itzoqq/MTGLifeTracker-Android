@@ -136,6 +136,7 @@ dependencies {
     implementation(libs.androidx.espresso.idling.resource)
     androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.espresso.contrib)
+    androidTestImplementation(libs.androidx.ui.automator)
 
     kspAndroidTest(libs.hilt.android.compiler)
 }

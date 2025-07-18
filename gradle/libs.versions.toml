@@ -27,6 +27,7 @@ jacoco = "0.8.13"
 hiltAndroid = "2.57"
 dagger = "2.57"
 ksp = "2.2.0-2.0.2"
+androidx-ui-automator = "2.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -62,6 +63,7 @@ androidx-test-ext-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx",
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
 androidx-fragment-testing = { module = "androidx.fragment:fragment-testing", version.ref = "fragmentTesting" }
 androidx-test-monitor = { group = "androidx.test", name = "monitor", version.ref = "androidxMonitor" }
+androidx-ui-automator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-ui-automator" } # Add this line
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
